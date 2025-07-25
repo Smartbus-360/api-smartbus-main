@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon index.js",
-    "start": "node index.js"
+    "start": "node index.js",
+    "postinstall": "npm rebuild bcrypt --build-from-source"
+
   },
   "keywords": [],
   "author": "",
