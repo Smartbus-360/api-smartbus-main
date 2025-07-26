@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+dotenv.config();
 import express from 'express';
 import http from 'http';
 import { Server as socketIO } from 'socket.io'; 
@@ -87,4 +88,3 @@ export { io };
 server.listen(3000, () => {
     console.log('Server is running on port 3000');
 });
-dotenv.config();
