@@ -25,7 +25,7 @@ export const getAdmins = async (req, res, next) => {
         u.nationality,
         i.name AS instituteName,
         i.institutionType,
-        i.instituteCode
+        i.instituteCode,
       FROM 
         tbl_sm360_users u
       LEFT JOIN 
