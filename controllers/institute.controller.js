@@ -150,6 +150,7 @@ export const getInstitutes = async (req, res, next) => {
 export const addInstitute = async (req, res, next) => {
   // const adminNotificationNamespace = io.of('/admin/notification');
   const {
+    instituteCode,
     name,
     contactNumber,
     email,
@@ -214,6 +215,7 @@ export const addInstitute = async (req, res, next) => {
   try {
     const newInstitute = await Institute.create(
       {
+        instituteCode,
         name,
         contactNumber: validatedContactNumber,
         email: validatedEmail,
