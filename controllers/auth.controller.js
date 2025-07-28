@@ -618,9 +618,14 @@ export const studentSelfRegister = async (req, res, next) => {
     if (conflict) {
       return next(errorHandler(400, 'Username or email already in use'));
     }
+// Sanitize username and password (remove special characters)
+const sanitize = (str) => str.replace(/[^a-zA-Z0-9]/g, '');
+
+const cleanUsername = sanitize(username);
+const cleanPassword = sanitize(password);
 
     // Hash password
-    const hashedPassword = bcryptjs.hashSync(password, 12);
+    const hashedPassword = bcryptjs.hashSync(cleanpassword, 12);
 
     // Update user record
     await sequelize.query(
