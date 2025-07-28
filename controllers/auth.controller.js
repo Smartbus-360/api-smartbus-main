@@ -625,7 +625,7 @@ const cleanUsername = sanitize(username);
 const cleanPassword = sanitize(password);
 
     // Hash password
-    const hashedPassword = bcryptjs.hashSync(cleanpassword, 12);
+    const hashedPassword = bcryptjs.hashSync(cleanPassword, 12);
 
     // Update user record
     await sequelize.query(
@@ -646,7 +646,7 @@ const cleanPassword = sanitize(password);
       WHERE registrationNumber = :registrationNumber AND instituteId = :instituteId`,
       {
         replacements: {
-          username,
+          username: cleanUsername,
           email,
           password: hashedPassword,
           full_name: full_name || null,
