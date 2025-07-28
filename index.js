@@ -37,24 +37,9 @@ const io = new socketIO(server, {
 });
 
 // Middleware
-const corsOptions = {
-  origin: "http://localhost:5000",
-  credentials: true,
-};
-app.use(cors(corsOptions));
-const allowedOrigins = ["http://localhost:5000", "http://localhost:3000"];
-
 app.use(cors({
-    origin: (origin, callback) => {
-        if (allowedOrigins.some(o => (typeof o === 'string' && o === origin) || 
-                                     (o instanceof RegExp && o.test(origin))) || 
-                                     !origin) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true,
+    origin: true,           // Reflect the request origin
+    credentials: true       // Allow cookies/auth headers
 }));
 
 
