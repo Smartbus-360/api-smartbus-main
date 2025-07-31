@@ -605,24 +605,24 @@ export const studentSelfRegister = async (req, res, next) => {
       return next(errorHandler(400, 'This student is already registered'));
     }
 
-    // Ensure new username or email isn’t already taken
-    const [conflict] = await sequelize.query(
-      `SELECT id FROM tbl_sm360_users 
-       WHERE (username = :username OR email = :email) AND id != :id`,
-      {
-        replacements: { username, email, id: existing.id },
-        type: sequelize.QueryTypes.SELECT,
-      }
-    );
+//     // Ensure new username or email isn’t already taken
+//     const [conflict] = await sequelize.query(
+//       `SELECT id FROM tbl_sm360_users 
+//        WHERE (username = :username OR email = :email) AND id != :id`,
+//       {
+//         replacements: { username, email, id: existing.id },
+//         type: sequelize.QueryTypes.SELECT,
+//       }
+//     );
 
-    if (conflict) {
-      return next(errorHandler(400, 'Username or email already in use'));
-    }
-// Sanitize username and password (remove special characters)
-const sanitize = (str) => str.replace(/[^a-zA-Z0-9]/g, '');
+//     if (conflict) {
+//       return next(errorHandler(400, 'Username or email already in use'));
+//     }
+// // Sanitize username and password (remove special characters)
+// const sanitize = (str) => str.replace(/[^a-zA-Z0-9]/g, '');
 
-const cleanUsername = sanitize(username);
-const cleanPassword = sanitize(password);
+// const cleanUsername = sanitize(username);
+// const cleanPassword = sanitize(password);
 
     // Hash password
     const hashedPassword = bcryptjs.hashSync(cleanPassword, 12);
@@ -630,8 +630,8 @@ const cleanPassword = sanitize(password);
     // Update user record
     await sequelize.query(
       `UPDATE tbl_sm360_users SET 
-        username = :username,
-        email = :email,
+        username = :registrationNumber,
+        email = :registrationNumber,
         password = :password,
         full_name = :full_name,
         phone = :phone,
@@ -646,8 +646,7 @@ const cleanPassword = sanitize(password);
       WHERE registrationNumber = :registrationNumber AND instituteId = :instituteId`,
       {
         replacements: {
-          username: cleanUsername,
-          email,
+          registrationNumber,
           password: hashedPassword,
           full_name: full_name || null,
           phone: phone || null,
