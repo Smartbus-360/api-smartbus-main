@@ -30,6 +30,8 @@ export const configureSocket = (io) => {
 
     // Driver namespace: Handles real-time updates from drivers
     driverNamespace.on('connection', (socket) => {
+                console.log('✅ Driver connected to /drivers namespace');
+
         //console.log('A driver connected');
         
         let driverId; // Track the driverId for cleanup on disconnect
@@ -38,23 +40,17 @@ export const configureSocket = (io) => {
         socket.on('driverConnected', (id) => {
             driverId = parseInt(id, 10);
             socket.join(`driver_${driverId}`);
-            getDriverInfo(driverId, (err, driverInfo) => {
-                if (err) return console.error(err);
-                //console.log(`Driver info for ${driverId} cached:`, driverInfo);
-            });
+            console.log(`Driver ${driverId} connected to room driver_${driverId}`);
         });
 
         socket.on('locationUpdate', (data) => {
-            const { driverId, latitude, longitude } = data;
+            const { driverId, latitude, longitude,speed = 0,placeName='' } = data;
             const numericDriverId = parseInt(driverId, 10);
-
-            if (!driverId || isNaN(numericDriverId)) {
-                return console.warn('Invalid driverId in locationUpdate event');
+            if (!numericDriverId || latitude === undefined || longitude === undefined) {
+                return console.error(`⚠️ Invalid or missing location data from driver ${driverId}`);
             }
+            console.log(`📡 Speed received from driver ${numericDriverId}:`, speed);
 
-            if (latitude === undefined || longitude === undefined) {
-                return console.warn(`Missing latitude/longitude in locationUpdate event for driver ${numericDriverId}`);
-            }
 
             //console.log(`Received locationUpdate for driver ${numericDriverId}: lat=${latitude}, lon=${longitude}`);
 
@@ -62,15 +58,33 @@ export const configureSocket = (io) => {
                 if (err) return console.error('Driver info error:', err);
 
                 userNamespace.to(`driver_${numericDriverId}`).emit('locationUpdate', {
-                    driverInfo: { name: driverInfo.name, phone: driverInfo.phone },
+                    driverInfo: { id : numericDriverId,name: driverInfo.name, phone: driverInfo.phone, busNumber : driverInfo.vehicleAssigned || 'N/A' 
+
+                    },
                     latitude,
-                    longitude
+                    longitude,
+                    speed,
+                    placeName
                 });
+                // ✅ Also notify admin namespace
+adminNotificationNamespace.to(`driver_${numericDriverId}`).emit('locationUpdate', {
+    driverInfo: { 
+        id: numericDriverId, 
+        name: driverInfo.name, 
+        phone: driverInfo.phone, 
+        busNumber: driverInfo.vehicleAssigned || 'N/A' 
+    },
+    latitude,
+    longitude,
+    speed,
+    placeName
+});
+
             });
         });
 
         socket.on('disconnect', () => {
-            //console.log('A driver disconnected');
+            console.log(`❌ Driver ${driverId || 'unknown'} disconnected`);
             if (driverId) {
                 socket.leave(`driver_${driverId}`);
                 delete driverInfoCache[driverId]; // Optional: Clear cache if driver goes offline
@@ -80,7 +94,7 @@ export const configureSocket = (io) => {
 
     // User namespace: Users connect here to receive real-time updates
     userNamespace.on('connection', (socket) => {
-        //console.log('A user connected');
+        console.log('✅ User connected to /users namespace');
         
         const subscribedDrivers = new Set(); // Track subscribed drivers for each user
         
@@ -88,11 +102,11 @@ export const configureSocket = (io) => {
             const driverId = typeof data === 'object' ? data.driverId : data;
             const numericDriverId = parseInt(driverId, 10);
 
-            if (typeof numericDriverId === 'number' && Number.isInteger(numericDriverId)) {
+            if (!isNaN(numericDriverId)) {
                 socket.join(`driver_${numericDriverId}`);
                 subscribedDrivers.add(numericDriverId); // Track subscriptions
-                //console.log(`User subscribed to driver_${numericDriverId}`);
-            } else {
+                console.log(`User subscribed to driver_${numericDriverId}`);
+          } else {
                 console.warn('Invalid driverId in subscribeToDriver event');
             }
         });
@@ -105,29 +119,50 @@ export const configureSocket = (io) => {
             if (subscribedDrivers.has(numericDriverId)) {
                 socket.leave(`driver_${numericDriverId}`);
                 subscribedDrivers.delete(numericDriverId); // Remove from tracked subscriptions
-                //console.log(`User unsubscribed from driver_${numericDriverId}`);
-            } else {
-                console.warn('Unsubscribe failed: user not subscribed to driver_', numericDriverId);
+                console.log(`User unsubscribed from driver_${numericDriverId}`);
             }
-        });
+                });
 
         socket.on('disconnect', () => {
-            //console.log('A user disconnected');
+            console.log('❌ User disconnected from /users namespace');
             // Cleanup: Unsubscribe user from all tracked driver rooms
             subscribedDrivers.forEach(driverId => {
                 socket.leave(`driver_${driverId}`);
             });
-            subscribedDrivers.clear();
         });
     });
 
     // Admin Notification namespace
     adminNotificationNamespace.on('connection', (socket) => {
-        //console.log('An admin connected for notifications');
+        console.log('✅ Admin notification channel connected');
+
+        const subscribedDrivers = new Set();
+
+        socket.on('subscribeToDriver', (data) => {
+            const driverId = typeof data === 'object' ? data.driverId : data;
+            const numericDriverId = parseInt(driverId, 10);
+            if (!isNaN(numericDriverId)) {
+                socket.join(`driver_${numericDriverId}`);
+                subscribedDrivers.add(numericDriverId);
+                console.log(`Admin subscribed to driver_${numericDriverId}`);
+            }
+        });
+
+        socket.on('unsubscribeFromDriver', (data) => {
+            const driverId = typeof data === 'object' ? data.driverId : data;
+            const numericDriverId = parseInt(driverId, 10);
+            if (subscribedDrivers.has(numericDriverId)) {
+                socket.leave(`driver_${numericDriverId}`);
+                subscribedDrivers.delete(numericDriverId);
+                console.log(`Admin unsubscribed from driver_${numericDriverId}`);
+            }
+        });
 
         socket.on('disconnect', () => {
-            //console.log('An admin disconnected from notifications');
+            console.log('❌ Admin notification channel disconnected');
+            subscribedDrivers.forEach(driverId => {
+                socket.leave(`driver_${driverId}`);
+            });
         });
     });
 };
-
