@@ -625,7 +625,7 @@ export const studentSelfRegister = async (req, res, next) => {
 // const cleanPassword = sanitize(password);
 
     // Hash password
-    const hashedPassword = bcryptjs.hashSync(cleanPassword, 12);
+    const hashedPassword = bcryptjs.hashSync(password, 12);
 
     // Update user record
     await sequelize.query(
