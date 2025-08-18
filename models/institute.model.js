@@ -109,6 +109,12 @@ const Institute = sequelize.define('tbl_sm360_institutes', {
     type: DataTypes.ENUM('university', 'school', 'college'),
     allowNull: false,
   },
+  mapAccess: {
+  type: DataTypes.BOOLEAN,
+  allowNull: false,
+  defaultValue: true,
+},
+
 }, { timestamps: true });
 
 export default Institute;
