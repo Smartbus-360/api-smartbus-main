@@ -528,3 +528,77 @@ export const checkUsername = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+export const addStudentDirect = async (req, res, next) => {
+  try {
+    const { registrationNumber, password, instituteCode, stopId } = req.body;
+
+    if (!registrationNumber || !password || !instituteCode || !stopId) {
+      return next(errorHandler(400, "Registration number, password, instituteCode, and stoppage are required"));
+    }
+
+    // 1. Find instituteId using instituteCode
+    const [institute] = await sequelize.query(
+      "SELECT id FROM tbl_sm360_institutes WHERE instituteCode = :instituteCode",
+      {
+        replacements: { instituteCode },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    if (!institute) {
+      return next(errorHandler(400, "Invalid institute code"));
+    }
+
+    // 2. Hash the password
+    const hashedPassword = bcryptjs.hashSync(password, 12);
+
+    // 3. Insert new student
+    await sequelize.query(
+      `INSERT INTO tbl_sm360_users (
+        registrationNumber,
+        username,
+        email,
+        password,
+        instituteId,
+        instituteCode,
+        stopId,
+        isAdmin,
+        verified,
+        status,
+        createdAt,
+        updatedAt
+      ) VALUES (
+        :registrationNumber,
+        :username,
+        :email,
+        :password,
+        :instituteId,
+        :instituteCode,
+        :stopId,
+        0,
+        'yes',
+        'active',
+        NOW(),
+        NOW()
+      )`,
+      {
+        replacements: {
+          registrationNumber,
+          username: registrationNumber, // 👈 username = regNo
+          email: registrationNumber,    // 👈 email = regNo
+          password: hashedPassword,
+          instituteId: institute.id,
+          instituteCode,
+          stopId,
+        },
+        type: sequelize.QueryTypes.INSERT,
+      }
+    );
+
+    res.status(201).json({ success: true, message: "Student created successfully" });
+  } catch (err) {
+    console.error("AddStudentDirect error:", err);
+    next(errorHandler(500, "Internal server error"));
+  }
+};
+
