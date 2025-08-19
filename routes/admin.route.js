@@ -29,6 +29,7 @@ import {
   searchAdmins,
   addPendingStudent,
   checkUsername,
+  addStudentDirect,
 } from "../controllers/admin.controller.js";
 import {
   getAllStoppages,
@@ -88,12 +89,15 @@ router.post('/one-time-login', oneTimeLogin);
 router.get('/check-username', checkUsername); // ✅ new route
 
 
+
 router.get("/admins", getAdmins);
 router.post("/admins", addAdmins);
 router.put("/admins/:id", updateAdmin);
 router.delete("/admins/:id", deleteAdmin);
 router.get("/search", verifyToken, searchAdmins); 
 router.post('/pending-student', verifyToken, addPendingStudent);
+router.post("/add-student-direct", verifyToken, addStudentDirect);
+
 
 
 router.post("/institutes", verifyToken, uploadLogoImage.single("logo"), addInstitute);
