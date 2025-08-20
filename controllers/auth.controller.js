@@ -790,3 +790,36 @@ export const changeStudentPassword = async (req, res, next) => {
     return next(errorHandler(500, err.message));
   }
 };
+// ADD: returns username, email, registrationNumber, instituteCode
+export const getMyBasics = async (req, res, next) => {
+  try {
+    // You sign tokens with { id, isAdmin, instituteId } in signin
+    const userId = req.user.id;
+
+    // Pull user basics
+    const [me] = await sequelize.query(
+      `SELECT id, username, email, registrationNumber, instituteId
+         FROM tbl_sm360_users
+        WHERE id = :id`,
+      { replacements: { id: userId }, type: sequelize.QueryTypes.SELECT }
+    );
+
+    if (!me) return res.status(404).json({ message: 'User not found' });
+
+    // Resolve instituteCode
+    const [inst] = await sequelize.query(
+      `SELECT instituteCode FROM tbl_sm360_institutes WHERE id = :iid`,
+      { replacements: { iid: me.instituteId }, type: sequelize.QueryTypes.SELECT }
+    );
+
+    return res.json({
+      username: me.username || '',
+      email: me.email || '',
+      registrationNumber: me.registrationNumber || '',
+      instituteCode: inst?.instituteCode || ''
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
