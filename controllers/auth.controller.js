@@ -10,6 +10,7 @@ import crypto from 'crypto';
 import sequelize from '../config/database.js';
 import dotenv from 'dotenv';
 
+
 dotenv.config();
 
 //authentication 
@@ -710,5 +711,82 @@ export const oneTimeLogin = async (req, res, next) => {
     res.status(200).json({ success: true, token, message: 'One-time login granted' });
   } catch (error) {
     next(errorHandler(500, error.message));
+  }
+};
+export const changeStudentPassword = async (req, res, next) => {
+  try {
+    const {
+      registrationNumber,
+      instituteCode,
+      oldPassword,
+      newPassword,
+      confirmNewPassword,
+    } = req.body;
+
+    if (!registrationNumber || !instituteCode || !oldPassword || !newPassword || !confirmNewPassword) {
+      return next(errorHandler(400, 'All fields are required'));
+    }
+    if (newPassword !== confirmNewPassword) {
+      return next(errorHandler(400, 'New password and confirmation do not match'));
+    }
+    if (newPassword.length < 6) {
+      return next(errorHandler(400, 'New password must be at least 6 characters'));
+    }
+
+    // Resolve instituteId from instituteCode
+    const institute = await sequelize.query(
+      `SELECT id FROM tbl_sm360_institutes WHERE instituteCode = :instituteCode`,
+      {
+        replacements: { instituteCode },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+    const instituteId = institute?.[0]?.id;
+    if (!instituteId) {
+      return next(errorHandler(400, 'Invalid institute code'));
+    }
+
+    // Fetch the student (verified + isAdmin = 0)
+    const result = await sequelize.query(
+      `SELECT id, password, verified, isAdmin
+         FROM tbl_sm360_users
+        WHERE registrationNumber = :registrationNumber
+          AND instituteId = :instituteId
+          AND isAdmin = 0`,
+      {
+        replacements: { registrationNumber, instituteId },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+    const user = result?.[0];
+
+    if (!user) {
+      return next(errorHandler(404, 'Student not found'));
+    }
+    if (user.verified !== 'yes') {
+      return next(errorHandler(403, 'Registration incomplete. Please register first.'));
+    }
+
+    // Verify old password
+    const ok = bcryptjs.compareSync(oldPassword, user.password);
+    if (!ok) {
+      return next(errorHandler(400, 'Old password is incorrect'));
+    }
+
+    // Hash and update new password
+    const hashed = bcryptjs.hashSync(newPassword, 12);
+    await sequelize.query(
+      `UPDATE tbl_sm360_users
+          SET password = :password, updatedAt = NOW()
+        WHERE id = :id`,
+      {
+        replacements: { password: hashed, id: user.id },
+        type: sequelize.QueryTypes.UPDATE,
+      }
+    );
+
+    return res.status(200).json({ success: true, message: 'Password updated successfully' });
+  } catch (err) {
+    return next(errorHandler(500, err.message));
   }
 };
