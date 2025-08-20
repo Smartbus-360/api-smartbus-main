@@ -1,4 +1,5 @@
 import express from "express";
+import { httpAuth } from "../middlewares/wsAuth.middleware.js";
 import {
   signup,
   signin,
