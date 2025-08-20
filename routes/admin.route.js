@@ -77,7 +77,6 @@ import {
 } from "../controllers/advertisement.controller.js";
 import { verifyToken } from "../utils/verifyUser.js";
 import { getNotifications, createNotification, deleteNotification, getBusNotifications, createBusNotification, deleteBusNotification } from "../controllers/notification.controller.js";
-import { httpAuth } from '../middlewares/wsAuth.middleware.js';
 
 const router = express.Router();
 
