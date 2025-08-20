@@ -716,14 +716,13 @@ export const oneTimeLogin = async (req, res, next) => {
 export const changeStudentPassword = async (req, res, next) => {
   try {
     const {
-      registrationNumber,
-      instituteCode,
+      username,
       oldPassword,
       newPassword,
       confirmNewPassword,
     } = req.body;
 
-    if (!registrationNumber || !instituteCode || !oldPassword || !newPassword || !confirmNewPassword) {
+    if (!username || !oldPassword || !newPassword || !confirmNewPassword) {
       return next(errorHandler(400, 'All fields are required'));
     }
     if (newPassword !== confirmNewPassword) {
@@ -733,32 +732,14 @@ export const changeStudentPassword = async (req, res, next) => {
       return next(errorHandler(400, 'New password must be at least 6 characters'));
     }
 
-    // Resolve instituteId from instituteCode
-    const institute = await sequelize.query(
-      `SELECT id FROM tbl_sm360_institutes WHERE instituteCode = :instituteCode`,
-      {
-        replacements: { instituteCode },
-        type: sequelize.QueryTypes.SELECT,
-      }
-    );
-    const instituteId = institute?.[0]?.id;
-    if (!instituteId) {
-      return next(errorHandler(400, 'Invalid institute code'));
-    }
-
-    // Fetch the student (verified + isAdmin = 0)
-    const result = await sequelize.query(
+        const [user] = await sequelize.query(
       `SELECT id, password, verified, isAdmin
          FROM tbl_sm360_users
-        WHERE registrationNumber = :registrationNumber
-          AND instituteId = :instituteId
+        WHERE LOWER(username) = LOWER(:username)
           AND isAdmin = 0`,
-      {
-        replacements: { registrationNumber, instituteId },
-        type: sequelize.QueryTypes.SELECT,
-      }
+      { replacements: { username }, type: sequelize.QueryTypes.SELECT }
     );
-    const user = result?.[0];
+
 
     if (!user) {
       return next(errorHandler(404, 'Student not found'));
