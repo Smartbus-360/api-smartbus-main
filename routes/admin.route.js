@@ -13,7 +13,8 @@ import {
   getEnquiries,
   studentSelfRegister,
   oneTimeLogin,
-  changeStudentPassword
+  changeStudentPassword,
+  getMyBasics
 } from "../controllers/auth.controller.js";
 import {
   getInstitutes,
@@ -76,6 +77,7 @@ import {
 } from "../controllers/advertisement.controller.js";
 import { verifyToken } from "../utils/verifyUser.js";
 import { getNotifications, createNotification, deleteNotification, getBusNotifications, createBusNotification, deleteBusNotification } from "../controllers/notification.controller.js";
+import { httpAuth } from '../middlewares/wsAuth.middleware.js';
 
 const router = express.Router();
 
@@ -144,6 +146,8 @@ router.put("/users/:id", verifyToken, uploadUserImage.single("profilePicture"), 
 router.delete("/users/:id", verifyToken, deleteUser);
 router.post('/self-register', studentSelfRegister);
 router.put('/auth/change-student-password', changeStudentPassword);
+router.get('/auth/me/basic', httpAuth, getMyBasics);
+
 
 
 //Advertisement
