@@ -6,6 +6,7 @@ import { checkBusReplacement } from "../controllers/bus.controller.js";
 import { getNotifications, getBusNotifications } from "../controllers/notification.controller.js";
 import { oneTimeLogin } from "../controllers/auth.controller.js";
 
+
 const apiRouter = express.Router();
 
 apiRouter.post("/login/user",  loginUser);
