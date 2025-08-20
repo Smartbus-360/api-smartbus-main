@@ -12,7 +12,8 @@ import {
   joinUs,
   getEnquiries,
   studentSelfRegister,
-  oneTimeLogin
+  oneTimeLogin,
+  changeStudentPassword
 } from "../controllers/auth.controller.js";
 import {
   getInstitutes,
@@ -142,6 +143,8 @@ router.post("/users", verifyToken, uploadUserImage.single("profilePicture"), add
 router.put("/users/:id", verifyToken, uploadUserImage.single("profilePicture"), updateUser);
 router.delete("/users/:id", verifyToken, deleteUser);
 router.post('/self-register', studentSelfRegister);
+router.put('/auth/change-student-password', changeStudentPassword);
+
 
 //Advertisement
 router.get("/ads", getAllAdvertisements);
