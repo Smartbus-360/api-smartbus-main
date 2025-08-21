@@ -4,6 +4,8 @@ import Driver from '../models/driver.model.js';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt'; 
 import { Op } from 'sequelize'; 
+import Institute from "../models/institute.model.js";
+
 
 dotenv.config();
 
@@ -159,5 +161,26 @@ export const logout = async (req, res) => {
     } catch (error) {
         res.status(500).json({ success: false, message: 'Error logging out' });
     }
+};
+export const canViewMap = async (req, res, next) => {
+  try {
+    const actor = req.user;                 // set by httpAuth
+    const instituteId = actor?.instituteId; // present on your tokens/rows
+
+    if (!instituteId) {
+      return res.status(403).json({ message: "Map access not configured." });
+    }
+
+    const inst = await Institute.findByPk(instituteId);
+    if (!inst) return res.status(404).json({ message: "Institute not found." });
+
+    if (inst.mapAccess !== true) {
+      return res.status(403).json({ message: "Map access disabled by superadmin." });
+    }
+
+    next();
+  } catch (e) {
+    return res.status(500).json({ message: "Map access check failed." });
+  }
 };
 
