@@ -80,6 +80,7 @@ export const getInstitutes = async (req, res, next) => {
           city,
           postalCode,
           institutionType,
+          mapAccess,
           createdAt,
           updatedAt 
         FROM tbl_sm360_institutes
@@ -116,6 +117,7 @@ export const getInstitutes = async (req, res, next) => {
           city,
           postalCode,
           institutionType,
+          mapAccess,
           createdAt,
           updatedAt 
         FROM tbl_sm360_institutes
