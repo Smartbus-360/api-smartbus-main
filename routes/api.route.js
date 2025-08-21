@@ -17,7 +17,7 @@ apiRouter.post("/signup/user", signupDriver);
 apiRouter.get("/user/details/:id", httpAuth,canViewMap, getUserDetails);
 apiRouter.get("/driver/details/:id", httpAuth,canViewMap, getDriverDetails);
 apiRouter.post("/stoppage/reached", httpAuth,canViewMap, updateReachDateTime); 
-apiRouter.post("/notify/speed", httpAuth,canViewMap notifyIfSpeedExceeded);
+apiRouter.post("/notify/speed", httpAuth,canViewMap, notifyIfSpeedExceeded);
 apiRouter.get("/advertisement/banner", generateAdBanner);
 apiRouter.get("/bus/replacement/:busId", httpAuth,canViewMap, checkBusReplacement);
 apiRouter.post("/missed-stoppage", httpAuth,canViewMap, markMissedStop);
