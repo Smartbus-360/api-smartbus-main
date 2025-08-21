@@ -22,7 +22,8 @@ import {
   addInstitute,
   updateInstitute,
   deleteInstitute,
-  uploadLogoImage
+  uploadLogoImage,
+  setInstituteMapAccess
 } from "../controllers/institute.controller.js";
 import {
   getAdmins,
@@ -113,6 +114,8 @@ router.post("/routes", verifyToken, addRoute);
 router.get("/routes/institute/:instituteId?", getRoutesByInstitute);
 router.put("/routes/:id", verifyToken, updateRoute);
 router.delete("/routes/:id", verifyToken, deleteRoute);
+router.put("/institutes/:id/map-access", verifyToken, setInstituteMapAccess);
+
 // router.get('/institutes/:instituteId/routes', getRoutesByInstitute);
 
 router.delete("/institutes/:id", deleteInstitute);
