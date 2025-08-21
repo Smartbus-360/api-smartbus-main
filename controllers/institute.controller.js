@@ -421,3 +421,25 @@ export const deleteInstitute = async (req, res, next) => {
     next(error);
   }
 };
+export const setInstituteMapAccess = async (req, res, next) => {
+  try {
+    const requester = await User.findByPk(req.user.id);
+    if (!requester || Number(requester.isAdmin) !== 1) {
+      return res.status(403).json({ message: "Only superadmin can change map access" });
+    }
+
+    const { id } = req.params;          // institute id
+    const { mapAccess } = req.body;     // boolean
+
+    const [count] = await Institute.update(
+      { mapAccess: !!mapAccess, lastUpdatedBy: requester.id },
+      { where: { id } }
+    );
+
+    if (!count) return res.status(404).json({ message: "Institute not found" });
+    return res.status(200).json({ success: true, message: "Map access updated" });
+  } catch (err) {
+    next(err);
+  }
+};
+
