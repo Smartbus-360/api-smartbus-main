@@ -20,13 +20,13 @@ apiRouter.get("/driver/details/:id", httpAuth, getDriverDetails);
 apiRouter.get("/map/access-check", httpAuth, canViewMap, (req, res) => {
   return res.status(204).end(); // 204 when map is allowed
 });
-apiRouter.post("/stoppage/reached", httpAuth,canViewMap, updateReachDateTime); 
-apiRouter.post("/notify/speed", httpAuth,canViewMap, notifyIfSpeedExceeded);
+apiRouter.post("/stoppage/reached", httpAuth, updateReachDateTime); 
+apiRouter.post("/notify/speed", httpAuth, notifyIfSpeedExceeded);
 apiRouter.get("/advertisement/banner", generateAdBanner);
-apiRouter.get("/bus/replacement/:busId", httpAuth,canViewMap, checkBusReplacement);
-apiRouter.post("/missed-stoppage", httpAuth,canViewMap, markMissedStop);
-apiRouter.post("/mark-final-stop",httpAuth,canViewMap, markFinalStopReached);
-apiRouter.get("/reach-times/:route", httpAuth,canViewMap ,getReachTimesForRoute);
+apiRouter.get("/bus/replacement/:busId", httpAuth, checkBusReplacement);
+apiRouter.post("/missed-stoppage", httpAuth, markMissedStop);
+apiRouter.post("/mark-final-stop",httpAuth, markFinalStopReached);
+apiRouter.get("/reach-times/:route", httpAuth ,getReachTimesForRoute);
 apiRouter.get("/notifications", httpAuth,getNotifications);
 apiRouter.get("/bus-notifications", httpAuth, getBusNotifications);
 apiRouter.post('/one-time-login', oneTimeLogin);
