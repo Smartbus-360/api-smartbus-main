@@ -1304,81 +1304,106 @@ export const getReachTimesForRoute = async (req, res) => {
   try {
     const reachTimes = await sequelize.query(
       `
-        SELECT 
-            filtered_data.reachDate,
-            JSON_ARRAYAGG(
-                JSON_OBJECT(
-                    'logId', filtered_data.logId,
-                    'stopId', filtered_data.stopId,
-                    'reachDateTime', filtered_data.reachDateTime,
-                    'tripType', filtered_data.tripType,
-                    'round', filtered_data.round,
-                    'stopName', filtered_data.stopName,
-                    'latitude', filtered_data.latitude,
-                    'longitude', filtered_data.longitude,
-                    'stopOrder', filtered_data.stopOrder,
-                    'defaultArrivalTime', filtered_data.defaultArrivalTime,
-                    'defaultDepartureTime', filtered_data.defaultDepartureTime,
-                    'defaultAfternoonArrivalTime', filtered_data.defaultAfternoonArrivalTime,
-                    'defaultAfternoonDepartureTime', filtered_data.defaultAfternoonDepartureTime,
-                    'defaultEveningArrivalTime', filtered_data.defaultEveningArrivalTime,
-                    'defaultEveningDepartureTime', filtered_data.defaultEveningDepartureTime,
-                    'reached', filtered_data.reached,
-                    'routeName', filtered_data.routeName,
-                    'totalDistance', filtered_data.totalDistance,
-                    'estimatedTravelTime', filtered_data.estimatedTravelTime
-                )
-            ) AS stops
-        FROM (
-            SELECT 
-                MIN(tbl_sm360_stop_reach_logs.id) AS logId,
-                tbl_sm360_stop_reach_logs.stopId,
-                DATE(tbl_sm360_stop_reach_logs.reachDateTime) AS reachDate,
-                MAX(tbl_sm360_stop_reach_logs.reachDateTime) AS reachDateTime,
-                tbl_sm360_stop_reach_logs.tripType,
-                tbl_sm360_stop_reach_logs.round,
-                tbl_sm360_stops.stopName,
-                tbl_sm360_stops.latitude,
-                tbl_sm360_stops.longitude,
-                tbl_sm360_stops.stopOrder,
-                tbl_sm360_stops.arrivalTime AS defaultArrivalTime,
-                tbl_sm360_stops.departureTime AS defaultDepartureTime,
-                tbl_sm360_stops.afternoonarrivalTime AS defaultAfternoonArrivalTime,
-                tbl_sm360_stops.afternoondepartureTime AS defaultAfternoonDepartureTime,
-                tbl_sm360_stops.eveningarrivalTime AS defaultEveningArrivalTime,
-                tbl_sm360_stops.eveningdepartureTime AS defaultEveningDepartureTime,
-                tbl_sm360_stops.reached,
-                tbl_sm360_routes.routeName,
-                tbl_sm360_routes.totalDistance,
-                tbl_sm360_routes.estimatedTravelTime
-            FROM tbl_sm360_stop_reach_logs
-            INNER JOIN tbl_sm360_stops ON tbl_sm360_stop_reach_logs.stopId = tbl_sm360_stops.id
-            INNER JOIN tbl_sm360_routes ON tbl_sm360_stops.routeId = tbl_sm360_routes.id
-            WHERE tbl_sm360_stop_reach_logs.routeId = :routeId
-              AND tbl_sm360_stop_reach_logs.reachDateTime >= DATE_SUB(CURDATE(), INTERVAL 2 DAY)
-            GROUP BY 
-                tbl_sm360_stop_reach_logs.stopId, 
-                DATE(tbl_sm360_stop_reach_logs.reachDateTime),
-                tbl_sm360_stop_reach_logs.tripType,
-                tbl_sm360_stop_reach_logs.round,
-                tbl_sm360_stops.stopName,
-                tbl_sm360_stops.latitude,
-                tbl_sm360_stops.longitude,
-                tbl_sm360_stops.stopOrder,
-                tbl_sm360_stops.arrivalTime,
-                tbl_sm360_stops.departureTime,
-                tbl_sm360_stops.afternoonarrivalTime,
-                tbl_sm360_stops.afternoondepartureTime,
-                tbl_sm360_stops.eveningarrivalTime,
-                tbl_sm360_stops.eveningdepartureTime,
-                tbl_sm360_stops.reached,
-                tbl_sm360_routes.routeName,
-                tbl_sm360_routes.totalDistance,
-                tbl_sm360_routes.estimatedTravelTime
-        ) AS filtered_data
-        GROUP BY filtered_data.reachDate
-        ORDER BY filtered_data.reachDate DESC;
-      `,
+`
+  SELECT 
+      filtered_data.reachDate,
+      JSON_ARRAYAGG(
+          JSON_OBJECT(
+              'logId', filtered_data.logId,
+              'stopId', filtered_data.stopId,
+              'reachDateTime', filtered_data.reachDateTime,     -- latest of the day
+              'tripType', filtered_data.tripType,
+              'round', filtered_data.round,
+              'stopName', filtered_data.stopName,
+              'latitude', filtered_data.latitude,
+              'longitude', filtered_data.longitude,
+              'stopOrder', filtered_data.stopOrder,
+              'defaultArrivalTime', filtered_data.defaultArrivalTime,
+              'defaultDepartureTime', filtered_data.defaultDepartureTime,
+              'defaultAfternoonArrivalTime', filtered_data.defaultAfternoonArrivalTime,
+              'defaultAfternoonDepartureTime', filtered_data.defaultAfternoonDepartureTime,
+              'defaultEveningArrivalTime', filtered_data.defaultEveningArrivalTime,
+              'defaultEveningDepartureTime', filtered_data.defaultEveningDepartureTime,
+              'reached', filtered_data.reached,
+              'routeName', filtered_data.routeName,
+              'totalDistance', filtered_data.totalDistance,
+              'estimatedTravelTime', filtered_data.estimatedTravelTime,
+              'visitCount', filtered_data.visitCount,           -- NEW: total visits today
+              'visitTimes', filtered_data.visitTimes            -- NEW: array of all times
+          )
+      ) AS stops
+  FROM (
+      SELECT 
+          MIN(l.id) AS logId,
+          l.stopId,
+          DATE(l.reachDateTime) AS reachDate,
+          MAX(l.reachDateTime) AS reachDateTime,
+          l.tripType,
+          l.round,
+          s.stopName,
+          s.latitude,
+          s.longitude,
+          s.stopOrder,
+          s.arrivalTime AS defaultArrivalTime,
+          s.departureTime AS defaultDepartureTime,
+          s.afternoonarrivalTime AS defaultAfternoonArrivalTime,
+          s.afternoondepartureTime AS defaultAfternoonDepartureTime,
+          s.eveningarrivalTime AS defaultEveningArrivalTime,
+          s.eveningdepartureTime AS defaultEveningDepartureTime,
+          s.reached,
+          r.routeName,
+          r.totalDistance,
+          r.estimatedTravelTime,
+
+          (
+            SELECT COUNT(*)
+            FROM tbl_sm360_stop_reach_logs l2
+            WHERE l2.stopId = l.stopId
+              AND l2.routeId = l.routeId
+              AND DATE(l2.reachDateTime) = DATE(l.reachDateTime)
+              AND l2.tripType = l.tripType
+              AND l2.round = l.round
+          ) AS visitCount,
+
+          (
+            SELECT JSON_ARRAYAGG(l2.reachDateTime ORDER BY l2.reachDateTime ASC)
+            FROM tbl_sm360_stop_reach_logs l2
+            WHERE l2.stopId = l.stopId
+              AND l2.routeId = l.routeId
+              AND DATE(l2.reachDateTime) = DATE(l.reachDateTime)
+              AND l2.tripType = l.tripType
+              AND l2.round = l.round
+          ) AS visitTimes
+
+      FROM tbl_sm360_stop_reach_logs l
+      INNER JOIN tbl_sm360_stops s  ON l.stopId = s.id
+      INNER JOIN tbl_sm360_routes r ON s.routeId = r.id
+      WHERE l.routeId = :routeId
+        AND l.reachDateTime >= DATE_SUB(CURDATE(), INTERVAL 2 DAY)
+      GROUP BY 
+          l.stopId, 
+          DATE(l.reachDateTime),
+          l.tripType,
+          l.round,
+          s.stopName,
+          s.latitude,
+          s.longitude,
+          s.stopOrder,
+          s.arrivalTime,
+          s.departureTime,
+          s.afternoonarrivalTime,
+          s.afternoondepartureTime,
+          s.eveningarrivalTime,
+          s.eveningdepartureTime,
+          s.reached,
+          r.routeName,
+          r.totalDistance,
+          r.estimatedTravelTime
+  ) AS filtered_data
+  GROUP BY filtered_data.reachDate
+  ORDER BY filtered_data.reachDate DESC;
+`
+,
       {
         replacements: { routeId },
         type: sequelize.QueryTypes.SELECT,
