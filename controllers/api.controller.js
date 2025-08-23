@@ -13,6 +13,8 @@ import sequelize from "../config/database.js";
 import axios from "axios";
 import Stop from "../models/stop.model.js";
 import { io } from '../index.js';
+import Driver from "../models/driver.model.js";
+
 // import StopReachLogs from "../models/stopReachLogs.model.js"; // ⬅️ add this
 
 
