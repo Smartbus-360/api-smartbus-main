@@ -1304,9 +1304,8 @@ export const getReachTimesForRoute = async (req, res) => {
   }
 
   try {
-    const reachTimes = await sequelize.query(
-      `
-`
+const reachTimes = await sequelize.query(
+  `
   SELECT 
       filtered_data.reachDate,
       JSON_ARRAYAGG(
@@ -1330,8 +1329,8 @@ export const getReachTimesForRoute = async (req, res) => {
               'routeName', filtered_data.routeName,
               'totalDistance', filtered_data.totalDistance,
               'estimatedTravelTime', filtered_data.estimatedTravelTime,
-              'visitCount', filtered_data.visitCount,           -- NEW: total visits today
-              'visitTimes', filtered_data.visitTimes            -- NEW: array of all times
+              'visitCount', filtered_data.visitCount,           -- total visits today (same phase+round)
+              'visitTimes', filtered_data.visitTimes            -- array of all times (same phase+round)
           )
       ) AS stops
   FROM (
@@ -1356,7 +1355,6 @@ export const getReachTimesForRoute = async (req, res) => {
           r.routeName,
           r.totalDistance,
           r.estimatedTravelTime,
-
           (
             SELECT COUNT(*)
             FROM tbl_sm360_stop_reach_logs l2
@@ -1366,7 +1364,6 @@ export const getReachTimesForRoute = async (req, res) => {
               AND l2.tripType = l.tripType
               AND l2.round = l.round
           ) AS visitCount,
-
           (
             SELECT JSON_ARRAYAGG(l2.reachDateTime ORDER BY l2.reachDateTime ASC)
             FROM tbl_sm360_stop_reach_logs l2
@@ -1376,7 +1373,6 @@ export const getReachTimesForRoute = async (req, res) => {
               AND l2.tripType = l.tripType
               AND l2.round = l.round
           ) AS visitTimes
-
       FROM tbl_sm360_stop_reach_logs l
       INNER JOIN tbl_sm360_stops s  ON l.stopId = s.id
       INNER JOIN tbl_sm360_routes r ON s.routeId = r.id
@@ -1404,15 +1400,12 @@ export const getReachTimesForRoute = async (req, res) => {
   ) AS filtered_data
   GROUP BY filtered_data.reachDate
   ORDER BY filtered_data.reachDate DESC;
-`
-,
-      {
-        replacements: { routeId },
-        type: sequelize.QueryTypes.SELECT,
-      }
-    );
-    
-
+  `,
+  {
+    replacements: { routeId },
+    type: sequelize.QueryTypes.SELECT,
+  }
+);
     res.json({ success: true, data: reachTimes });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
