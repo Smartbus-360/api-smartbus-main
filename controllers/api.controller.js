@@ -13,10 +13,6 @@ import sequelize from "../config/database.js";
 import axios from "axios";
 import Stop from "../models/stop.model.js";
 import { io } from '../index.js';
-import Driver from "../models/driver.model.js";
-
-// import StopReachLogs from "../models/stopReachLogs.model.js"; // ⬅️ add this
-
 
 // const OSRM_URL = "http://router.project-osrm.org/route/v1/driving";
 
@@ -131,13 +127,13 @@ export const getUserDetails = async (req, res) => {
         WHERE logs.stopId = s.id 
           AND logs.routeId = s.routeId  -- Ensure correct route reference
           AND logs.tripType = r.currentJourneyPhase -- Match current trip phase
-          AND DATE(reachDateTime) = CURDATE()  -- Consider only today's logs
+          AND logs.reachDate = CURDATE()  -- Consider only today's logs
           AND logs.round = (
             SELECT COALESCE(MAX(round), 1) 
             FROM tbl_sm360_stop_reach_logs 
             WHERE stopId = s.id 
               AND routeId = s.routeId 
-             AND DATE(reachDateTime) = CURDATE()  -- Get max round for today
+              AND reachDate = CURDATE()  -- Get max round for today
           )  
         ORDER BY logs.stopHitCount DESC  -- Highest stop count first
         LIMIT 1
@@ -904,7 +900,7 @@ export const signupUser = async (req, res) => {
     }
 
     // Hash the password
-    const hashedPassword = bcryptjs.hashSync(password, 12);
+    const hashedPassword = bcrypt.hashSync(password, 12);
 
     // Create new user with the corresponding columns
     const newUser = await User.create({
@@ -948,60 +944,58 @@ export const updateReachDateTime = async (req, res) => {
       message: "Required data are missing",
     });
   }
-  
-  const phase = String(tripType || "").toLowerCase();
-  // if (!["morning", "afternoon", "evening"].includes(tripType.toLowerCase())) {
-  if (!["morning", "afternoon", "evening"].includes(phase)) {
+
+  if (!["morning", "afternoon", "evening"].includes(tripType.toLowerCase())) {
     return res.status(400).json({
       success: false,
       message: "Invalid tripType. Must be 'morning', 'afternoon', or 'evening'.",
     });
   }
 
- const formattedReachDateTime = new Date(reachDateTime);
-  if (isNaN(formattedReachDateTime.getTime())) {
-    return res.status(400).json({ success: false, message: "Invalid reachDateTime format" });
-  }
-  const t = await sequelize.transaction();
   try {
-    const stoppageToUpdate = await Stop.findByPk(stoppageId , { transaction: t });
+    const stoppageToUpdate = await Stop.findByPk(stoppageId);
     if (!stoppageToUpdate) {
-      await t.rollback();
       return res.status(400).json({ success: false, message: "Invalid stoppage" });
     }
- let stopHitCount = 1;
 
-    const existingToday = await sequelize.query(
+    const formattedReachDateTime = new Date(reachDateTime);
+    if (isNaN(formattedReachDateTime.getTime())) {
+      return res.status(400).json({ success: false, message: "Invalid reachDateTime format" });
+    }
+
+    // Check if any logs exist for this round on today's date
+    const checkIfFirstHit = await sequelize.query(
       `SELECT 1 
-         FROM tbl_sm360_stop_reach_logs 
-        WHERE stopId = :stopId 
-          AND routeId = :routeId 
-          AND tripType = :tripType 
-          AND round = :round 
-          AND DATE(reachDateTime) = CURDATE()
-        LIMIT 1;`,
+       FROM tbl_sm360_stop_reach_logs 
+       WHERE stopId = :stopId 
+         AND routeId = :routeId 
+         AND tripType = :tripType 
+         AND round = :round 
+         AND DATE(reachDateTime) = CURDATE()
+       LIMIT 1;`,
       {
-        replacements: { stopId: stoppageId, routeId, tripType: phase, round },
+        replacements: { stopId: stoppageId, routeId, tripType, round },
         type: sequelize.QueryTypes.SELECT,
-        transaction: t,
       }
     );
 
-    if (existingToday.length > 0) {
+    let stopHitCount = 1;
+
+    if (checkIfFirstHit.length > 0) {
+      // Fetch latest hit count
       const latestLog = await sequelize.query(
         `SELECT stopHitCount 
-           FROM tbl_sm360_stop_reach_logs 
-          WHERE stopId = :stopId 
-            AND routeId = :routeId 
-            AND tripType = :tripType 
-            AND round = :round  
-            AND DATE(reachDateTime) = CURDATE() 
-          ORDER BY id DESC 
-          LIMIT 1;`,
+         FROM tbl_sm360_stop_reach_logs 
+         WHERE stopId = :stopId 
+           AND routeId = :routeId 
+           AND tripType = :tripType 
+           AND round = :round  
+           AND DATE(reachDateTime) = CURDATE() 
+         ORDER BY id DESC 
+         LIMIT 1;`,
         {
-          replacements: { stopId: stoppageId, routeId, tripType: phase, round },
+          replacements: { stopId: stoppageId, routeId, tripType, round },
           type: sequelize.QueryTypes.SELECT,
-          transaction: t,
         }
       );
 
@@ -1010,22 +1004,21 @@ export const updateReachDateTime = async (req, res) => {
       }
     }
 
-    // ---- Insert into history table (with duplicate guard) ----
     if (parseInt(reached) === 2) {
-      // MISSED STOP: add a single log (stopHitCount = 0) for today+round if not already present
+      // STOP MISSED — Do not increment, just log once with 0 if needed
       const [existingMissedLog] = await sequelize.query(
         `SELECT id FROM tbl_sm360_stop_reach_logs 
-          WHERE stopId = :stopId AND routeId = :routeId AND tripType = :tripType 
-            AND round = :round AND DATE(reachDateTime) = CURDATE()
-          LIMIT 1`,
+         WHERE stopId = :stopId AND routeId = :routeId AND tripType = :tripType 
+           AND round = :round AND DATE(reachDateTime) = CURDATE()
+         LIMIT 1`,
         {
-          replacements: { stopId: stoppageId, routeId, tripType: phase, round },
+          replacements: { stopId: stoppageId, routeId, tripType, round },
           type: sequelize.QueryTypes.SELECT,
-          transaction: t,
         }
       );
-
+    
       if (!existingMissedLog) {
+        console.log(`Missed stop ${stoppageId} — inserting missed log with stopHitCount = 0`);
         await sequelize.query(
           `INSERT INTO tbl_sm360_stop_reach_logs 
               (stopId, routeId, reachDateTime, tripType, round, stopHitCount, createdAt, updatedAt)
@@ -1036,32 +1029,67 @@ export const updateReachDateTime = async (req, res) => {
               stopId: stoppageId,
               routeId,
               reachDateTime: formattedReachDateTime,
-              tripType: phase,
+              tripType: tripType.toLowerCase(),
               round,
             },
             type: sequelize.QueryTypes.INSERT,
-            transaction: t,
           }
         );
+      } else {
+        console.log(`Missed stop log already exists for stop ${stoppageId}, skipping insert.`);
       }
+    
     } else if (parseInt(reached) === 1) {
-      // STOP REACHED: duplicate guard (30s)
-      const [recentHit] = await sequelize.query(
-        `SELECT id 
-           FROM tbl_sm360_stop_reach_logs 
-          WHERE stopId = :stopId AND routeId = :routeId 
-            AND tripType = :tripType AND round = :round 
-            AND DATE(reachDateTime) = CURDATE()
-            AND TIMESTAMPDIFF(SECOND, createdAt, NOW()) <= 30
-          ORDER BY id DESC LIMIT 1`,
+      // STOP REACHED — Apply normal hit count logic with duplicate check
+      let stopHitCount = 1;
+    
+      const checkIfFirstHit = await sequelize.query(
+        `SELECT 1 
+         FROM tbl_sm360_stop_reach_logs 
+         WHERE stopId = :stopId AND routeId = :routeId AND tripType = :tripType 
+           AND round = :round AND DATE(reachDateTime) = CURDATE()
+         LIMIT 1;`,
         {
-          replacements: { stopId: stoppageId, routeId, tripType: phase, round },
+          replacements: { stopId: stoppageId, routeId, tripType, round },
           type: sequelize.QueryTypes.SELECT,
-          transaction: t,
         }
       );
-
-      if (!recentHit) {
+    
+      if (checkIfFirstHit.length > 0) {
+        const latestLog = await sequelize.query(
+          `SELECT stopHitCount 
+           FROM tbl_sm360_stop_reach_logs 
+           WHERE stopId = :stopId AND routeId = :routeId AND tripType = :tripType 
+             AND round = :round AND DATE(reachDateTime) = CURDATE()
+           ORDER BY id DESC LIMIT 1;`,
+          {
+            replacements: { stopId: stoppageId, routeId, tripType, round },
+            type: sequelize.QueryTypes.SELECT,
+          }
+        );
+        if (latestLog.length > 0) {
+          stopHitCount = parseInt(latestLog[0].stopHitCount, 10) + 1;
+        }
+      }
+    
+      // Prevent rapid duplicate inserts
+      const [recentHit] = await sequelize.query(
+        `SELECT id 
+         FROM tbl_sm360_stop_reach_logs 
+         WHERE stopId = :stopId AND routeId = :routeId 
+           AND tripType = :tripType AND round = :round 
+           AND DATE(reachDateTime) = CURDATE()
+           AND TIMESTAMPDIFF(SECOND, createdAt, NOW()) <= 30
+         ORDER BY id DESC LIMIT 1`,
+        {
+          replacements: { stopId: stoppageId, routeId, tripType, round },
+          type: sequelize.QueryTypes.SELECT,
+        }
+      );
+    
+      if (recentHit) {
+        console.log(`Duplicate hit detected within 30 seconds. Skipping insert for stop ${stoppageId}.`);
+      } else {
         await sequelize.query(
           `INSERT INTO tbl_sm360_stop_reach_logs 
               (stopId, routeId, reachDateTime, tripType, round, stopHitCount, createdAt, updatedAt)
@@ -1072,207 +1100,32 @@ export const updateReachDateTime = async (req, res) => {
               stopId: stoppageId,
               routeId,
               reachDateTime: formattedReachDateTime,
-              tripType: phase,
+              tripType: tripType.toLowerCase(),
               round,
               stopHitCount,
             },
             type: sequelize.QueryTypes.INSERT,
-            transaction: t,
           }
         );
-      } else {
-        // Duplicate within 30s → do nothing
       }
-    }
+    }       
 
-    // ---- Update latest status on tbl_sm360_stops (for “current” UI) ----
+    // Update stop status
     stoppageToUpdate.reached = reached;
     stoppageToUpdate.reachDateTime = formattedReachDateTime;
-    await stoppageToUpdate.save({ transaction: t });
+    await stoppageToUpdate.save();
 
-    await t.commit();
-    return res.json({
+    res.json({
       success: true,
-      message: "Reach time recorded successfully (history + latest updated).",
+      message: "Reach time recorded successfully.",
       stopHitCount,
       round,
     });
   } catch (error) {
-    await t.rollback();
     console.error(error);
-    return res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
-
-
-//     const formattedReachDateTime = new Date(reachDateTime);
-//     if (isNaN(formattedReachDateTime.getTime())) {
-//       return res.status(400).json({ success: false, message: "Invalid reachDateTime format" });
-//     }
-
-//     // Check if any logs exist for this round on today's date
-//     const checkIfFirstHit = await sequelize.query(
-//       `SELECT 1 
-//        FROM tbl_sm360_stop_reach_logs 
-//        WHERE stopId = :stopId 
-//          AND routeId = :routeId 
-//          AND tripType = :tripType 
-//          AND round = :round 
-//          AND DATE(reachDateTime) = CURDATE()
-//        LIMIT 1;`,
-//       {
-//         replacements: { stopId: stoppageId, routeId, tripType, round },
-//         type: sequelize.QueryTypes.SELECT,
-//       }
-//     );
-
-//     let stopHitCount = 1;
-
-//     if (checkIfFirstHit.length > 0) {
-//       // Fetch latest hit count
-//       const latestLog = await sequelize.query(
-//         `SELECT stopHitCount 
-//          FROM tbl_sm360_stop_reach_logs 
-//          WHERE stopId = :stopId 
-//            AND routeId = :routeId 
-//            AND tripType = :tripType 
-//            AND round = :round  
-//            AND DATE(reachDateTime) = CURDATE() 
-//          ORDER BY id DESC 
-//          LIMIT 1;`,
-//         {
-//           replacements: { stopId: stoppageId, routeId, tripType, round },
-//           type: sequelize.QueryTypes.SELECT,
-//         }
-//       );
-
-//       if (latestLog.length > 0) {
-//         stopHitCount = parseInt(latestLog[0].stopHitCount, 10) + 1;
-//       }
-//     }
-
-//     if (parseInt(reached) === 2) {
-//       // STOP MISSED — Do not increment, just log once with 0 if needed
-//       const [existingMissedLog] = await sequelize.query(
-//         `SELECT id FROM tbl_sm360_stop_reach_logs 
-//          WHERE stopId = :stopId AND routeId = :routeId AND tripType = :tripType 
-//            AND round = :round AND DATE(reachDateTime) = CURDATE()
-//          LIMIT 1`,
-//         {
-//           replacements: { stopId: stoppageId, routeId, tripType, round },
-//           type: sequelize.QueryTypes.SELECT,
-//         }
-//       );
-    
-//       if (!existingMissedLog) {
-//         console.log(`Missed stop ${stoppageId} — inserting missed log with stopHitCount = 0`);
-//         await sequelize.query(
-//           `INSERT INTO tbl_sm360_stop_reach_logs 
-//               (stopId, routeId, reachDateTime, tripType, round, stopHitCount, createdAt, updatedAt)
-//            VALUES 
-//               (:stopId, :routeId, :reachDateTime, :tripType, :round, 0, NOW(), NOW())`,
-//           {
-//             replacements: {
-//               stopId: stoppageId,
-//               routeId,
-//               reachDateTime: formattedReachDateTime,
-//               tripType: tripType.toLowerCase(),
-//               round,
-//             },
-//             type: sequelize.QueryTypes.INSERT,
-//           }
-//         );
-//       } else {
-//         console.log(`Missed stop log already exists for stop ${stoppageId}, skipping insert.`);
-//       }
-    
-//     } else if (parseInt(reached) === 1) {
-//       // STOP REACHED — Apply normal hit count logic with duplicate check
-//       let stopHitCount = 1;
-    
-//       const checkIfFirstHit = await sequelize.query(
-//         `SELECT 1 
-//          FROM tbl_sm360_stop_reach_logs 
-//          WHERE stopId = :stopId AND routeId = :routeId AND tripType = :tripType 
-//            AND round = :round AND DATE(reachDateTime) = CURDATE()
-//          LIMIT 1;`,
-//         {
-//           replacements: { stopId: stoppageId, routeId, tripType, round },
-//           type: sequelize.QueryTypes.SELECT,
-//         }
-//       );
-    
-//       if (checkIfFirstHit.length > 0) {
-//         const latestLog = await sequelize.query(
-//           `SELECT stopHitCount 
-//            FROM tbl_sm360_stop_reach_logs 
-//            WHERE stopId = :stopId AND routeId = :routeId AND tripType = :tripType 
-//              AND round = :round AND DATE(reachDateTime) = CURDATE()
-//            ORDER BY id DESC LIMIT 1;`,
-//           {
-//             replacements: { stopId: stoppageId, routeId, tripType, round },
-//             type: sequelize.QueryTypes.SELECT,
-//           }
-//         );
-//         if (latestLog.length > 0) {
-//           stopHitCount = parseInt(latestLog[0].stopHitCount, 10) + 1;
-//         }
-//       }
-    
-//       // Prevent rapid duplicate inserts
-//       const [recentHit] = await sequelize.query(
-//         `SELECT id 
-//          FROM tbl_sm360_stop_reach_logs 
-//          WHERE stopId = :stopId AND routeId = :routeId 
-//            AND tripType = :tripType AND round = :round 
-//            AND DATE(reachDateTime) = CURDATE()
-//            AND TIMESTAMPDIFF(SECOND, createdAt, NOW()) <= 30
-//          ORDER BY id DESC LIMIT 1`,
-//         {
-//           replacements: { stopId: stoppageId, routeId, tripType, round },
-//           type: sequelize.QueryTypes.SELECT,
-//         }
-//       );
-    
-//       if (recentHit) {
-//         console.log(`Duplicate hit detected within 30 seconds. Skipping insert for stop ${stoppageId}.`);
-//       } else {
-//         await sequelize.query(
-//           `INSERT INTO tbl_sm360_stop_reach_logs 
-//               (stopId, routeId, reachDateTime, tripType, round, stopHitCount, createdAt, updatedAt)
-//            VALUES 
-//               (:stopId, :routeId, :reachDateTime, :tripType, :round, :stopHitCount, NOW(), NOW())`,
-//           {
-//             replacements: {
-//               stopId: stoppageId,
-//               routeId,
-//               reachDateTime: formattedReachDateTime,
-//               tripType: tripType.toLowerCase(),
-//               round,
-//               stopHitCount,
-//             },
-//             type: sequelize.QueryTypes.INSERT,
-//           }
-//         );
-//       }
-//     }       
-
-//     // Update stop status
-//     stoppageToUpdate.reached = reached;
-//     stoppageToUpdate.reachDateTime = formattedReachDateTime;
-//     await stoppageToUpdate.save();
-
-//     res.json({
-//       success: true,
-//       message: "Reach time recorded successfully.",
-//       stopHitCount,
-//       round,
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ success: false, message: error.message });
-//   }
-// };
 
 export const notifyIfSpeedExceeded = async (req, res) => {
     const { driverId, latitude, longitude, speed, time } = req.body;
@@ -1304,108 +1157,90 @@ export const getReachTimesForRoute = async (req, res) => {
   }
 
   try {
-const reachTimes = await sequelize.query(
-  `
-  SELECT 
-      filtered_data.reachDate,
-      JSON_ARRAYAGG(
-          JSON_OBJECT(
-              'logId', filtered_data.logId,
-              'stopId', filtered_data.stopId,
-              'reachDateTime', filtered_data.reachDateTime,     -- latest of the day
-              'tripType', filtered_data.tripType,
-              'round', filtered_data.round,
-              'stopName', filtered_data.stopName,
-              'latitude', filtered_data.latitude,
-              'longitude', filtered_data.longitude,
-              'stopOrder', filtered_data.stopOrder,
-              'defaultArrivalTime', filtered_data.defaultArrivalTime,
-              'defaultDepartureTime', filtered_data.defaultDepartureTime,
-              'defaultAfternoonArrivalTime', filtered_data.defaultAfternoonArrivalTime,
-              'defaultAfternoonDepartureTime', filtered_data.defaultAfternoonDepartureTime,
-              'defaultEveningArrivalTime', filtered_data.defaultEveningArrivalTime,
-              'defaultEveningDepartureTime', filtered_data.defaultEveningDepartureTime,
-              'reached', filtered_data.reached,
-              'routeName', filtered_data.routeName,
-              'totalDistance', filtered_data.totalDistance,
-              'estimatedTravelTime', filtered_data.estimatedTravelTime,
-              'visitCount', filtered_data.visitCount,           -- total visits today (same phase+round)
-              'visitTimes', filtered_data.visitTimes            -- array of all times (same phase+round)
-          )
-      ) AS stops
-  FROM (
-      SELECT 
-          MIN(l.id) AS logId,
-          l.stopId,
-          DATE(l.reachDateTime) AS reachDate,
-          MAX(l.reachDateTime) AS reachDateTime,
-          l.tripType,
-          l.round,
-          s.stopName,
-          s.latitude,
-          s.longitude,
-          s.stopOrder,
-          s.arrivalTime AS defaultArrivalTime,
-          s.departureTime AS defaultDepartureTime,
-          s.afternoonarrivalTime AS defaultAfternoonArrivalTime,
-          s.afternoondepartureTime AS defaultAfternoonDepartureTime,
-          s.eveningarrivalTime AS defaultEveningArrivalTime,
-          s.eveningdepartureTime AS defaultEveningDepartureTime,
-          s.reached,
-          r.routeName,
-          r.totalDistance,
-          r.estimatedTravelTime,
-          (
-            SELECT COUNT(*)
-            FROM tbl_sm360_stop_reach_logs l2
-            WHERE l2.stopId = l.stopId
-              AND l2.routeId = l.routeId
-              AND DATE(l2.reachDateTime) = DATE(l.reachDateTime)
-              AND l2.tripType = l.tripType
-              AND l2.round = l.round
-          ) AS visitCount,
-          (
-            SELECT JSON_ARRAYAGG(l2.reachDateTime ORDER BY l2.reachDateTime ASC)
-            FROM tbl_sm360_stop_reach_logs l2
-            WHERE l2.stopId = l.stopId
-              AND l2.routeId = l.routeId
-              AND DATE(l2.reachDateTime) = DATE(l.reachDateTime)
-              AND l2.tripType = l.tripType
-              AND l2.round = l.round
-          ) AS visitTimes
-      FROM tbl_sm360_stop_reach_logs l
-      INNER JOIN tbl_sm360_stops s  ON l.stopId = s.id
-      INNER JOIN tbl_sm360_routes r ON s.routeId = r.id
-      WHERE l.routeId = :routeId
-        AND l.reachDateTime >= DATE_SUB(CURDATE(), INTERVAL 2 DAY)
-      GROUP BY 
-          l.stopId, 
-          DATE(l.reachDateTime),
-          l.tripType,
-          l.round,
-          s.stopName,
-          s.latitude,
-          s.longitude,
-          s.stopOrder,
-          s.arrivalTime,
-          s.departureTime,
-          s.afternoonarrivalTime,
-          s.afternoondepartureTime,
-          s.eveningarrivalTime,
-          s.eveningdepartureTime,
-          s.reached,
-          r.routeName,
-          r.totalDistance,
-          r.estimatedTravelTime
-  ) AS filtered_data
-  GROUP BY filtered_data.reachDate
-  ORDER BY filtered_data.reachDate DESC;
-  `,
-  {
-    replacements: { routeId },
-    type: sequelize.QueryTypes.SELECT,
-  }
-);
+    const reachTimes = await sequelize.query(
+      `
+        SELECT 
+            filtered_data.reachDate,
+            JSON_ARRAYAGG(
+                JSON_OBJECT(
+                    'logId', filtered_data.logId,
+                    'stopId', filtered_data.stopId,
+                    'reachDateTime', filtered_data.reachDateTime,
+                    'tripType', filtered_data.tripType,
+                    'round', filtered_data.round,
+                    'stopName', filtered_data.stopName,
+                    'latitude', filtered_data.latitude,
+                    'longitude', filtered_data.longitude,
+                    'stopOrder', filtered_data.stopOrder,
+                    'defaultArrivalTime', filtered_data.defaultArrivalTime,
+                    'defaultDepartureTime', filtered_data.defaultDepartureTime,
+                    'defaultAfternoonArrivalTime', filtered_data.defaultAfternoonArrivalTime,
+                    'defaultAfternoonDepartureTime', filtered_data.defaultAfternoonDepartureTime,
+                    'defaultEveningArrivalTime', filtered_data.defaultEveningArrivalTime,
+                    'defaultEveningDepartureTime', filtered_data.defaultEveningDepartureTime,
+                    'reached', filtered_data.reached,
+                    'routeName', filtered_data.routeName,
+                    'totalDistance', filtered_data.totalDistance,
+                    'estimatedTravelTime', filtered_data.estimatedTravelTime
+                )
+            ) AS stops
+        FROM (
+            SELECT 
+                MIN(tbl_sm360_stop_reach_logs.id) AS logId,
+                tbl_sm360_stop_reach_logs.stopId,
+                DATE(tbl_sm360_stop_reach_logs.reachDateTime) AS reachDate,
+                MAX(tbl_sm360_stop_reach_logs.reachDateTime) AS reachDateTime,
+                tbl_sm360_stop_reach_logs.tripType,
+                tbl_sm360_stop_reach_logs.round,
+                tbl_sm360_stops.stopName,
+                tbl_sm360_stops.latitude,
+                tbl_sm360_stops.longitude,
+                tbl_sm360_stops.stopOrder,
+                tbl_sm360_stops.arrivalTime AS defaultArrivalTime,
+                tbl_sm360_stops.departureTime AS defaultDepartureTime,
+                tbl_sm360_stops.afternoonarrivalTime AS defaultAfternoonArrivalTime,
+                tbl_sm360_stops.afternoondepartureTime AS defaultAfternoonDepartureTime,
+                tbl_sm360_stops.eveningarrivalTime AS defaultEveningArrivalTime,
+                tbl_sm360_stops.eveningdepartureTime AS defaultEveningDepartureTime,
+                tbl_sm360_stops.reached,
+                tbl_sm360_routes.routeName,
+                tbl_sm360_routes.totalDistance,
+                tbl_sm360_routes.estimatedTravelTime
+            FROM tbl_sm360_stop_reach_logs
+            INNER JOIN tbl_sm360_stops ON tbl_sm360_stop_reach_logs.stopId = tbl_sm360_stops.id
+            INNER JOIN tbl_sm360_routes ON tbl_sm360_stops.routeId = tbl_sm360_routes.id
+            WHERE tbl_sm360_stop_reach_logs.routeId = :routeId
+              AND tbl_sm360_stop_reach_logs.reachDateTime >= DATE_SUB(CURDATE(), INTERVAL 2 DAY)
+            GROUP BY 
+                tbl_sm360_stop_reach_logs.stopId, 
+                DATE(tbl_sm360_stop_reach_logs.reachDateTime),
+                tbl_sm360_stop_reach_logs.tripType,
+                tbl_sm360_stop_reach_logs.round,
+                tbl_sm360_stops.stopName,
+                tbl_sm360_stops.latitude,
+                tbl_sm360_stops.longitude,
+                tbl_sm360_stops.stopOrder,
+                tbl_sm360_stops.arrivalTime,
+                tbl_sm360_stops.departureTime,
+                tbl_sm360_stops.afternoonarrivalTime,
+                tbl_sm360_stops.afternoondepartureTime,
+                tbl_sm360_stops.eveningarrivalTime,
+                tbl_sm360_stops.eveningdepartureTime,
+                tbl_sm360_stops.reached,
+                tbl_sm360_routes.routeName,
+                tbl_sm360_routes.totalDistance,
+                tbl_sm360_routes.estimatedTravelTime
+        ) AS filtered_data
+        GROUP BY filtered_data.reachDate
+        ORDER BY filtered_data.reachDate DESC;
+      `,
+      {
+        replacements: { routeId },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+    
+
     res.json({ success: true, data: reachTimes });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
