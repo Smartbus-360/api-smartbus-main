@@ -9,7 +9,9 @@ const DriverQrToken = sequelize.define('tbl_sm360_driver_qr_tokens', {
   expiresAt:        { type: DataTypes.DATE, allowNull: false },
   maxUses:          { type: DataTypes.INTEGER, defaultValue: 1 },
   usedCount:        { type: DataTypes.INTEGER, defaultValue: 0 },
-  status:           { type: DataTypes.ENUM('active','used','revoked','expired'), defaultValue: 'active' }
+  status:           { type: DataTypes.ENUM('active','used','revoked','expired'), defaultValue: 'active' },
+    createdBy:        { type: DataTypes.INTEGER, allowNull: false }
+
 }, { timestamps: true });
 
 export default DriverQrToken;
