@@ -6,6 +6,13 @@ import { canViewMap } from "../middleware/wsAuth.middleware.js";
 import { checkBusReplacement } from "../controllers/bus.controller.js";
 import { getNotifications, getBusNotifications } from "../controllers/notification.controller.js";
 import { oneTimeLogin } from "../controllers/auth.controller.js";
+import {
+  createSubDriver,  
+  listSubDrivers,      // POST /drivers/:id/subdriver
+  generateDriverQr,       // POST /driver-qr/generate
+  exchangeDriverQr,       // POST /driver-qr/exchange
+  revokeDriverQr          // POST /driver-qr/revoke/:id
+} from "../controllers/driverQr.controller.js";
 
 
 const apiRouter = express.Router();
@@ -30,5 +37,13 @@ apiRouter.get("/reach-times/:route", httpAuth ,getReachTimesForRoute);
 apiRouter.get("/notifications", httpAuth,getNotifications);
 apiRouter.get("/bus-notifications", httpAuth, getBusNotifications);
 apiRouter.post('/one-time-login', oneTimeLogin);
+apiRouter.post("/drivers/:id/subdriver", httpAuth, createSubDriver);
+apiRouter.post("/driver-qr/generate",    httpAuth, generateDriverQr);
+apiRouter.post("/driver-qr/exchange",                 exchangeDriverQr); // no auth; token is the auth
+apiRouter.post("/driver-qr/revoke/:id",  httpAuth, revokeDriverQr);
+apiRouter.post('/one-time-login', oneTimeLogin);
+apiRouter.get("/drivers/:id/subdrivers", httpAuth, listSubDrivers);
+
+
 
 export default apiRouter;
