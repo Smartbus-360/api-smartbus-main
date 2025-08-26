@@ -109,6 +109,10 @@ export const exchangeDriverQr = async (req, res) => {
       JWT_SECRET,
       { expiresIn: '8h' }
     );
+    const decoded = jwt.decode(driverJwt);
+console.log('[QR-EXCHANGE] issued token for driver', sub.id,
+            'exp=', new Date(decoded.exp * 1000).toISOString());
+
 
     // 5) Persist token like normal driver login
     await sequelize.query(
