@@ -93,6 +93,11 @@ export const exchangeDriverQr = async (req, res) => {
     if (!sub) {
       return res.status(400).json({ success: false, message: "Sub driver not found" });
     }
+    // Ensure this sub-driver actually belongs to the original driver and is flagged as a subdriver
+if (sub.parentDriverId !== row.originalDriverId || !sub.isSubdriver) {
+  return res.status(400).json({ success: false, message: "Invalid sub-driver mapping" });
+}
+
 
 const JWT_SECRET = process.env.JWT_SECRET;
    const secondsLeft = Math.max(1, Math.floor((new Date(row.expiresAt) - Date.now()) / 1000));
@@ -117,9 +122,14 @@ await sequelize.query(
     );
 
     // 6) Mark this QR token as used (+count)
-    row.status = 'used';
-    row.usedCount = (row.usedCount ?? 0) + 1;
-    await row.save();
+// 6) Mark as used in a race-safe way (avoids double use if two scans race)
+const updated = await DriverQrToken.update(
+  { status: 'used', usedCount: (row.usedCount ?? 0) + 1 },
+  { where: { id: row.id, status: 'active' } }
+);
+if (!updated[0]) {
+  return res.status(409).json({ success: false, message: "Token already used" });
+}
 
     // 7) Return a payload that mirrors /login/driver
     return res.json({
