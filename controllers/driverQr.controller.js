@@ -13,6 +13,9 @@ import { QueryTypes } from "sequelize";   // safer than sequelize.QueryTypes
 export const createSubDriver = async (req, res) => {
   const mainDriverId = Number(req.params.id);
   const { name, email, phone, password, instituteId } = req.body;
+  if (!password) {
+    return res.status(400).json({ success: false, message: "Password required" });
+  }
 
     const hashed = await bcryptjs.hash(password, 10);
 
@@ -70,6 +73,9 @@ export const generateDriverQr = async (req, res) => {
 export const exchangeDriverQr = async (req, res) => {
   try {
     const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({ success: false, message: "Token required" });
+    }
 
     // 1) Find an ACTIVE token
     const row = await DriverQrToken.findOne({ where: { token, status: 'active' } });
@@ -100,6 +106,9 @@ if (sub.parentDriverId !== row.originalDriverId || !sub.isSubdriver) {
 
 
 const JWT_SECRET = process.env.JWT_SECRET;
+    if (!JWT_SECRET) {
+  return res.status(500).json({ success: false, message: "Server misconfig: JWT_SECRET missing" });
+}
    const secondsLeft = Math.max(1, Math.floor((new Date(row.expiresAt) - Date.now()) / 1000));
    const driverJwt = jwt.sign(
      { id: sub.id, email: sub.email, role: 'driver', qr: true },
