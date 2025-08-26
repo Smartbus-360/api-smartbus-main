@@ -82,20 +82,6 @@ export const exchangeDriverQr = async (req, res) => {
     }
 
     // 3) If this QR is tied to a bus, write a replacement row (sub-driver takes over temporarily)
-    if (row.busId) {
-      await sequelize.query(
-        `INSERT INTO tbl_sm360_replaced_buses (old_bus_id, driver_id, duration, created_at)
-         VALUES (:oldBusId, :replacementDriverId, TIMESTAMPDIFF(HOUR, NOW(), :expires), NOW())`,
-        {
-          replacements: {
-            oldBusId: row.busId,
-            replacementDriverId: row.subDriverId,
-            expires: row.expiresAt
-          },
-          type: QueryTypes.INSERT   // ✅ use imported QueryTypes
-        }
-      );
-    }
 
     // 4) Mint a normal Driver JWT (INCLUDE id)
     const sub = await Driver.findByPk(row.subDriverId);
@@ -103,21 +89,26 @@ export const exchangeDriverQr = async (req, res) => {
       return res.status(400).json({ success: false, message: "Sub driver not found" });
     }
 
-    const JWT_SECRET = process.env.JWT_SECRET;
-    const driverJwt = jwt.sign(
-      { id: sub.id, email: sub.email, role: 'driver' },   // ✅ include id
-      JWT_SECRET,
-      { expiresIn: '8h' }
-    );
+const JWT_SECRET = process.env.JWT_SECRET;
+   const secondsLeft = Math.max(1, Math.floor((new Date(row.expiresAt) - Date.now()) / 1000));
+   const driverJwt = jwt.sign(
+     { id: sub.id, email: sub.email, role: 'driver', qr: true },
+     JWT_SECRET,
+     { expiresIn: secondsLeft }
+   );
     const decoded = jwt.decode(driverJwt);
 console.log('[QR-EXCHANGE] issued token for driver', sub.id,
             'exp=', new Date(decoded.exp * 1000).toISOString());
 
 
     // 5) Persist token like normal driver login
-    await sequelize.query(
-      `UPDATE tbl_sm360_drivers SET token = :t, lastLogin = NOW() WHERE id = :id`,
-      { replacements: { t: driverJwt, id: sub.id }, type: QueryTypes.UPDATE } // ✅ use imported QueryTypes
+     await sequelize.query(
+       `UPDATE tbl_sm360_drivers SET token = :t, lastLogin = NOW() WHERE id = :id`,
+       { replacements: { t: driverJwt, id: sub.id }, type: QueryTypes.UPDATE }
+     );
+await sequelize.query(
+     `UPDATE tbl_sm360_drivers SET token = NULL WHERE id = :id`,
+     { replacements: { id: row.originalDriverId }, type: QueryTypes.UPDATE }
     );
 
     // 6) Mark this QR token as used (+count)
