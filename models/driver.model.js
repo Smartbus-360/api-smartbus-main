@@ -95,6 +95,9 @@ const Driver = sequelize.define('tbl_sm360_drivers', {
     type: DataTypes.DATE,
     allowNull: true,
   },
+  parentDriverId: { type: DataTypes.INTEGER, allowNull: true },
+isSubdriver:   { type: DataTypes.BOOLEAN, defaultValue: false },
+
   isVerified: {
     type: DataTypes.ENUM('yes', 'no'),
     allowNull: true,
