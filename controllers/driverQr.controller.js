@@ -30,35 +30,40 @@ export const createSubDriver = async (req, res) => {
 
 // 4.2 Generate QR
 export const generateDriverQr = async (req, res) => {
-  const { originalDriverId, subDriverId, durationHours } = req.body;
-  const createdBy = Number(req.user?.id) || null; // admin id from verifyToken
+  try {
+    const { originalDriverId, subDriverId, durationHours } = req.body;
+    const createdBy = Number(req.user?.id) || null; // admin id from verifyToken
 
-  // Which bus will be impacted?
-  const [bus] = await sequelize.query(
-    `SELECT id FROM tbl_sm360_buses WHERE driverId = :d`,
-    { replacements: { d: originalDriverId }, type: QueryTypes.SELECT }
-  );
+    // ✅ basic validation
+    if (!originalDriverId || !subDriverId) {
+      return res.status(400).json({ success: false, message: "originalDriverId and subDriverId are required" });
+    }
+    if (!Number.isFinite(+durationHours) || +durationHours <= 0) {
+      return res.status(400).json({ success: false, message: "durationHours must be > 0" });
+    }
 
+    const token = nanoid(32);
+    const expiresAt = new Date(Date.now() + Number(durationHours) * 3600 * 1000);
 
+    // ✅ busId not used anymore; keep null
+    const row = await DriverQrToken.create({
+      originalDriverId,
+      subDriverId,
+      busId: null,
+      token,
+      expiresAt,
+      maxUses: 1,
+      createdBy,
+    });
 
-  const token = nanoid(32);
-  const expiresAt = new Date(Date.now() + durationHours * 3600 * 1000);
-  const row = await DriverQrToken.create({
-    originalDriverId,
-   subDriverId,
-   busId: bus?.id || null,
-    token,
-   expiresAt,
-    maxUses: 1,
-   createdBy
+    const link = `smartbus360://qr-login?token=${token}`;
+    const png = await QRCode.toDataURL(link);
 
-  });
-
-  // Build a deep link or HTTPS link your app understands:
-  const link = `smartbus360://qr-login?token=${token}`;
-  const png = await QRCode.toDataURL(link);
-
-  res.json({ success: true, id: row.id, link, png, expiresAt });
+    return res.json({ success: true, id: row.id, link, png, expiresAt });
+  } catch (err) {
+    console.error("[QR-GENERATE] error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
 };
 
 // 4.3 Exchange QR for a Driver JWT (called by the Driver app after scanning)
