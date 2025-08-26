@@ -63,32 +63,76 @@ export const generateDriverQr = async (req, res) => {
 
 // 4.3 Exchange QR for a Driver JWT (called by the Driver app after scanning)
 export const exchangeDriverQr = async (req, res) => {
-  const { token } = req.body;
-  const row = await DriverQrToken.findOne({ where: { token, status: 'active' } });
-  if (!row) return res.status(400).json({ success: false, message: "Invalid/used token" });
-  if (new Date() > row.expiresAt) return res.status(400).json({ success: false, message: "Token expired" });
+  try {
+    const { token } = req.body;
 
-  // Create/assign replacement for duration (blocks original driver for bus)
-  if (row.busId) {
-    await sequelize.query(
-      `INSERT INTO tbl_sm360_replaced_buses (old_bus_id, driver_id, duration, created_at)
-       VALUES (:oldBusId, :replacementDriverId, TIMESTAMPDIFF(HOUR, NOW(), :expires), NOW())`,
-      { replacements: { oldBusId: row.busId, replacementDriverId: row.subDriverId, expires: row.expiresAt },
-        type: sequelize.QueryTypes.INSERT }
+    // 1) Find an ACTIVE token
+    const row = await DriverQrToken.findOne({ where: { token, status: 'active' } });
+    if (!row) {
+      return res.status(400).json({ success: false, message: "Invalid/used token" });
+    }
+
+    // 2) Expiry check
+    const now = new Date();
+    if (now > row.expiresAt) {
+      // mark as expired for bookkeeping
+      row.status = 'expired';
+      await row.save();
+      return res.status(400).json({ success: false, message: "Token expired" });
+    }
+
+    // 3) If this QR is tied to a bus, write a replacement row (sub-driver takes over temporarily)
+    if (row.busId) {
+      await sequelize.query(
+        `INSERT INTO tbl_sm360_replaced_buses (old_bus_id, driver_id, duration, created_at)
+         VALUES (:oldBusId, :replacementDriverId, TIMESTAMPDIFF(HOUR, NOW(), :expires), NOW())`,
+        {
+          replacements: {
+            oldBusId: row.busId,
+            replacementDriverId: row.subDriverId,
+            expires: row.expiresAt
+          },
+          type: QueryTypes.INSERT   // ✅ use imported QueryTypes
+        }
+      );
+    }
+
+    // 4) Mint a normal Driver JWT (INCLUDE id)
+    const sub = await Driver.findByPk(row.subDriverId);
+    if (!sub) {
+      return res.status(400).json({ success: false, message: "Sub driver not found" });
+    }
+
+    const JWT_SECRET = process.env.JWT_SECRET;
+    const driverJwt = jwt.sign(
+      { id: sub.id, email: sub.email, role: 'driver' },   // ✅ include id
+      JWT_SECRET,
+      { expiresIn: '8h' }
     );
+
+    // 5) Persist token like normal driver login
+    await sequelize.query(
+      `UPDATE tbl_sm360_drivers SET token = :t, lastLogin = NOW() WHERE id = :id`,
+      { replacements: { t: driverJwt, id: sub.id }, type: QueryTypes.UPDATE } // ✅ use imported QueryTypes
+    );
+
+    // 6) Mark this QR token as used (+count)
+    row.status = 'used';
+    row.usedCount = (row.usedCount ?? 0) + 1;
+    await row.save();
+
+    // 7) Return a payload that mirrors /login/driver
+    return res.json({
+      success: true,
+      driverId: sub.id,
+      driverName: sub.name ?? "",
+      email: sub.email ?? "",
+      token: driverJwt
+    });
+  } catch (err) {
+    console.error("exchangeDriverQr error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
-
-  // Mint a normal Driver JWT and store it in tbl_sm360_drivers.token (same as /login/driver)
-  const sub = await Driver.findByPk(row.subDriverId);
-  const JWT_SECRET = process.env.JWT_SECRET;
-  const driverJwt = jwt.sign({ email: sub.email, role: 'driver' }, JWT_SECRET, { expiresIn: '8h' });
-  await sequelize.query(`UPDATE tbl_sm360_drivers SET token = :t WHERE id = :id`,
-    { replacements: { t: driverJwt, id: sub.id }, type: sequelize.QueryTypes.UPDATE });
-
-  // Mark token as used
-  row.status = 'used'; row.usedCount = 1; await row.save();
-
-  res.json({ success: true, token: driverJwt, driverId: sub.id });
 };
 
 // 4.4 Admin can revoke a QR before it’s used
