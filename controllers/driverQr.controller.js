@@ -171,18 +171,5 @@ export const listSubDrivers = async (req, res) => {
   res.json({ success: true, subDrivers: rows });
 };
 
-const activeQr = await DriverQrToken.findOne({
-  where: {
-    originalDriverId: driver.id,
-    status: 'active',
-    expiresAt: { [Op.gt]: new Date() },
-  }
-});
 
-if (activeQr) {
-  return res.status(423).json({
-    success: false,
-    message: "Temporarily blocked: a sub-driver has taken over via QR login."
-  });
-}
 
