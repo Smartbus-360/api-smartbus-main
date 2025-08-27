@@ -87,68 +87,39 @@ export const createSubDriver = async (req, res) => {
 
 export const generateDriverQr = async (req, res) => {
   try {
-    const { originalDriverId, subDriverId, durationHours } = req.body;
+    const { driverId, durationHours } = req.body;
     const createdBy = Number(req.user?.id) || null;
 
-    // basic validation...
-    if (!originalDriverId || !subDriverId) {
-      return res.status(400).json({ success: false, message: "originalDriverId and subDriverId are required" });
+    if (!driverId) {
+      return res.status(400).json({ success: false, message: "driverId is required" });
     }
-    if (!Number.isFinite(+durationHours) || +durationHours <= 0) {
+    const hours = Number(durationHours ?? 6);
+    if (!Number.isFinite(hours) || hours <= 0) {
       return res.status(400).json({ success: false, message: "durationHours must be > 0" });
     }
 
-    // 🔴 NEW: validate institute + route overlap
-    const [main, sub] = await Promise.all([
-      Driver.findByPk(originalDriverId),
-      Driver.findByPk(subDriverId),
-    ]);
-    if (!main || !sub || main.instituteId !== sub.instituteId) {
-      return res.status(400).json({ success: false, message: "Different institute or driver not found" });
-    }
-
-    // get main driver routes
-    const mainRouteRows = await DriverRoute.findAll({ where: { driverId: originalDriverId } });
-    const mainRouteIds = mainRouteRows.map(r => r.routeId);
-// right after fetching mainRouteRows / mainRouteIds
-if (mainRouteIds.length === 0) {
-  return res.status(400).json({
-    success: false,
-    message: "Main driver has no routes assigned",
-  });
-}
-
-    // check overlap with subdriver routes
-    const overlap = await DriverRoute.findOne({
-      where: {
-        driverId: subDriverId,
-        routeId: { [Op.in]: mainRouteIds },
-      },
-    });
-    if (!overlap) {
-      return res.status(400).json({ success: false, message: "Sub-driver not assigned to any of the main driver's routes" });
-    }
-
-    // existing logic: create token row
     const token = nanoid(32);
-    const expiresAt = new Date(Date.now() + Number(durationHours) * 3600 * 1000);
+    const expiresAt = new Date(Date.now() + hours * 3600 * 1000);
 
     const row = await DriverQrToken.create({
-      originalDriverId,
-      subDriverId,
+      originalDriverId: driverId,
+      subDriverId: null,          // not used
       busId: null,
       token,
       expiresAt,
       maxUses: 1,
+      usedCount: 0,
+      status: 'active',
       createdBy,
     });
 
-    const link = `smartbus360://qr-login?token=${token}`;
-    const png = await QRCode.toDataURL(link);
+    // (Optional) render QR PNG from token
+    const payload = JSON.stringify({ token, type: "driver-login" });
+    const png = await QRCode.toDataURL(payload);
 
-    return res.json({ success: true, id: row.id, link, png, expiresAt });
+    return res.json({ success: true, id: row.id, token, expiresAt, png });
   } catch (err) {
-    console.error("[QR-GENERATE] error:", err);
+    console.error("generateDriverQr error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
@@ -161,83 +132,65 @@ export const exchangeDriverQr = async (req, res) => {
       return res.status(400).json({ success: false, message: "Token required" });
     }
 
-    // 1) Find an ACTIVE token
-    const row = await DriverQrToken.findOne({ where: { token, status: 'active' } });
+    // Accept an ACTIVE or already USED (but unexpired) token
+    const row = await DriverQrToken.findOne({
+      where: {
+        token,
+        status: { [Op.in]: ['active', 'used'] },
+        expiresAt: { [Op.gt]: new Date() },
+      },
+    });
     if (!row) {
-      return res.status(400).json({ success: false, message: "Invalid/used token" });
+      return res.status(400).json({ success: false, message: "Invalid or expired token" });
     }
 
-    // 2) Expiry check
-    const now = new Date();
-    if (now > row.expiresAt) {
-      // mark as expired for bookkeeping
-      row.status = 'expired';
-      await row.save();
-      return res.status(400).json({ success: false, message: "Token expired" });
+    // Issue a normal Driver JWT for the SAME driver
+    const driver = await Driver.findByPk(row.originalDriverId);
+    if (!driver) {
+      return res.status(404).json({ success: false, message: "Driver not found" });
     }
 
-    // 3) If this QR is tied to a bus, write a replacement row (sub-driver takes over temporarily)
-
-    // 4) Mint a normal Driver JWT (INCLUDE id)
-    const sub = await Driver.findByPk(row.subDriverId);
-    if (!sub) {
-      return res.status(400).json({ success: false, message: "Sub driver not found" });
-    }
-    // Ensure this sub-driver actually belongs to the original driver and is flagged as a subdriver
-if (sub.parentDriverId !== row.originalDriverId || !sub.isSubdriver) {
-  return res.status(400).json({ success: false, message: "Invalid sub-driver mapping" });
-}
-
-
-const JWT_SECRET = process.env.JWT_SECRET;
+    const JWT_SECRET = process.env.JWT_SECRET;
     if (!JWT_SECRET) {
-  return res.status(500).json({ success: false, message: "Server misconfig: JWT_SECRET missing" });
-}
-   const secondsLeft = Math.max(1, Math.floor((new Date(row.expiresAt) - Date.now()) / 1000));
-   const driverJwt = jwt.sign(
-     { id: sub.id, email: sub.email, role: 'driver', qr: true },
-     JWT_SECRET,
-     { expiresIn: secondsLeft }
-   );
-    const decoded = jwt.decode(driverJwt);
-console.log('[QR-EXCHANGE] issued token for driver', sub.id,
-            'exp=', new Date(decoded.exp * 1000).toISOString());
+      return res.status(500).json({ success: false, message: "Server misconfig: JWT_SECRET missing" });
+    }
 
-
-    // 5) Persist token like normal driver login
-     await sequelize.query(
-       `UPDATE tbl_sm360_drivers SET token = :t, lastLogin = NOW() WHERE id = :id`,
-       { replacements: { t: driverJwt, id: sub.id }, type: QueryTypes.UPDATE }
-     );
-await sequelize.query(
-     `UPDATE tbl_sm360_drivers SET token = NULL WHERE id = :id`,
-     { replacements: { id: row.originalDriverId }, type: QueryTypes.UPDATE }
+    const secondsLeft = Math.max(1, Math.floor((new Date(row.expiresAt) - Date.now()) / 1000));
+    const driverJwt = jwt.sign(
+      { id: driver.id, email: driver.email, role: 'driver', qr: true },
+      JWT_SECRET,
+      { expiresIn: secondsLeft }
     );
 
-    // 6) Mark this QR token as used (+count)
-// 6) Mark as used in a race-safe way (avoids double use if two scans race)
-const updated = await DriverQrToken.update(
-  { status: 'used', usedCount: (row.usedCount ?? 0) + 1 },
-  { where: { id: row.id, status: 'active' } }
-);
-if (!updated[0]) {
-  return res.status(409).json({ success: false, message: "Token already used" });
-}
+    // Persist token ON THE SAME DRIVER (do NOT null out any other device)
+    await sequelize.query(
+      `UPDATE tbl_sm360_drivers SET token = :t, lastLogin = NOW() WHERE id = :id`,
+      { replacements: { t: driverJwt, id: driver.id }, type: QueryTypes.UPDATE }
+    );
 
-    // 7) Return a payload that mirrors /login/driver
+    // Mark QR as used (so others get 423 block until it expires)
+    await DriverQrToken.update(
+      { status: 'used', usedCount: (row.usedCount ?? 0) + 1 },
+      { where: { id: row.id } }
+    );
+
+    const decoded = jwt.decode(driverJwt);
+    console.log('[QR-EXCHANGE] issued token for driver', driver.id,
+                'exp=', new Date(decoded.exp * 1000).toISOString());
+
     return res.json({
       success: true,
-      driverId: sub.id,
-      driverName: sub.name ?? "",
-      email: sub.email ?? "",
-      token: driverJwt
+      driverId: driver.id,
+      driverName: driver.name ?? "",
+      email: driver.email ?? "",
+      token: driverJwt,
+      expiresAt: row.expiresAt,
     });
   } catch (err) {
     console.error("exchangeDriverQr error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
 // 4.4 Admin can revoke a QR before it’s used
 export const revokeDriverQr = async (req, res) => {
   const { id } = req.params;
