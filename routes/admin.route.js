@@ -49,8 +49,6 @@ import {
   uploadDriverImage
 } from "../controllers/driver.controller.js";
 import {
-createSubDriver,
-listSubDrivers,
 generateDriverQr,
 revokeDriverQr,
 } from "../controllers/driverQr.controller.js";
@@ -130,10 +128,7 @@ router.post("/drivers", verifyToken, uploadDriverImage.single("profilePicture"),
 router.put("/drivers/:id", verifyToken, uploadDriverImage.single("profilePicture"), updateDriver);
 router.delete("/drivers/:id", verifyToken, deleteDriver);
 router.post("/drivers/routes", addUpdateDriverRoute);
-router.get("/drivers/:id/subdrivers", verifyToken, listSubDrivers);
-// Create a sub-driver under a driver
-router.post("/drivers/:id/subdriver", verifyToken, createSubDriver);
-// Generate time-boxed QR for login handoff
+
 router.post("/driver-qr/generate", verifyToken, generateDriverQr);
 // Revoke a driver QR token
 router.post("/driver-qr/revoke/:id", verifyToken, revokeDriverQr);
