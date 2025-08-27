@@ -6,6 +6,8 @@ import DriverRoute from "../models/driverRoute.model.js";
 import sequelize from '../config/database.js';
 import multer from "multer";
 import User from "../models/user.model.js";
+import DriverQrToken from "../models/driverQrToken.model.js";
+import { Op } from "sequelize";
 
 const baseURL = "https://api.smartbus360.com";
 
@@ -399,5 +401,48 @@ export const deleteDriver = async (req, res, next) => {
   } catch (error) {
     console.error("Error deleting driver:", error);
     res.status(500).json({ message: "Failed to delete driver." });
+  }
+};
+export const getDriverSelf = async (req, res, next) => {
+  try {
+    // assuming auth middleware has set req.user to the driver row / payload
+    const driver = req.user;
+    if (!driver) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    // If this is the main driver (not a sub-driver), block during active QR window
+    if (!driver.isSubdriver) {
+      const activeQr = await DriverQrToken.findOne({
+        where: {
+          originalDriverId: driver.id,
+          status: "active",
+          expiresAt: { [Op.gt]: new Date() },
+        },
+      });
+
+      if (activeQr) {
+        return res.status(423).json({
+          success: false,
+          message: "Temporarily blocked: a sub-driver is active via QR.",
+        });
+      }
+    }
+
+    // Return whatever minimal profile your app needs on reopen
+    return res.json({
+      success: true,
+      driver: {
+        id: driver.id,
+        name: driver.name,
+        email: driver.email,
+        phone: driver.phone,
+        isSubdriver: driver.isSubdriver ?? false,
+        instituteId: driver.instituteId,
+      },
+    });
+  } catch (err) {
+    console.error("getDriverSelf error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
