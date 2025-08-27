@@ -7,6 +7,8 @@ import jwt from "jsonwebtoken";
 import bcryptjs from "bcryptjs";
 import { QueryTypes } from "sequelize";   // safer than sequelize.QueryTypes
 import { Op } from "sequelize";
+import DriverRoute from "../models/driverRoute.model.js";
+import Route from "../models/route.model.js";
 
 
 
@@ -18,27 +20,77 @@ export const createSubDriver = async (req, res) => {
     return res.status(400).json({ success: false, message: "Password required" });
   }
 
-    const hashed = await bcryptjs.hash(password, 10);
+  // get main driver to inherit institute & routes
+  const main = await Driver.findByPk(mainDriverId);
+  if (!main) {
+    return res.status(404).json({ success: false, message: "Main driver not found" });
+  }
+
+  const hashed = await bcryptjs.hash(password, 10);
 
   const sub = await Driver.create({
     name, email, phone,
-    password : hashed,                // hash like your normal addDriver flow
-    instituteId,
+    password: hashed,
+    instituteId: instituteId ?? main.instituteId,     // 👈 inherit if not sent
     parentDriverId: mainDriverId,
     isSubdriver: true,
     availabilityStatus: 'Available'
   });
 
+  // 👇 clone the main driver's routes to sub-driver
+  const mainRouteRows = await DriverRoute.findAll({ where: { driverId: mainDriverId } });
+  if (mainRouteRows.length) {
+    const toInsert = mainRouteRows.map(r => ({ driverId: sub.id, routeId: r.routeId }));
+    await DriverRoute.bulkCreate(toInsert, { ignoreDuplicates: true });
+  }
+
   res.json({ success: true, subDriver: sub });
 };
 
 // 4.2 Generate QR
+// export const generateDriverQr = async (req, res) => {
+//   try {
+//     const { originalDriverId, subDriverId, durationHours } = req.body;
+//     const createdBy = Number(req.user?.id) || null; // admin id from verifyToken
+
+//     // ✅ basic validation
+//     if (!originalDriverId || !subDriverId) {
+//       return res.status(400).json({ success: false, message: "originalDriverId and subDriverId are required" });
+//     }
+//     if (!Number.isFinite(+durationHours) || +durationHours <= 0) {
+//       return res.status(400).json({ success: false, message: "durationHours must be > 0" });
+//     }
+
+//     const token = nanoid(32);
+//     const expiresAt = new Date(Date.now() + Number(durationHours) * 3600 * 1000);
+
+//     // ✅ busId not used anymore; keep null
+//     const row = await DriverQrToken.create({
+//       originalDriverId,
+//       subDriverId,
+//       busId: null,
+//       token,
+//       expiresAt,
+//       maxUses: 1,
+//       createdBy,
+//     });
+
+//     const link = `smartbus360://qr-login?token=${token}`;
+//     const png = await QRCode.toDataURL(link);
+
+//     return res.json({ success: true, id: row.id, link, png, expiresAt });
+//   } catch (err) {
+//     console.error("[QR-GENERATE] error:", err);
+//     return res.status(500).json({ success: false, message: "Server error" });
+//   }
+// };
+
 export const generateDriverQr = async (req, res) => {
   try {
     const { originalDriverId, subDriverId, durationHours } = req.body;
-    const createdBy = Number(req.user?.id) || null; // admin id from verifyToken
+    const createdBy = Number(req.user?.id) || null;
 
-    // ✅ basic validation
+    // basic validation...
     if (!originalDriverId || !subDriverId) {
       return res.status(400).json({ success: false, message: "originalDriverId and subDriverId are required" });
     }
@@ -46,10 +98,41 @@ export const generateDriverQr = async (req, res) => {
       return res.status(400).json({ success: false, message: "durationHours must be > 0" });
     }
 
+    // 🔴 NEW: validate institute + route overlap
+    const [main, sub] = await Promise.all([
+      Driver.findByPk(originalDriverId),
+      Driver.findByPk(subDriverId),
+    ]);
+    if (!main || !sub || main.instituteId !== sub.instituteId) {
+      return res.status(400).json({ success: false, message: "Different institute or driver not found" });
+    }
+
+    // get main driver routes
+    const mainRouteRows = await DriverRoute.findAll({ where: { driverId: originalDriverId } });
+    const mainRouteIds = mainRouteRows.map(r => r.routeId);
+// right after fetching mainRouteRows / mainRouteIds
+if (mainRouteIds.length === 0) {
+  return res.status(400).json({
+    success: false,
+    message: "Main driver has no routes assigned",
+  });
+}
+
+    // check overlap with subdriver routes
+    const overlap = await DriverRoute.findOne({
+      where: {
+        driverId: subDriverId,
+        routeId: { [Op.in]: mainRouteIds },
+      },
+    });
+    if (!overlap) {
+      return res.status(400).json({ success: false, message: "Sub-driver not assigned to any of the main driver's routes" });
+    }
+
+    // existing logic: create token row
     const token = nanoid(32);
     const expiresAt = new Date(Date.now() + Number(durationHours) * 3600 * 1000);
 
-    // ✅ busId not used anymore; keep null
     const row = await DriverQrToken.create({
       originalDriverId,
       subDriverId,
@@ -162,14 +245,90 @@ export const revokeDriverQr = async (req, res) => {
   res.json({ success: true });
 };
 // List sub-drivers of a main driver
+// export const listSubDrivers = async (req, res) => {
+//   const mainDriverId = Number(req.params.id);
+//   const rows = await Driver.findAll({
+//     where: { parentDriverId: mainDriverId, isSubdriver: true },
+//     attributes: ["id", "name", "email", "phone"]
+//   });
+//   res.json({ success: true, subDrivers: rows });
+// };
+// List sub-drivers of a main driver WITH route overlap & active QR info
 export const listSubDrivers = async (req, res) => {
   const mainDriverId = Number(req.params.id);
-  const rows = await Driver.findAll({
-    where: { parentDriverId: mainDriverId, isSubdriver: true },
-    attributes: ["id", "name", "email", "phone"]
-  });
-  res.json({ success: true, subDrivers: rows });
+  try {
+    // main driver route ids
+    const mainRouteRows = await DriverRoute.findAll({
+      where: { driverId: mainDriverId },
+      attributes: ["routeId"],
+    });
+    const mainRouteIds = mainRouteRows.map(r => r.routeId);
+
+    // all subs under this main
+    const subs = await Driver.findAll({
+      where: { parentDriverId: mainDriverId, isSubdriver: true },
+      attributes: ["id", "name", "email", "phone"],
+    });
+
+    // collect all sub->route rows in one query
+    const subIds = subs.map(s => s.id);
+    const subRouteRows = subIds.length
+      ? await DriverRoute.findAll({
+          where: { driverId: { [Op.in]: subIds } },
+          attributes: ["driverId", "routeId"],
+        })
+      : [];
+
+    // fetch names for all routeIds we’ll show
+    const allRouteIds = Array.from(new Set([
+      ...mainRouteIds,
+      ...subRouteRows.map(r => r.routeId),
+    ]));
+    const routeRows = allRouteIds.length
+      ? await Route.findAll({ where: { id: { [Op.in]: allRouteIds } }, attributes: ["id", "routeName"] })
+      : [];
+    const routeNameById = Object.fromEntries(routeRows.map(r => [r.id, r.routeName]));
+
+    // map: subDriverId -> [routeId...]
+    const routesBySub = {};
+    for (const r of subRouteRows) {
+      (routesBySub[r.driverId] ||= []).push(r.routeId);
+    }
+
+    // build response with eligibility and active QR
+    const now = new Date();
+    const results = [];
+    for (const s of subs) {
+      const sRouteIds = routesBySub[s.id] || [];
+      const overlapIds = sRouteIds.filter(id => mainRouteIds.includes(id));
+      const eligible = overlapIds.length > 0;
+
+      const activeQr = await DriverQrToken.findOne({
+        where: {
+          originalDriverId: mainDriverId,
+          subDriverId: s.id,
+          status: "active",
+          expiresAt: { [Op.gt]: now },
+        },
+        order: [["expiresAt", "DESC"]],
+      });
+
+      results.push({
+        id: s.id,
+        name: s.name,
+        email: s.email,
+        phone: s.phone,
+        eligible,
+        routes: sRouteIds.map(id => ({ id, name: routeNameById[id] || `Route ${id}` })),
+        overlapRoutes: overlapIds.map(id => ({ id, name: routeNameById[id] || `Route ${id}` })),
+        activeQrId: activeQr?.id || null,
+        activeQrExpiresAt: activeQr?.expiresAt || null,
+      });
+    }
+
+    res.json({ success: true, subDrivers: results, mainRouteIds });
+  } catch (e) {
+    console.error("listSubDrivers error:", e);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 };
-
-
-
