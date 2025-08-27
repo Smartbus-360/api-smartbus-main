@@ -13,6 +13,7 @@ import {
   exchangeDriverQr,       // POST /driver-qr/exchange
   revokeDriverQr          // POST /driver-qr/revoke/:id
 } from "../controllers/driverQr.controller.js";
+import { getDriverSelf } from "../controllers/driver.controller.js";
 
 
 const apiRouter = express.Router();
@@ -23,6 +24,8 @@ apiRouter.post("/signup/driver", signupUser);
 apiRouter.post("/signup/user", signupDriver);
 apiRouter.get("/user/details/:id", httpAuth, getUserDetails);
 apiRouter.get("/driver/details/:id", httpAuth, getDriverDetails);
+apiRouter.get("/driver/self", httpAuth, getDriverSelf);
+
 // ⬇️ put this near your other routes
 apiRouter.get("/map/access-check", httpAuth, canViewMap, (req, res) => {
   return res.status(204).end(); // 204 when map is allowed
