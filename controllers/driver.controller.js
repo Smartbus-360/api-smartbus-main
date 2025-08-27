@@ -412,22 +412,25 @@ export const getDriverSelf = async (req, res, next) => {
     }
 
     // If this is the main driver (not a sub-driver), block during active QR window
-    if (!driver.isSubdriver) {
-      const activeQr = await DriverQrToken.findOne({
-        where: {
-          originalDriverId: driver.id,
-          status: "active",
-          expiresAt: { [Op.gt]: new Date() },
-        },
-      });
+// If this is a normal driver (not a sub-driver), block while a claimed QR is still unexpired
+if (!driver.isSubdriver) {
+  const activeOrUsedQr = await DriverQrToken.findOne({
+    where: {
+      originalDriverId: driver.id,
+      expiresAt: { [Op.gt]: new Date() },
+      status: { [Op.in]: ['active', 'used'] },
+      usedCount: { [Op.gt]: 0 }, // ensure someone actually scanned it
+    },
+  });
 
-      if (activeQr) {
-        return res.status(423).json({
-          success: false,
-          message: "Temporarily blocked: a sub-driver is active via QR.",
-        });
-      }
-    }
+  if (activeOrUsedQr) {
+    return res.status(423).json({
+      success: false,
+      message: "Temporarily blocked: this driver is active via QR until the QR expires.",
+      until: activeOrUsedQr.expiresAt,
+    });
+  }
+}
 
     // Return whatever minimal profile your app needs on reopen
     return res.json({
