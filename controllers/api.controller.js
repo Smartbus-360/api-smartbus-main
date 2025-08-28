@@ -772,6 +772,15 @@ export const loginDriver = async (req, res) => {
     // Authenticate the driver and get the token
     const driverData = await getDriverToken(email, password);
     const activeQr = await findActiveQrOverride(driverData.id);
+    if (activeQr) {
+      return res.status(423).json({
+        success: false,
+        code: "QR_SESSION_ACTIVE",
+        message: `You are blocked as one QR session is going on till ${activeQr.expiresAt.toISOString()}`,
+        expiresAt: activeQr.expiresAt
+      });
+    }
+
     
 
     // Invalidate existing token for this driver
