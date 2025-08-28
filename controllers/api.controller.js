@@ -179,18 +179,6 @@ export const getUserDetails = async (req, res) => {
 
 export const getDriverDetails = async (req, res) => {
   const { id } = req.params;
-  // QR override gate: block manual JWTs while a QR session is active
-const activeQr = await findActiveQrOverride(Number(id));
-const isQrJwt = Boolean(req.user?.qr); // your QR JWT sets { qr: true }
-
-if (activeQr && !isQrJwt) {
-  return res.status(423).json({
-    success: false,
-    reason: "qr_override_active",
-    message: "Temporarily blocked: a QR login is active for this driver.",
-    until: activeQr.expiresAt,
-  });
-}
 
 
   try {
