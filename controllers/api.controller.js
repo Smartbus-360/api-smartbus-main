@@ -864,7 +864,7 @@ export const signupDriver = async (req, res) => {
 
     // Generate JWT token for the driver
     const token = jwt.sign(
-      { email: newDriver.email, role: "driver" },
+      { email: newDriver.email, role: "driver",qr: true  },
       JWT_SECRET,
       { expiresIn: "8h" }
     );
