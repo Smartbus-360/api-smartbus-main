@@ -772,14 +772,7 @@ export const loginDriver = async (req, res) => {
     // Authenticate the driver and get the token
     const driverData = await getDriverToken(email, password);
     const activeQr = await findActiveQrOverride(driverData.id);
-    if (activeQr) {
-      return res.status(423).json({
-        success: false,
-        reason: "qr_override_active",
-        message: "A QR session is currently active for this driver. Try again after it expires.",
-        blockedUntil: activeQr.expiresAt,
-      });
-    }
+    
 
     // Invalidate existing token for this driver
     await sequelize.query(
