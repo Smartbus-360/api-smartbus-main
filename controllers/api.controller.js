@@ -13,6 +13,7 @@ import sequelize from "../config/database.js";
 import axios from "axios";
 import Stop from "../models/stop.model.js";
 import { io } from '../index.js';
+import { findActiveQrOverride } from "../utils/qrOverride.js";
 
 // const OSRM_URL = "http://router.project-osrm.org/route/v1/driving";
 
