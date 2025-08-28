@@ -8,6 +8,7 @@ import multer from "multer";
 import User from "../models/user.model.js";
 import DriverQrToken from "../models/driverQrToken.model.js";
 import { Op } from "sequelize";
+import { findActiveQrOverride } from "../utils/qrOverride.js";
 
 const baseURL = "https://api.smartbus360.com";
 
@@ -413,24 +414,19 @@ export const getDriverSelf = async (req, res, next) => {
 
     // If this is the main driver (not a sub-driver), block during active QR window
 // If this is a normal driver (not a sub-driver), block while a claimed QR is still unexpired
-if (!driver.isSubdriver) {
-  const activeOrUsedQr = await DriverQrToken.findOne({
-    where: {
-      originalDriverId: driver.id,
-      expiresAt: { [Op.gt]: new Date() },
-      status: { [Op.in]: ['active', 'used'] },
-      usedCount: { [Op.gt]: 0 }, // ensure someone actually scanned it
-    },
-  });
-
-  if (activeOrUsedQr) {
-    return res.status(423).json({
-      success: false,
-      message: "Temporarily blocked: this driver is active via QR until the QR expires.",
-      until: activeOrUsedQr.expiresAt,
-    });
+const isSub = Number(driver.isSubdriver) === 1 || driver.isSubdriver === true;
+if (!isSub) {
+    const activeQr = await findActiveQrOverride(driver.id);
+    const isQrJwt = Boolean(req.user?.qr);
+    if (activeQr && !isQrJwt) {
+      return res.status(423).json({
+        success: false,
+        reason: "qr_override_active",
+        message: "Temporarily blocked: a QR login is active for this driver.",
+        until: activeQr.expiresAt,
+      });
+    }
   }
-}
 
     // Return whatever minimal profile your app needs on reopen
     return res.json({
