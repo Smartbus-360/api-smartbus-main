@@ -9,6 +9,7 @@ import { QueryTypes } from "sequelize";   // safer than sequelize.QueryTypes
 import { Op } from "sequelize";
 import DriverRoute from "../models/driverRoute.model.js";
 import Route from "../models/route.model.js";
+import { io } from "../index.js";
 
 
 
@@ -173,6 +174,10 @@ export const exchangeDriverQr = async (req, res) => {
       { status: 'used', usedCount: (row.usedCount ?? 0) + 1 },
       { where: { id: row.id } }
     );
+io.to(`driver:${driver.id}`).emit("qrOverrideActive", {
+  driverId: driver.id,
+  until: row.expiresAt,
+});
 
     const decoded = jwt.decode(driverJwt);
     console.log('[QR-EXCHANGE] issued token for driver', driver.id,
