@@ -199,7 +199,14 @@ io.to(`driver:${driver.id}`).emit("qrOverrideActive", {
 // 4.4 Admin can revoke a QR before it’s used
 export const revokeDriverQr = async (req, res) => {
   const { id } = req.params;
+    const row = await DriverQrToken.findByPk(id);
   await DriverQrToken.update({ status: 'revoked' }, { where: { id }});
+  if (row?.originalDriverId) {
+    io.to(`driver:${row.originalDriverId}`).emit("qrOverrideEnded", {
+      driverId: row.originalDriverId,
+    });
+  }
+
   res.json({ success: true });
 };
 // List sub-drivers of a main driver
