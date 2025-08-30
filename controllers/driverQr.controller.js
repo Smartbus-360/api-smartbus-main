@@ -164,9 +164,11 @@ export const exchangeDriverQr = async (req, res) => {
     );
 
     // Persist token ON THE SAME DRIVER (do NOT null out any other device)
+        // (Optional) just bump lastLogin if you want to record activity:
+
     await sequelize.query(
-      `UPDATE tbl_sm360_drivers SET token = :t, lastLogin = NOW() WHERE id = :id`,
-      { replacements: { t: driverJwt, id: driver.id }, type: QueryTypes.UPDATE }
+     `UPDATE tbl_sm360_drivers SET lastLogin = NOW() WHERE id = :id`,
+      { replacements: { id: driver.id }, type: QueryTypes.UPDATE }
     );
 
     // Mark QR as used (so others get 423 block until it expires)
