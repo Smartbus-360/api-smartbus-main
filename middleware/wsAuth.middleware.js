@@ -49,6 +49,61 @@ export const httpAuth = async (req, res, next) => {
     }
 };
 
+export async function httpAuth(req, res, next) {
+  try {
+    const auth = req.headers.authorization || "";
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+    if (!token) return res.status(401).json({ success:false, message: "Missing token" });
+
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    // Only showing driver branch; keep your existing user branch logic.
+    if (payload.role === "driver") {
+      const driver = await Driver.findByPk(payload.id);
+      if (!driver) return res.status(401).json({ success:false, message:"Invalid driver" });
+
+      const activeQr = await findActiveQrOverride(driver.id); // returns active/used + unexpired
+      const isQrToken = Boolean(payload.qr);
+
+      if (isQrToken) {
+        // QR token path: allow ONLY if an override is active
+        if (!activeQr) {
+          return res.status(423).json({
+            success:false,
+            code:"QR_NOT_ACTIVE",
+            message:"QR session is not active anymore.",
+          });
+        }
+        // allow without comparing against driver.token
+        req.user = driver;
+        return next();
+      }
+
+      // Normal token path: must match DB token AND be blocked while QR override is active
+      if (activeQr) {
+        return res.status(423).json({
+          success:false,
+          code:"QR_SESSION_ACTIVE",
+          message:`Normal session is temporarily blocked until ${activeQr.expiresAt.toISOString()}`,
+          expiresAt: activeQr.expiresAt
+        });
+      }
+
+      if (driver.token !== token) {
+        return res.status(401).json({ success:false, message:"Session no longer valid" });
+      }
+
+      req.user = driver;
+      return next();
+    }
+
+    // keep your existing user/admin logic ...
+    return next();
+  } catch (e) {
+    return res.status(401).json({ success:false, message: e.message });
+  }
+}
+
+
 // Middleware for WebSocket Authentication
 export const wsAuth = async (socket, next) => {
     const jwtToken = socket.handshake.headers['authorization'];
