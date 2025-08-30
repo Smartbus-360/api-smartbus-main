@@ -6,6 +6,7 @@ import bcrypt from 'bcrypt';
 import { Op } from 'sequelize'; 
 import Institute from "../models/institute.model.js";
 import { findActiveQrOverride } from "../utils/qrOverride.js";
+import DriverQrToken from '../models/driverQrToken.model.js';
 
 
 dotenv.config();
@@ -31,10 +32,56 @@ export const httpAuth = async (req, res, next) => {
         let user;
         if (payload.role === 'user') {
             user = await User.findOne({ where: { email: payload.email, token } });
-        } else if (payload.role === 'driver') {
-            user = await Driver.findOne({ where: { email: payload.email, token } });
+} else if (payload.role === 'driver') {
+    // QR-session token lane
+    if (payload.qr === true) {
+        const row = await DriverQrToken.findOne({
+            where: {
+                originalDriverId: payload.id,
+                token: payload.qrToken,
+                status: { [Op.in]: ['active', 'used'] },
+                expiresAt: { [Op.gt]: new Date() },
+            },
+            order: [['expiresAt', 'DESC']],
+        });
+
+        if (!row) {
+            return res.status(401).json({ message: 'QR session invalid or expired' });
         }
 
+        const driver = await Driver.findByPk(payload.id);
+        if (!driver) return res.status(401).json({ message: 'Driver not found' });
+
+        req.user = driver;
+        return next();
+    }
+
+    // Normal token lane
+    const driver = await Driver.findOne({ where: { email: payload.email, token } });
+    if (!driver) {
+        return res.status(401).json({ message: 'Authentication error: Invalid or expired token' });
+    }
+
+    const activeQr = await DriverQrToken.findOne({
+        where: {
+            originalDriverId: driver.id,
+            status: { [Op.in]: ['active', 'used'] },
+            expiresAt: { [Op.gt]: new Date() },
+        },
+        order: [['expiresAt', 'DESC']],
+    });
+
+    if (activeQr) {
+        return res.status(423).json({
+            code: 'QR_SESSION_ACTIVE',
+            message: `Temporarily blocked by QR session until ${activeQr.expiresAt.toISOString()}`,
+            expiresAt: activeQr.expiresAt,
+        });
+    }
+
+    req.user = driver;
+    return next();
+}
         // Ensure the token matches the one stored in the database
         if (!user) {
             return res.status(401).json({ message: 'Authentication error: Invalid or expired token' });
@@ -71,9 +118,47 @@ export const wsAuth = async (socket, next) => {
         let user;
         if (payload.role === 'user') {
             user = await User.findOne({ where: { email: payload.email, token } });
-        } else if (payload.role === 'driver') {
-            user = await Driver.findOne({ where: { email: payload.email, token } });
-        }
+} else if (payload.role === 'driver') {
+    if (payload.qr === true) {
+        const row = await DriverQrToken.findOne({
+            where: {
+                originalDriverId: payload.id,
+                token: payload.qrToken,
+                status: { [Op.in]: ['active', 'used'] },
+                expiresAt: { [Op.gt]: new Date() },
+            },
+            order: [['expiresAt', 'DESC']],
+        });
+
+        if (!row) return next(new Error('QR session invalid or expired'));
+
+        const driver = await Driver.findByPk(payload.id);
+        if (!driver) return next(new Error('Driver not found'));
+
+        socket.user = driver;
+        return next();
+    }
+
+    const driver = await Driver.findOne({ where: { email: payload.email, token } });
+    if (!driver) return next(new Error('Authentication error: Invalid or expired token'));
+
+    const activeQr = await DriverQrToken.findOne({
+        where: {
+            originalDriverId: driver.id,
+            status: { [Op.in]: ['active', 'used'] },
+            expiresAt: { [Op.gt]: new Date() },
+        },
+        order: [['expiresAt', 'DESC']],
+    });
+
+    if (activeQr) {
+        return next(new Error(`Temporarily blocked by QR session until ${activeQr.expiresAt.toISOString()}`));
+    }
+
+    socket.user = driver;
+    return next();
+}
+
 
         if (!user) {
             return next(new Error('Authentication error: Invalid or expired token'));
