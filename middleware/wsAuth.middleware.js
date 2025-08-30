@@ -36,37 +36,9 @@ export const httpAuth = async (req, res, next) => {
         }
 
         // Ensure the token matches the one stored in the database
-
-// ...after you verified the token (jwt.verify) and fetched `user` by email+token...
-
-// Ensure the token matches the one stored in the database
-
-
-/* >>> INSERT THIS BLOCK <<< */
-if (payload.role === 'driver') {
-  // QR JWTs must be issued with { qr: true } in their payload
-  const isQrToken = payload?.qr === true;
-
-  // For normal (non-QR) tokens, soft-block while a QR override is active
-  if (!isQrToken) {
-    const activeQr = await findActiveQrOverride(user.id); // user is the Driver row
-    if (activeQr) {
-      return res.status(423).json({
-        success: false,
-        code: "QR_SESSION_ACTIVE",
-        message: `Normal session is paused until ${new Date(activeQr.expiresAt).toISOString()}`,
-        expiresAt: activeQr.expiresAt
-      });
-    }
-  }
-
-  // Optional: let downstream know which token type authenticated the call
-  req.authSource = isQrToken ? "qr" : "normal";
-}
-/* >>> END INSERT <<< */
-
-// Attach user and continue
-
+        if (!user) {
+            return res.status(401).json({ message: 'Authentication error: Invalid or expired token' });
+        }
 
         // Attach user to the request object for later use
         req.user = user;
@@ -104,20 +76,6 @@ export const wsAuth = async (socket, next) => {
         if (!user) {
             return next(new Error('Authentication error: Invalid or expired token'));
         }
-        if (payload.role === 'driver') {
-  const isQrToken = payload?.qr === true;
-
-  if (!isQrToken) {
-    const activeQr = await findActiveQrOverride(user.id);
-    if (activeQr) {
-      // Handshake error the client can parse; include expiry ISO time
-      return next(new Error(`QR_SESSION_ACTIVE:${new Date(activeQr.expiresAt).toISOString()}`));
-    }
-  }
-
-  socket.authSource = isQrToken ? "qr" : "normal";
-}
-
 
         // Attach user to the socket object for later use
         socket.user = user;
@@ -226,4 +184,3 @@ export const canViewMap = async (req, res, next) => {
     return res.status(500).json({ message: "Map access check failed." });
   }
 };
-
