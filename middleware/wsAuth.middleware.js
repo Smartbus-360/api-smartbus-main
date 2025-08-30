@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import bcrypt from 'bcrypt'; 
 import { Op } from 'sequelize'; 
 import Institute from "../models/institute.model.js";
+import { findActiveQrOverride } from "../utils/qrOverride.js";
 
 
 dotenv.config();
@@ -38,6 +39,38 @@ export const httpAuth = async (req, res, next) => {
         if (!user) {
             return res.status(401).json({ message: 'Authentication error: Invalid or expired token' });
         }
+// ...after you verified the token (jwt.verify) and fetched `user` by email+token...
+
+// Ensure the token matches the one stored in the database
+if (!user) {
+  return res.status(401).json({ message: 'Authentication error: Invalid or expired token' });
+}
+
+/* >>> INSERT THIS BLOCK <<< */
+if (payload.role === 'driver') {
+  // QR JWTs must be issued with { qr: true } in their payload
+  const isQrToken = payload?.qr === true;
+
+  // For normal (non-QR) tokens, soft-block while a QR override is active
+  if (!isQrToken) {
+    const activeQr = await findActiveQrOverride(user.id); // user is the Driver row
+    if (activeQr) {
+      return res.status(423).json({
+        success: false,
+        code: "QR_SESSION_ACTIVE",
+        message: `Normal session is paused until ${new Date(activeQr.expiresAt).toISOString()}`,
+        expiresAt: activeQr.expiresAt
+      });
+    }
+  }
+
+  // Optional: let downstream know which token type authenticated the call
+  req.authSource = isQrToken ? "qr" : "normal";
+}
+/* >>> END INSERT <<< */
+
+// Attach user and continue
+
 
         // Attach user to the request object for later use
         req.user = user;
