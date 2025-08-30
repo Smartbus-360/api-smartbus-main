@@ -40,9 +40,7 @@ export const httpAuth = async (req, res, next) => {
 // ...after you verified the token (jwt.verify) and fetched `user` by email+token...
 
 // Ensure the token matches the one stored in the database
-if (!user) {
-  return res.status(401).json({ message: 'Authentication error: Invalid or expired token' });
-}
+
 
 /* >>> INSERT THIS BLOCK <<< */
 if (payload.role === 'driver') {
