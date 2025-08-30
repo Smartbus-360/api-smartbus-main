@@ -156,20 +156,18 @@ export const exchangeDriverQr = async (req, res) => {
       return res.status(500).json({ success: false, message: "Server misconfig: JWT_SECRET missing" });
     }
 
-    const secondsLeft = Math.max(1, Math.floor((new Date(row.expiresAt) - Date.now()) / 1000));
-    const driverJwt = jwt.sign(
-      { id: driver.id, email: driver.email, role: 'driver', qr: true },
-      JWT_SECRET,
-      { expiresIn: secondsLeft }
-    );
+const secondsLeft = Math.max(1, Math.floor((new Date(row.expiresAt) - Date.now()) / 1000));
+const driverJwt = jwt.sign(
+  { id: driver.id, email: driver.email, role: 'driver', qr: true, qrToken: row.token },
+  JWT_SECRET,
+  { expiresIn: secondsLeft }
+);
+
 
     // Persist token ON THE SAME DRIVER (do NOT null out any other device)
         // (Optional) just bump lastLogin if you want to record activity:
 
-    await sequelize.query(
-     `UPDATE tbl_sm360_drivers SET lastLogin = NOW() WHERE id = :id`,
-      { replacements: { id: driver.id }, type: QueryTypes.UPDATE }
-    );
+    
 
     // Mark QR as used (so others get 423 block until it expires)
     await DriverQrToken.update(
@@ -180,6 +178,15 @@ io.to(`driver:${driver.id}`).emit("qrOverrideActive", {
   driverId: driver.id,
   until: row.expiresAt,
 });
+    return res.json({
+  success: true,
+  driverId: driver.id,
+  driverName: driver.name ?? "",
+  email: driver.email ?? "",
+  token: driverJwt,          // short-lived QR session token
+  expiresAt: row.expiresAt,
+});
+
 
     const decoded = jwt.decode(driverJwt);
     console.log('[QR-EXCHANGE] issued token for driver', driver.id,
