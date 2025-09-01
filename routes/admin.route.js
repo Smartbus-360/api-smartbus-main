@@ -127,7 +127,7 @@ router.get("/drivers", verifyToken, getDrivers);
 router.post("/drivers", verifyToken, uploadDriverImage.single("profilePicture"), addDriver);
 router.put("/drivers/:id", verifyToken, uploadDriverImage.single("profilePicture"), updateDriver);
 router.delete("/drivers/:id", verifyToken, deleteDriver);
-router.post("/drivers/routes", addUpdateDriverRoute);
+router.post("/drivers/routes",verifyToken, addUpdateDriverRoute);
 
 router.post("/driver-qr/generate", verifyToken, generateDriverQr);
 // Revoke a driver QR token
