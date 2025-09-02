@@ -833,6 +833,23 @@ export const logoutUser = async (req, res) => {
   const { userId } = req.body;
 
   try {
+    const auth = req.headers['authorization'];
+    const token = auth && auth.startsWith('Bearer ') ? auth.split(' ')[1] : null;
+    if (!token) return res.status(400).json({ success: false, message: 'No token found in Authorization header' });
+
+    await sequelize.query(
+      `UPDATE tbl_sm360_user_sessions
+       SET revokedAt = NOW()
+       WHERE token = :token AND revokedAt IS NULL`,
+      { replacements: { token }, type: sequelize.QueryTypes.UPDATE }
+    );
+
+    return res.json({ success: true, message: 'Logged out on this device' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 //     await sequelize.query(
 //       `UPDATE tbl_sm360_users SET token = NULL WHERE id = :userId`,
 //       { replacements: { userId }, type: sequelize.QueryTypes.UPDATE }
@@ -842,18 +859,7 @@ export const logoutUser = async (req, res) => {
 //     res.status(500).json({ success: false, message: error.message });
 //   }
 // };
-    const auth = req.headers['authorization'];
-const token = auth && auth.startsWith('Bearer ') ? auth.split(' ')[1] : null;
-if (!token) return res.status(400).json({ success: false, message: 'No token found in Authorization header' });
-
-await sequelize.query(
-  `UPDATE tbl_sm360_user_sessions 
-   SET revokedAt = NOW() 
-   WHERE token = :token AND revokedAt IS NULL`,
-  { replacements: { token }, type: sequelize.QueryTypes.UPDATE }
-);
-
-res.json({ success: true, message: 'Logged out on this device' });
+    
 
 
 // Driver Signup Route
