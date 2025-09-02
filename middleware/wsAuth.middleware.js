@@ -31,7 +31,22 @@ export const httpAuth = async (req, res, next) => {
         // Fetch user or driver from the database
         let user;
         if (payload.role === 'user') {
-            user = await User.findOne({ where: { email: payload.email, token } });
+            // user = await User.findOne({ where: { email: payload.email, token } });
+
+            const [session] = await User.sequelize.query(
+  `SELECT userId FROM tbl_sm360_user_sessions 
+   WHERE token = :token AND revokedAt IS NULL AND expiresAt > NOW() 
+   LIMIT 1`,
+  { replacements: { token }, type: User.sequelize.QueryTypes.SELECT }
+);
+if (!session) return res.status(401).json({ message: 'Authentication error: Invalid or expired token' });
+
+const user = await User.findByPk(session.userId);
+if (!user) return res.status(401).json({ message: 'Authentication error: User not found' });
+
+req.user = user;
+return next();
+
 } else if (payload.role === 'driver') {
     // QR-session token lane
     if (payload.qr === true) {
