@@ -728,23 +728,39 @@ export const loginUser = async (req, res) => {
     // Authenticate the user and get the token
     const userData = await getUserToken(usernameOrEmail, password);
 
+    // new logic 
+await sequelize.query(
+  `INSERT INTO tbl_sm360_user_sessions (userId, token, userAgent, ip, expiresAt)
+   VALUES (:uid, :token, :ua, :ip, DATE_ADD(NOW(), INTERVAL 8 HOUR))`,
+  {
+    replacements: {
+      uid: userData.id,
+      token: userData.token,
+      ua: req.headers['user-agent'] || null,
+      ip: req.ip || null
+    },
+    type: sequelize.QueryTypes.INSERT
+  }
+);
+
+
     // Invalidate existing token for this user
-    await sequelize.query(
-      `UPDATE tbl_sm360_users SET token = NULL WHERE id = :userId`,
-      {
-        replacements: { userId: userData.id },
-        type: sequelize.QueryTypes.UPDATE,
-      }
-    );
+    // await sequelize.query(
+    //   `UPDATE tbl_sm360_users SET token = NULL WHERE id = :userId`,
+    //   {
+    //     replacements: { userId: userData.id },
+    //     type: sequelize.QueryTypes.UPDATE,
+    //   }
+    // );
 
     // Save the new token in the database
-    await sequelize.query(
-      `UPDATE tbl_sm360_users SET token = :token WHERE id = :userId`,
-      {
-        replacements: { token: userData.token, userId: userData.id },
-        type: sequelize.QueryTypes.UPDATE,
-      }
-    );
+    // await sequelize.query(
+    //   `UPDATE tbl_sm360_users SET token = :token WHERE id = :userId`,
+    //   {
+    //     replacements: { token: userData.token, userId: userData.id },
+    //     type: sequelize.QueryTypes.UPDATE,
+    //   }
+    // );
 
     res.json({
       success: true,
@@ -817,15 +833,28 @@ export const logoutUser = async (req, res) => {
   const { userId } = req.body;
 
   try {
-    await sequelize.query(
-      `UPDATE tbl_sm360_users SET token = NULL WHERE id = :userId`,
-      { replacements: { userId }, type: sequelize.QueryTypes.UPDATE }
-    );
-    res.json({ success: true, message: "Logged out successfully" });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
+//     await sequelize.query(
+//       `UPDATE tbl_sm360_users SET token = NULL WHERE id = :userId`,
+//       { replacements: { userId }, type: sequelize.QueryTypes.UPDATE }
+//     );
+//     res.json({ success: true, message: "Logged out successfully" });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+    const auth = req.headers['authorization'];
+const token = auth && auth.startsWith('Bearer ') ? auth.split(' ')[1] : null;
+if (!token) return res.status(400).json({ success: false, message: 'No token found in Authorization header' });
+
+await sequelize.query(
+  `UPDATE tbl_sm360_user_sessions 
+   SET revokedAt = NOW() 
+   WHERE token = :token AND revokedAt IS NULL`,
+  { replacements: { token }, type: sequelize.QueryTypes.UPDATE }
+);
+
+res.json({ success: true, message: 'Logged out on this device' });
+
 
 // Driver Signup Route
 export const signupDriver = async (req, res) => {
