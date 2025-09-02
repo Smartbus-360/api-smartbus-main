@@ -209,8 +209,8 @@ export const getUserToken = async (usernameOrEmail, password) => {
 
         if (isPasswordCorrect) {
             const token = jwt.sign({ email: user.email, role: 'user' }, JWT_SECRET, { expiresIn: '8h' });
-            user.token = token; // Optionally save the token in the database
-            await user.save();
+            // user.token = token; // Optionally save the token in the database
+            // await user.save();
 
             // Return token along with user id, username, and email
             return {
