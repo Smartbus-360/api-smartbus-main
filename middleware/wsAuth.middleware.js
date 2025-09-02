@@ -132,7 +132,21 @@ export const wsAuth = async (socket, next) => {
         // Fetch user or driver from the database and ensure token matches
         let user;
         if (payload.role === 'user') {
-            user = await User.findOne({ where: { email: payload.email, token } });
+            // user = await User.findOne({ where: { email: payload.email, token } });
+            const [session] = await User.sequelize.query(
+  `SELECT userId FROM tbl_sm360_user_sessions
+   WHERE token = :token AND revokedAt IS NULL AND expiresAt > NOW()
+   LIMIT 1`,
+  { replacements: { token }, type: User.sequelize.QueryTypes.SELECT }
+);
+if (!session) return next(new Error('Authentication error: Invalid or expired token'));
+
+const user = await User.findByPk(session.userId);
+if (!user) return next(new Error('Authentication error: User not found'));
+
+socket.user = user;
+return next();
+
 } else if (payload.role === 'driver') {
     if (payload.qr === true) {
         const row = await DriverQrToken.findOne({
