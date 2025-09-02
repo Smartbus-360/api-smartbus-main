@@ -24,6 +24,8 @@ apiRouter.post("/signup/user", signupDriver);
 apiRouter.get("/user/details/:id", httpAuth, getUserDetails);
 apiRouter.get("/driver/details/:id", httpAuth, getDriverDetails);
 apiRouter.get("/driver/self", httpAuth, getDriverSelf);
+apiRouter.post("/logout/user", httpAuth, logoutUser);
+
 
 // ⬇️ put this near your other routes
 apiRouter.get("/map/access-check", httpAuth, canViewMap, (req, res) => {
