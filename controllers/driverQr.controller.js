@@ -306,3 +306,34 @@ export const listSubDrivers = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+// GET /api/driver-qr/history?driverId=123&limit=50&status=all|active|used|revoked
+export const listDriverQrHistory = async (req, res) => {
+  try {
+    const driverId = Number(req.query.driverId) || null;
+    const limit = Math.min(Number(req.query.limit) || 50, 200);
+    const status = (req.query.status || 'all').toLowerCase();
+
+    const where = {};
+    if (driverId) where.originalDriverId = driverId;
+    if (status !== 'all') where.status = status; // 'active' | 'used' | 'revoked'
+
+    // Include durationHours computed from createdAt/expiresAt
+    const rows = await DriverQrToken.findAll({
+      where,
+      order: [['createdAt', 'DESC']],
+      limit,
+      attributes: [
+        'id', 'originalDriverId', 'token', 'status', 'usedCount', 'createdBy',
+        'createdAt', 'expiresAt',
+        // computed field: (expiresAt - createdAt) in hours (integer)
+        [sequelize.literal("TIMESTAMPDIFF(HOUR, createdAt, expiresAt)"), 'durationHours']
+      ]
+    });
+
+    res.json({ success: true, items: rows });
+  } catch (e) {
+    console.error('listDriverQrHistory error:', e);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
