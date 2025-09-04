@@ -51,6 +51,7 @@ import {
 import {
 generateDriverQr,
 revokeDriverQr,
+  listDriverQrHistory,
 } from "../controllers/driverQr.controller.js";
 import {
   addRoute,
@@ -132,6 +133,7 @@ router.post("/drivers/routes", addUpdateDriverRoute);
 router.post("/driver-qr/generate", verifyToken, generateDriverQr);
 // Revoke a driver QR token
 router.post("/driver-qr/revoke/:id", verifyToken, revokeDriverQr);
+router.get("/driver-qr/history", verifyToken, listDriverQrHistory); 
 
 // Buses
 router.post("/buses", verifyToken, addBus);
