@@ -29,7 +29,7 @@ export const httpAuth = async (req, res, next) => {
         const payload = jwt.verify(token, JWT_SECRET);
 
         // Fetch user or driver from the database
-        let user;
+        
         if (payload.role === 'user') {
             // user = await User.findOne({ where: { email: payload.email, token } });
 
@@ -61,8 +61,7 @@ return next();
             order: [['expiresAt', 'DESC']],
         });
 
-        if (!row) 
-            return res.status(401).json({ message: 'QR session invalid or expired' });
+        if (!row)  return res.status(401).json({ message: 'QR session invalid or expired' });
         
 
         const driver = await Driver.findByPk(payload.id);
@@ -74,9 +73,8 @@ return next();
 
     // Normal token lane
     const driver = await Driver.findOne({ where: { email: payload.email, token } });
-    if (!driver) {
-        return res.status(401).json({ message: 'Authentication error: Invalid or expired token' });
-    }
+    if (!driver)  return res.status(401).json({ message: 'Authentication error: Invalid or expired token' });
+    
 
     const activeQr = await DriverQrToken.findOne({
         where: {
@@ -101,8 +99,7 @@ return next();
        
 
         // Attach user to the request object for later use
-        req.user = user;
-        next(); // Proceed to the next middleware
+            return res.status(401).json({ message: 'Authentication error: Invalid token role' });
     } catch (err) {
         console.error(err);
         return res.status(401).json({ message: 'Authentication error: Invalid token' });
