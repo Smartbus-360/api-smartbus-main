@@ -226,6 +226,14 @@ export const getUserToken = async (usernameOrEmail, password) => {
             // user.token = token; // Optionally save the token in the database
             // await user.save();
 
+            await User.sequelize.query(
+    `INSERT INTO tbl_sm360_user_sessions (userId, token, createdAt, expiresAt)
+     VALUES (:userId, :token, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY))`,
+    {
+      replacements: { userId: user.id, token },
+      type: User.sequelize.QueryTypes.INSERT,
+    }
+  );
             // Return token along with user id, username, and email
             return {
                 id: user.id,
@@ -269,8 +277,18 @@ export const getDriverToken = async (email, password) => {
 export const logout = async (req, res) => {
     const { id, role } = req.user;
     try {
-        if (role === 'user') {
-            await User.update({ token: null }, { where: { id } });
+        const bearer = req.headers['authorization'] || '';
+  const token = bearer.startsWith('Bearer ') ? bearer.slice(7) : null;
+
+  if (token) {
+    await User.sequelize.query(
+      `UPDATE tbl_sm360_user_sessions
+         SET revokedAt = NOW()
+       WHERE token = :token
+         AND revokedAt IS NULL`,
+      { replacements: { token }, type: User.sequelize.QueryTypes.UPDATE }
+    );
+  }
         } else if (role === 'driver') {
             await Driver.update({ token: null }, { where: { id } });
         }
