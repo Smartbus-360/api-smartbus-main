@@ -47,7 +47,8 @@ if (!user) return res.status(401).json({ message: 'Authentication error: User no
 req.user = user;
 return next();
 
-} else if (payload.role === 'driver') {
+} 
+    if (payload.role === 'driver') {
     // QR-session token lane
     if (payload.qr === true) {
         const row = await DriverQrToken.findOne({
@@ -60,9 +61,9 @@ return next();
             order: [['expiresAt', 'DESC']],
         });
 
-        if (!row) {
+        if (!row) 
             return res.status(401).json({ message: 'QR session invalid or expired' });
-        }
+        
 
         const driver = await Driver.findByPk(payload.id);
         if (!driver) return res.status(401).json({ message: 'Driver not found' });
@@ -97,10 +98,7 @@ return next();
     req.user = driver;
     return next();
 }
-        // Ensure the token matches the one stored in the database
-        if (!user) {
-            return res.status(401).json({ message: 'Authentication error: Invalid or expired token' });
-        }
+       
 
         // Attach user to the request object for later use
         req.user = user;
@@ -130,7 +128,6 @@ export const wsAuth = async (socket, next) => {
         const payload = jwt.verify(token, JWT_SECRET);
 
         // Fetch user or driver from the database and ensure token matches
-        let user;
         if (payload.role === 'user') {
             // user = await User.findOne({ where: { email: payload.email, token } });
             const [session] = await User.sequelize.query(
@@ -147,7 +144,8 @@ if (!user) return next(new Error('Authentication error: User not found'));
 socket.user = user;
 return next();
 
-} else if (payload.role === 'driver') {
+}
+  if (payload.role === 'driver') {
     if (payload.qr === true) {
         const row = await DriverQrToken.findOne({
             where: {
@@ -189,13 +187,12 @@ return next();
 }
 
 
-        if (!user) {
-            return next(new Error('Authentication error: Invalid or expired token'));
-        }
+        
 
         // Attach user to the socket object for later use
-        socket.user = user;
-        next(); // Proceed to the next middleware
+        // socket.user = user;
+        // next(); // Proceed to the next middleware
+            return next(new Error('Authentication error: Invalid token role'));
     } catch (err) {
         console.error(err);
         return next(new Error('Authentication error: Invalid token'));
@@ -277,6 +274,7 @@ export const getDriverToken = async (email, password) => {
 export const logout = async (req, res) => {
     const { id, role } = req.user;
     try {
+            if (role === 'user') {
         const bearer = req.headers['authorization'] || '';
   const token = bearer.startsWith('Bearer ') ? bearer.slice(7) : null;
 
