@@ -438,6 +438,7 @@ if (!isSub) {
         phone: driver.phone,
         isSubdriver: driver.isSubdriver ?? false,
         instituteId: driver.instituteId,
+        shiftType: driver.shiftType,
       },
     });
   } catch (err) {
