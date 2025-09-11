@@ -445,3 +445,26 @@ if (!isSub) {
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
+// controllers/driver.controller.js
+export const updateDriverShift = async (req, res, next) => {
+  const { driverId, shiftType } = req.body;
+  try {
+    const driver = await Driver.findByPk(driverId);
+    if (!driver) {
+      return res.status(404).json({ message: "Driver not found" });
+    }
+
+    driver.shiftType = shiftType;
+    await driver.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Shift updated to ${shiftType} for driver ${driver.name}`,
+      driver,
+    });
+  } catch (error) {
+    console.error("Error updating driver shift:", error);
+    res.status(500).json({ message: "Failed to update driver shift" });
+  }
+};
+
