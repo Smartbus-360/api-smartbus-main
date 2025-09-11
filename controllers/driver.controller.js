@@ -457,6 +457,12 @@ export const updateDriverShift = async (req, res, next) => {
 
     driver.shiftType = shiftType;
     await driver.save();
+        if (req.io) {
+  req.io.of("/drivers").to(`driver_${driver.id}`).emit("shiftUpdated", {
+    driverId: driver.id,
+    shiftType: driver.shiftType,
+  });
+}
 
     res.status(200).json({
       success: true,
