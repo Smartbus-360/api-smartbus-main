@@ -46,7 +46,8 @@ import {
   addDriver,
   updateDriver,
   deleteDriver,
-  uploadDriverImage
+  uploadDriverImage,
+  updateDriverShift,
 } from "../controllers/driver.controller.js";
 import {
 generateDriverQr,
@@ -106,6 +107,7 @@ router.delete("/admins/:id", deleteAdmin);
 router.get("/search", verifyToken, searchAdmins); 
 router.post('/pending-student', verifyToken, addPendingStudent);
 router.post("/add-student-direct", verifyToken, addStudentDirect);
+router.put("/drivers/:id/shift", verifyToken, updateDriverShift);
 
 
 
