@@ -35,6 +35,11 @@ export const configureSocket = (io) => {
         //console.log('A driver connected');
         
         let driverId; // Track the driverId for cleanup on disconnect
+                socket.on('driverConnected', (id) => {
+        driverId = parseInt(id, 10);
+        socket.join(`driver_${driverId}`);
+        console.log(`Driver ${driverId} connected to room driver_${driverId}`);
+    });
         
         // Driver joins a room based on their ID
         socket.on('driverConnected', (id) => {
