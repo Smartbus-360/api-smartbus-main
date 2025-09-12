@@ -83,7 +83,8 @@ socket.on('shiftUpdated', (data) => {
                     latitude,
                     longitude,
                     speed,
-                    placeName
+                    placeName,
+                    shiftType: driverInfo.shiftType
                 });
                 // ✅ Also notify admin namespace
 adminNotificationNamespace.to(`driver_${numericDriverId}`).emit('locationUpdate', {
@@ -96,7 +97,8 @@ adminNotificationNamespace.to(`driver_${numericDriverId}`).emit('locationUpdate'
     latitude,
     longitude,
     speed,
-    placeName
+    placeName,
+    shiftType: driverInfo.shiftType
 });
 
             });
