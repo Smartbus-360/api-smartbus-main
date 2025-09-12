@@ -475,11 +475,20 @@ export const updateDriverShift = async (req, res, next) => {
     driver.shiftType = shiftType;
     await driver.save();
 
-    // 🔔 Broadcast change to sockets so admin UI + driver app reflect instantly
-    req.app.get("io").of("/admin/notification").to(`driver_${driverId}`).emit("shiftUpdated", {
+    const io = req.app.get("io");
+
+    // Notify admins
+    io.of("/admin/notification").to(`driver_${driverId}`).emit("shiftUpdated", {
       driverId: driver.id,
       shiftType: driver.shiftType,
     });
+
+    // Notify driver
+    io.of("/drivers").to(`driver_${driverId}`).emit("shiftUpdated", {
+      driverId: driver.id,
+      shiftType: driver.shiftType,
+    });
+
 
     return res.status(200).json({
       success: true,
