@@ -84,7 +84,7 @@ socket.on('shiftUpdated', (data) => {
                     longitude,
                     speed,
                     placeName,
-                    shiftType: driverInfo.shiftType
+                    shiftType: effectiveShift
                 });
                 // ✅ Also notify admin namespace
 adminNotificationNamespace.to(`driver_${numericDriverId}`).emit('locationUpdate', {
@@ -98,7 +98,7 @@ adminNotificationNamespace.to(`driver_${numericDriverId}`).emit('locationUpdate'
     longitude,
     speed,
     placeName,
-    shiftType: driverInfo.shiftType
+    shiftType: effectiveShift
 });
 
             });
