@@ -40,6 +40,20 @@ export const configureSocket = (io) => {
         socket.join(`driver_${driverId}`);
         console.log(`Driver ${driverId} connected to room driver_${driverId}`);
     });
+        // ✅ Allow driver client to subscribe to its own shift updates
+socket.on('subscribeToShift', (id) => {
+  const driverId = parseInt(id, 10);
+  if (!isNaN(driverId)) {
+    socket.join(`driver_${driverId}`);
+    console.log(`Driver ${driverId} subscribed to shift updates`);
+  }
+});
+
+// ✅ Optional: Handle shiftUpdated event (driver will just receive it)
+socket.on('shiftUpdated', (data) => {
+  console.log(`Shift update received for driver ${data.driverId}: ${data.shiftType}`);
+});
+
         
         // Driver joins a room based on their ID
         socket.on('driverConnected', (id) => {
