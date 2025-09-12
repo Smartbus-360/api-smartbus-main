@@ -63,7 +63,7 @@ socket.on('shiftUpdated', (data) => {
         });
 
         socket.on('locationUpdate', (data) => {
-            const { driverId, latitude, longitude,speed = 0,placeName='' } = data;
+            const { driverId, latitude, longitude,speed = 0,placeName='' ,shiftType = null} = data;
             const numericDriverId = parseInt(driverId, 10);
             if (!numericDriverId || latitude === undefined || longitude === undefined) {
                 return console.error(`⚠️ Invalid or missing location data from driver ${driverId}`);
