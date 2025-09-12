@@ -76,6 +76,9 @@ socket.on('shiftUpdated', (data) => {
             getDriverInfo(numericDriverId, (err, driverInfo) => {
                 if (err) return console.error('Driver info error:', err);
 
+                    const effectiveShift = shiftType || driverInfo.shiftType;
+
+
                 userNamespace.to(`driver_${numericDriverId}`).emit('locationUpdate', {
                     driverInfo: { id : numericDriverId,name: driverInfo.name, phone: driverInfo.phone, busNumber : driverInfo.vehicleAssigned || 'N/A' 
 
