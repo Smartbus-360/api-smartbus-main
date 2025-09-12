@@ -162,6 +162,13 @@ adminNotificationNamespace.to(`driver_${numericDriverId}`).emit('locationUpdate'
                 console.log(`Admin unsubscribed from driver_${numericDriverId}`);
             }
         });
+            socket.on('subscribeToDriverShift', (driverId) => {
+        const numericDriverId = parseInt(driverId, 10);
+        if (!isNaN(numericDriverId)) {
+            socket.join(`driver_${numericDriverId}`);
+            console.log(`Admin subscribed to shift updates of driver ${numericDriverId}`);
+        }
+    });
 
         socket.on('disconnect', () => {
             console.log('❌ Admin notification channel disconnected');
