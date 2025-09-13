@@ -460,13 +460,14 @@ export const updateDriverShift = async (req, res) => {
 
     driver.shiftType = newShift || driver.shiftType;
     await driver.save();
-
+    
     await DriverJourney.create({
       driverId: id,
       phase: newPhase,
       round: newRound,
       action: `Admin updated driver shift/journey to ${newShift || ''} ${newPhase || ''} Round ${newRound || ''}`
     });
+
 
     // ✅ Broadcast to both driver & admin sockets
     const payload = {
@@ -494,18 +495,6 @@ export const getDriverJourneys = async (req, res) => {
     res.json(journeys);
   } catch (err) {
     res.status(500).json({ error: "Error fetching journeys" });
-  }
-};
-    res.json({
-      success: true,
-      message: "Journey updated successfully",
-      driverId,
-      phase,
-      round,
-    });
-  } catch (err) {
-    console.error("Error in updateJourney:", err);
-    res.status(500).json({ success: false, message: err.message });
   }
 };
 
