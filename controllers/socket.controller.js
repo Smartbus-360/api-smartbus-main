@@ -69,6 +69,18 @@ socket.on('shiftUpdated', (data) => {
                 return console.error(`⚠️ Invalid or missing location data from driver ${driverId}`);
             }
             console.log(`📡 Speed received from driver ${numericDriverId}:`, speed);
+            if (shiftType) {
+        try {
+            await Driver.update(
+                { shiftType },
+                { where: { id: numericDriverId } }
+            );
+            console.log(`✅ ShiftType for driver ${numericDriverId} updated to ${shiftType}`);
+        } catch (err) {
+            console.error("❌ Failed to update shiftType in DB:", err);
+        }
+    }
+
 
 
             //console.log(`Received locationUpdate for driver ${numericDriverId}: lat=${latitude}, lon=${longitude}`);
