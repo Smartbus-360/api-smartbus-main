@@ -48,6 +48,7 @@ import {
   deleteDriver,
   uploadDriverImage,
   updateDriverShift,
+  getDriverJourneys,
 } from "../controllers/driver.controller.js";
 import {
 generateDriverQr,
