@@ -29,7 +29,8 @@ export const configureSocket = (io) => {
     const adminNotificationNamespace = io.of('/admin/notification');
 
     // Driver namespace: Handles real-time updates from drivers
-   
+   driverNamespace.on('connection', (socket) => {
+    console.log('✅ Driver connected to /drivers namespace');
         // ✅ Allow driver client to subscribe to its own shift updates
 socket.on('subscribeToShift', (id) => {
   const driverId = parseInt(id, 10);
