@@ -32,8 +32,8 @@ export const configureSocket = (io) => {
     driverNamespace.on('connection', (socket) => {
                 console.log('✅ Driver connected to /drivers namespace');
         // Inside driverNamespace.on('connection')
-socket.on("shiftUpdated", (data) => {
-  console.log(`Shift update received for driver ${data.driverId}: ${data.phase} Round ${data.round}`);
+// socket.on("shiftUpdated", (data) => {
+//   console.log(`Shift update received for driver ${data.driverId}: ${data.phase} Round ${data.round}`);
 
   // Forward to driver’s own room
   driverNamespace.to(`driver_${data.driverId}`).emit("shiftUpdated", data);
@@ -170,8 +170,8 @@ adminNotificationNamespace.to(`driver_${numericDriverId}`).emit('locationUpdate'
     adminNotificationNamespace.on('connection', (socket) => {
         console.log('✅ Admin notification channel connected');
 
-        socket.on("shiftUpdated", (data) => {
-  console.log(`Admin triggered shift update for driver ${data.driverId}: ${data.phase}`);
+  //       socket.on("shiftUpdated", (data) => {
+  // console.log(`Admin triggered shift update for driver ${data.driverId}: ${data.phase}`);
   driverNamespace.to(`driver_${data.driverId}`).emit("shiftUpdated", data);
   adminNotificationNamespace.to(`driver_${data.driverId}`).emit("shiftUpdated", data);
 });
