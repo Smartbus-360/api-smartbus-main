@@ -14,8 +14,6 @@ import axios from "axios";
 import Stop from "../models/stop.model.js";
 import { io } from '../index.js';
 import { findActiveQrOverride } from "../utils/qrOverride.js";
-import DriverJourney from "../models/driverJourney.model.js";
-
 
 // const OSRM_URL = "http://router.project-osrm.org/route/v1/driving";
 
@@ -530,11 +528,8 @@ export const markMissedStop = async (req, res) => {
 };
 
 export const markFinalStopReached = async (req, res) => {
-  const { routeId,driverId } = req.body;
+  const { routeId } = req.body;
   if (!routeId) return res.status(400).json({ success: false, message: "Route ID is required." });
-  if (!driverId) {
-    return res.status(400).json({ success: false, message: "Driver ID is required." });
-  }
 
   const rId = Number(routeId);
   try {
@@ -629,21 +624,7 @@ export const markFinalStopReached = async (req, res) => {
       nextRound = availableRounds[0] || 1;
     } else {
       nextRound = availableRounds[currentIndex + 1];
-      await DriverJourney.create({
-  driverId,
-  phase: nextPhase,
-  round: nextRound,
-  action: `Moving to next round`,
-});
-      req.io.of('/admin/notification').emit("driverJourneyUpdate", {
-  driverId,
-  phase: nextPhase,
-  round: nextRound,
-  action: "Journey updated",
-  timestamp: new Date()
-});
-
-      // console.log(`Moving to next round: ${nextRound} in ${nextPhase}`);
+      console.log(`Moving to next round: ${nextRound} in ${nextPhase}`);
       await resetStopHitCount(rId, currentJourneyPhase, currentRound); // 🔧 fix here
     }
     
