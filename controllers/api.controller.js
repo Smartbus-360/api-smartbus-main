@@ -14,6 +14,8 @@ import axios from "axios";
 import Stop from "../models/stop.model.js";
 import { io } from '../index.js';
 import { findActiveQrOverride } from "../utils/qrOverride.js";
+import DriverJourney from "../models/driverJourney.model.js";
+
 
 // const OSRM_URL = "http://router.project-osrm.org/route/v1/driving";
 
@@ -624,7 +626,13 @@ export const markFinalStopReached = async (req, res) => {
       nextRound = availableRounds[0] || 1;
     } else {
       nextRound = availableRounds[currentIndex + 1];
-      console.log(`Moving to next round: ${nextRound} in ${nextPhase}`);
+      await DriverJourney.create({
+  driverId,
+  phase: nextPhase,
+  round: nextRound,
+  action: `Moving to next round`,
+});
+      // console.log(`Moving to next round: ${nextRound} in ${nextPhase}`);
       await resetStopHitCount(rId, currentJourneyPhase, currentRound); // 🔧 fix here
     }
     
