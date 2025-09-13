@@ -448,6 +448,7 @@ if (!isSub) {
   }
 };
 // controllers/driver.controller.js
+// controllers/driver.controller.js
 export const updateDriverShift = async (req, res) => {
   const { id } = req.params; // driverId
   const { newShift, newPhase, newRound } = req.body;
@@ -456,27 +457,46 @@ export const updateDriverShift = async (req, res) => {
     const driver = await Driver.findByPk(id);
     if (!driver) return res.status(404).json({ error: "Driver not found" });
 
+    // ✅ Update shiftType
     driver.shiftType = newShift || driver.shiftType;
     await driver.save();
-    req.io.of("/admin/notification").emit("driverJourneyUpdate", {
-  driverId,
-  phase: nextPhase,
-  round: nextRound,
-  action: "Journey updated",
-  timestamp: new Date()
-});
 
-
+    // ✅ Log journey change in DB
     await DriverJourney.create({
       driverId: id,
-      phase: newPhase,
-      round: newRound,
-      action: `Admin updated driver shift/journey to ${newShift || ''} ${newPhase || ''} Round ${newRound || ''}`
+      phase: newPhase || "N/A",
+      round: newRound || 0,
+      action: `Admin updated driver shift/journey to ${newShift || driver.shiftType} ${newPhase || ''} Round ${newRound || ''}`
     });
 
-    res.json({ success: true, driver });
+    // ✅ Emit to Driver namespace
+    if (req.io) {
+      req.io.of("/drivers").to(`driver_${id}`).emit("shiftUpdated", {
+        driverId: id,
+        shiftType: driver.shiftType,
+        phase: newPhase,
+        round: newRound,
+        updatedAt: new Date()
+      });
+
+      // ✅ Emit to Admin namespace
+      req.io.of("/admin/notification").to(`driver_${id}`).emit("shiftUpdated", {
+        driverId: id,
+        shiftType: driver.shiftType,
+        phase: newPhase,
+        round: newRound,
+        updatedAt: new Date()
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Driver shift updated successfully",
+      driver
+    });
   } catch (err) {
-    res.status(500).json({ error: "Error updating driver shift" });
+    console.error("Error updating driver shift:", err);
+    return res.status(500).json({ error: "Error updating driver shift" });
   }
 };
 export const getDriverJourneys = async (req, res) => {
