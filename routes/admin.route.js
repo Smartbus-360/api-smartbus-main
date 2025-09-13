@@ -49,7 +49,6 @@ import {
   uploadDriverImage,
   updateDriverShift,
   getDriverJourneys,
-  updateJourney,
 } from "../controllers/driver.controller.js";
 import {
 generateDriverQr,
@@ -111,7 +110,6 @@ router.post('/pending-student', verifyToken, addPendingStudent);
 router.post("/add-student-direct", verifyToken, addStudentDirect);
 router.put("/drivers/:id/shift", verifyToken, updateDriverShift);
 router.get("/drivers/:driverId/journeys", verifyToken, getDriverJourneys);
-router.put("/drivers/:id/journey", verifyToken, updateJourney);
 
 
 
