@@ -10,6 +10,7 @@ import DriverQrToken from "../models/driverQrToken.model.js";
 import { Op } from "sequelize";
 import { findActiveQrOverride } from "../utils/qrOverride.js";
 import DriverJourney from "../models/driverJourney.model.js";
+import { io } from "../index.js"; // make sure io is exported in index.js
 
 const baseURL = "https://api.smartbus360.com";
 
@@ -453,9 +454,11 @@ export const updateDriverShift = async (req, res) => {
   const { id } = req.params; // driverId
   const { newShift, newPhase, newRound } = req.body;
 
-  try {
+  
     const driver = await Driver.findByPk(id);
-    if (!driver) return res.status(404).json({ error: "Driver not found" });
+    if (!driver) {
+      return res.status(404).json({ error: "Driver not found" });
+    }
 
     // ✅ Update shiftType
     driver.shiftType = newShift || driver.shiftType;
@@ -464,9 +467,9 @@ export const updateDriverShift = async (req, res) => {
     // ✅ Log journey change in DB
     await DriverJourney.create({
       driverId: id,
-      phase: newPhase || "N/A",
-      round: newRound || 0,
-      action: `Admin updated driver shift/journey to ${newShift || driver.shiftType} ${newPhase || ''} Round ${newRound || ''}`
+      phase: newPhase ,
+      round: newRound ,
+      action: `Admin updated driver shift/journey to ${newShift || driver.shiftType} ${newPhase || ""} Round ${newRound || ""}`
     });
 
     // ✅ Emit to Driver namespace
