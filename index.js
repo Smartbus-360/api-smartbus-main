@@ -67,6 +67,11 @@ app.use((err, req, res, next) => {
 });
 
 configureSocket(io);
+app.use((req, res, next) => {
+  req.io = io;  // attach io to every request
+  next();
+});
+
 export { io };
 
 // Start server
