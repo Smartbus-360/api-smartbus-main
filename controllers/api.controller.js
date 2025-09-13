@@ -632,6 +632,14 @@ export const markFinalStopReached = async (req, res) => {
   round: nextRound,
   action: `Moving to next round`,
 });
+      req.io.of('/admin/notification').emit("driverJourneyUpdate", {
+  driverId,
+  phase: nextPhase,
+  round: nextRound,
+  action: "Journey updated",
+  timestamp: new Date()
+});
+
       // console.log(`Moving to next round: ${nextRound} in ${nextPhase}`);
       await resetStopHitCount(rId, currentJourneyPhase, currentRound); // 🔧 fix here
     }
