@@ -458,6 +458,14 @@ export const updateDriverShift = async (req, res) => {
 
     driver.shiftType = newShift || driver.shiftType;
     await driver.save();
+    req.io.of("/admin/notification").emit("driverJourneyUpdate", {
+  driverId,
+  phase: nextPhase,
+  round: nextRound,
+  action: "Journey updated",
+  timestamp: new Date()
+});
+
 
     await DriverJourney.create({
       driverId: id,
