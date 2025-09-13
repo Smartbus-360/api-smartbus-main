@@ -29,27 +29,7 @@ export const configureSocket = (io) => {
     const adminNotificationNamespace = io.of('/admin/notification');
 
     // Driver namespace: Handles real-time updates from drivers
-    driverNamespace.on('connection', (socket) => {
-                console.log('✅ Driver connected to /drivers namespace');
-        // Inside driverNamespace.on('connection')
-// socket.on("shiftUpdated", (data) => {
-//   console.log(`Shift update received for driver ${data.driverId}: ${data.phase} Round ${data.round}`);
-
-  // Forward to driver’s own room
-  driverNamespace.to(`driver_${data.driverId}`).emit("shiftUpdated", data);
-
-  // Forward to admin namespace too
-  adminNotificationNamespace.to(`driver_${data.driverId}`).emit("shiftUpdated", data);
-});
-
-        //console.log('A driver connected');
-        
-        let driverId; // Track the driverId for cleanup on disconnect
-                socket.on('driverConnected', (id) => {
-        driverId = parseInt(id, 10);
-        socket.join(`driver_${driverId}`);
-        console.log(`Driver ${driverId} connected to room driver_${driverId}`);
-    });
+   
         // ✅ Allow driver client to subscribe to its own shift updates
 socket.on('subscribeToShift', (id) => {
   const driverId = parseInt(id, 10);
@@ -170,11 +150,6 @@ adminNotificationNamespace.to(`driver_${numericDriverId}`).emit('locationUpdate'
     adminNotificationNamespace.on('connection', (socket) => {
         console.log('✅ Admin notification channel connected');
 
-  //       socket.on("shiftUpdated", (data) => {
-  // console.log(`Admin triggered shift update for driver ${data.driverId}: ${data.phase}`);
-  driverNamespace.to(`driver_${data.driverId}`).emit("shiftUpdated", data);
-  adminNotificationNamespace.to(`driver_${data.driverId}`).emit("shiftUpdated", data);
-});
 
         const subscribedDrivers = new Set();
 
