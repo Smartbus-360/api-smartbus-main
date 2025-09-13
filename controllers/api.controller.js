@@ -530,8 +530,11 @@ export const markMissedStop = async (req, res) => {
 };
 
 export const markFinalStopReached = async (req, res) => {
-  const { routeId } = req.body;
+  const { routeId,driverId } = req.body;
   if (!routeId) return res.status(400).json({ success: false, message: "Route ID is required." });
+  if (!driverId) {
+    return res.status(400).json({ success: false, message: "Driver ID is required." });
+  }
 
   const rId = Number(routeId);
   try {
