@@ -9,6 +9,7 @@ import User from "../models/user.model.js";
 import DriverQrToken from "../models/driverQrToken.model.js";
 import { Op } from "sequelize";
 import { findActiveQrOverride } from "../utils/qrOverride.js";
+import DriverJourney from "../models/driverJourney.model.js";
 
 const baseURL = "https://api.smartbus360.com";
 
@@ -447,57 +448,39 @@ if (!isSub) {
   }
 };
 // controllers/driver.controller.js
-export const updateDriverShift = async (req, res, next) => {
+export const updateDriverShift = async (req, res) => {
+  const { id } = req.params; // driverId
+  const { newShift, newPhase, newRound } = req.body;
+
   try {
-    const driverId = req.params.id;
-    const { shiftType } = req.body; // morning / evening / both
+    const driver = await Driver.findByPk(id);
+    if (!driver) return res.status(404).json({ error: "Driver not found" });
 
-    if (!shiftType) {
-      return next(errorHandler(400, "Shift type is required"));
-    }
-
-    const user = await User.findByPk(req.user.id);
-    if (!user) return next(errorHandler(404, "User not found"));
-
-    const driver = await Driver.findByPk(driverId);
-    if (!driver) return next(errorHandler(404, "Driver not found"));
-
-    // ✅ Driver can only update own shift
-    if (req.user.isAdmin === 0 && req.user.id !== driverId) {
-      return next(errorHandler(403, "Not authorized to update this driver shift"));
-    }
-
-    // ✅ Institute Admin can update drivers of their institute
-    if (req.user.isAdmin === 2 && driver.instituteId !== user.instituteId) {
-      return next(errorHandler(403, "You are not authorized to update drivers outside your institute"));
-    }
-
-    driver.shiftType = shiftType;
+    driver.shiftType = newShift || driver.shiftType;
     await driver.save();
 
-    const io = req.app.get("io");
-
-    // Notify admins
-    io.of("/admin/notification").to(`driver_${driverId}`).emit("shiftUpdated", {
-      driverId: driver.id,
-      shiftType: driver.shiftType,
+    await DriverJourney.create({
+      driverId: id,
+      phase: newPhase,
+      round: newRound,
+      action: `Admin updated driver shift/journey to ${newShift || ''} ${newPhase || ''} Round ${newRound || ''}`
     });
 
-    // Notify driver
-    io.of("/drivers").to(`driver_${driverId}`).emit("shiftUpdated", {
-      driverId: driver.id,
-      shiftType: driver.shiftType,
+    res.json({ success: true, driver });
+  } catch (err) {
+    res.status(500).json({ error: "Error updating driver shift" });
+  }
+};
+export const getDriverJourneys = async (req, res) => {
+  const { driverId } = req.params;
+  try {
+    const journeys = await DriverJourney.findAll({
+      where: { driverId },
+      order: [['timestamp', 'DESC']]
     });
-
-
-    return res.status(200).json({
-      success: true,
-      message: "Driver shift updated successfully",
-      driver: { id: driver.id, name: driver.name, shiftType: driver.shiftType },
-    });
-  } catch (error) {
-    console.error("Error updating driver shift:", error);
-    return next(errorHandler(500, "Failed to update driver shift"));
+    res.json(journeys);
+  } catch (err) {
+    res.status(500).json({ error: "Error fetching journeys" });
   }
 };
 
