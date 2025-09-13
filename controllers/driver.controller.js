@@ -467,6 +467,11 @@ export const updateDriverShift = async (req, res) => {
       round: newRound,
       action: `Admin updated driver shift/journey to ${newShift || ''} ${newPhase || ''} Round ${newRound || ''}`
     });
+        if (driverInfoCache[id]) {
+      delete driverInfoCache[id];
+      console.log(`Cache cleared for driver ${id} after admin update`);
+    }
+
 
 
     // ✅ Broadcast to both driver & admin sockets
