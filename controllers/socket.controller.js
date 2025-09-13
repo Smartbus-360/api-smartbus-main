@@ -40,9 +40,6 @@ socket.on('subscribeToShift', (id) => {
 });
 
 // ✅ Optional: Handle shiftUpdated event (driver will just receive it)
-socket.on('shiftUpdated', (data) => {
-  console.log(`Shift update received for driver ${data.driverId}: ${data.shiftType}`);
-});
 
         
         // Driver joins a room based on their ID
