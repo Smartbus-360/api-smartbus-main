@@ -468,8 +468,19 @@ export const updateDriverShift = async (req, res) => {
       action: `Admin updated driver shift/journey to ${newShift || ''} ${newPhase || ''} Round ${newRound || ''}`
     });
 
-    res.json({ success: true, driver });
+    // ✅ Broadcast to both driver & admin sockets
+    const payload = {
+      driverId: id,
+      phase: newPhase,
+      round: newRound,
+      action: "Admin Update"
+    };
+    io.of("/drivers").to(`driver_${id}`).emit("shiftUpdated", payload);
+    io.of("/admin/notification").to(`driver_${id}`).emit("shiftUpdated", payload);
+
+    res.json({ success: true, message: "Journey updated", ...payload });
   } catch (err) {
+    console.error("Error in updateDriverShift:", err);
     res.status(500).json({ error: "Error updating driver shift" });
   }
 };
@@ -485,34 +496,6 @@ export const getDriverJourneys = async (req, res) => {
     res.status(500).json({ error: "Error fetching journeys" });
   }
 };
-    await DriverJourney.create({
-      driverId,
-      phase,
-      round,
-      action: action || "Updated by Admin",
-    });
-
-    // Update driver's current phase/round in DB
-    await Driver.update(
-      { shiftType: phase }, // optional, if you store phase in driver
-      { where: { id: driverId } }
-    );
-
-    // Broadcast via socket to both driver + admin
-    io.of("/drivers").to(`driver_${driverId}`).emit("shiftUpdated", {
-      driverId,
-      phase,
-      round,
-      action: "Admin Update",
-    });
-
-    io.of("/admin/notification").to(`driver_${driverId}`).emit("shiftUpdated", {
-      driverId,
-      phase,
-      round,
-      action: "Admin Update",
-    });
-
     res.json({
       success: true,
       message: "Journey updated successfully",
