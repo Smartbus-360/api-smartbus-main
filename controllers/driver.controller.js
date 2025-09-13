@@ -10,6 +10,8 @@ import DriverQrToken from "../models/driverQrToken.model.js";
 import { Op } from "sequelize";
 import { findActiveQrOverride } from "../utils/qrOverride.js";
 import DriverJourney from "../models/driverJourney.model.js";
+import { io } from "../index.js"; 
+
 
 const baseURL = "https://api.smartbus360.com";
 
@@ -483,3 +485,44 @@ export const getDriverJourneys = async (req, res) => {
     res.status(500).json({ error: "Error fetching journeys" });
   }
 };
+    await DriverJourney.create({
+      driverId,
+      phase,
+      round,
+      action: action || "Updated by Admin",
+    });
+
+    // Update driver's current phase/round in DB
+    await Driver.update(
+      { shiftType: phase }, // optional, if you store phase in driver
+      { where: { id: driverId } }
+    );
+
+    // Broadcast via socket to both driver + admin
+    io.of("/drivers").to(`driver_${driverId}`).emit("shiftUpdated", {
+      driverId,
+      phase,
+      round,
+      action: "Admin Update",
+    });
+
+    io.of("/admin/notification").to(`driver_${driverId}`).emit("shiftUpdated", {
+      driverId,
+      phase,
+      round,
+      action: "Admin Update",
+    });
+
+    res.json({
+      success: true,
+      message: "Journey updated successfully",
+      driverId,
+      phase,
+      round,
+    });
+  } catch (err) {
+    console.error("Error in updateJourney:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
