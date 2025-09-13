@@ -108,6 +108,8 @@ router.get("/search", verifyToken, searchAdmins);
 router.post('/pending-student', verifyToken, addPendingStudent);
 router.post("/add-student-direct", verifyToken, addStudentDirect);
 router.put("/drivers/:id/shift", verifyToken, updateDriverShift);
+router.get("/drivers/:driverId/journeys", verifyToken, getDriverJourneys);
+
 
 
 
