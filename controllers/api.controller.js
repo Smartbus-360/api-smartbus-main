@@ -1838,6 +1838,8 @@ export const markFinalStopReached = async (req, res) => {
   let { routeId, driverId } = req.body;
   if (!routeId) return res.status(400).json({ success: false, message: "Route ID is required." });
 
+        const rId = Number(routeId);
+
   // const rId = Number(routeId);
       if (req.user && req.user.id) {
     driverId = driverId || req.user.id; // prefer token driverId
