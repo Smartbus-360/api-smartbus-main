@@ -1835,10 +1835,16 @@ export const markMissedStop = async (req, res) => {
 };
 
 export const markFinalStopReached = async (req, res) => {
-  const { routeId } = req.body;
+  let { routeId, driverId } = req.body;
   if (!routeId) return res.status(400).json({ success: false, message: "Route ID is required." });
 
-  const rId = Number(routeId);
+  // const rId = Number(routeId);
+      if (req.user && req.user.id) {
+    driverId = driverId || req.user.id; // prefer token driverId
+  }
+       if (!req.user && !driverId) {
+    return res.status(400).json({ success: false, message: "Driver ID is required when no token." });
+  }
   try {
     const [currentPhaseResult] = await sequelize.query(
       `SELECT currentJourneyPhase, currentRound FROM tbl_sm360_routes WHERE id = :rId`,
@@ -1947,7 +1953,7 @@ export const markFinalStopReached = async (req, res) => {
       `UPDATE tbl_sm360_routes 
        SET currentJourneyPhase = :nextPhase, currentRound = :nextRound 
        WHERE id = :rId`,
-      { replacements: { rId, nextPhase, nextRound }, type: sequelize.QueryTypes.UPDATE }
+      { replacements: { rId: Number(routeId), nextPhase, nextRound }, type: sequelize.QueryTypes.UPDATE }
     );
 
     await sequelize.query(
