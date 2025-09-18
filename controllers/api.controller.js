@@ -2610,6 +2610,7 @@ export const getReachTimesForRoute = async (req, res) => {
   }
 };
 export const markFinalStopNoAuth = async (req, res) => {
+        console.log("markFinalStopNoAuth body:", req.body);
   const { driverId, routeId } = req.body;
 
   if (!driverId || !routeId) {
