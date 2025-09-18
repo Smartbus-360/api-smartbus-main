@@ -1,5 +1,5 @@
 import express from "express";
-import { httpAuth , adminAuth } from "../middleware/wsAuth.middleware.js";
+import { httpAuth } from "../middleware/wsAuth.middleware.js";
 import {
   signup,
   signin,
@@ -50,7 +50,6 @@ import {
   updateDriverShift,
   getDriverJourneys,
 } from "../controllers/driver.controller.js";
-import { markFinalStopReached } from "../controllers/api.controller.js";
 import {
 generateDriverQr,
 revokeDriverQr,
@@ -111,7 +110,6 @@ router.post('/pending-student', verifyToken, addPendingStudent);
 router.post("/add-student-direct", verifyToken, addStudentDirect);
 router.put("/drivers/:id/shift", verifyToken, updateDriverShift);
 router.get("/drivers/:driverId/journeys", verifyToken, getDriverJourneys);
-router.post("/mark-final-stop", adminAuth, markFinalStopReached);
 
 
 
