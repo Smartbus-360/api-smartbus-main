@@ -36,7 +36,7 @@ apiRouter.post("/notify/speed", httpAuth, notifyIfSpeedExceeded);
 apiRouter.get("/advertisement/banner", generateAdBanner);
 apiRouter.get("/bus/replacement/:busId", httpAuth, checkBusReplacement);
 apiRouter.post("/missed-stoppage", httpAuth, markMissedStop);
-apiRouter.post("/mark-final-stop", markFinalStopReached);
+apiRouter.post("/mark-final-stop",httpAuth, markFinalStopReached);
 apiRouter.get("/reach-times/:route", httpAuth ,getReachTimesForRoute);
 apiRouter.get("/notifications", httpAuth,getNotifications);
 apiRouter.get("/bus-notifications", httpAuth, getBusNotifications);
