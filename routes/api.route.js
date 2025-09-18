@@ -3,6 +3,7 @@ import { loginUser, loginDriver, signupUser, signupDriver, getUserDetails, getDr
 import { generateAdBanner } from "../controllers/advertisement.controller.js";
 import { httpAuth } from "../middleware/wsAuth.middleware.js";
 import { canViewMap } from "../middleware/wsAuth.middleware.js";
+import { optionalAuth } from "../middleware/optionalAuth.js";
 import { checkBusReplacement } from "../controllers/bus.controller.js";
 import { getNotifications, getBusNotifications } from "../controllers/notification.controller.js";
 import { oneTimeLogin } from "../controllers/auth.controller.js";
@@ -36,7 +37,7 @@ apiRouter.post("/notify/speed", httpAuth, notifyIfSpeedExceeded);
 apiRouter.get("/advertisement/banner", generateAdBanner);
 apiRouter.get("/bus/replacement/:busId", httpAuth, checkBusReplacement);
 apiRouter.post("/missed-stoppage", httpAuth, markMissedStop);
-apiRouter.post("/mark-final-stop",httpAuth, markFinalStopReached);
+apiRouter.post("/mark-final-stop",optionalAuth, markFinalStopReached);
 apiRouter.get("/reach-times/:route", httpAuth ,getReachTimesForRoute);
 apiRouter.get("/notifications", httpAuth,getNotifications);
 apiRouter.get("/bus-notifications", httpAuth, getBusNotifications);
