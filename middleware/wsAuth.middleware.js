@@ -216,7 +216,7 @@ export const getUserToken = async (usernameOrEmail, password) => {
         //console.log(`Password correct: ${isPasswordCorrect}`);
 
         if (isPasswordCorrect) {
-            const token = jwt.sign({ email: user.email, role: 'user' }, JWT_SECRET, { expiresIn: '30d' });
+            const token = jwt.sign({ email: user.email, role: 'user' }, JWT_SECRET, { expiresIn: '8h' });
             // user.token = token; // Optionally save the token in the database
             // await user.save();
 
@@ -252,7 +252,7 @@ export const getDriverToken = async (email, password) => {
     
     // Check if driver exists and verify the password
     if (driver && await bcrypt.compare(password, driver.password)) {
-        const token = jwt.sign({ email: driver.email, role: 'driver' }, JWT_SECRET, { expiresIn: '30d' });
+        const token = jwt.sign({ email: driver.email, role: 'driver' }, JWT_SECRET, { expiresIn: '8h' });
         driver.token = token; // Optionally save the token in the database
         await driver.save();
 
