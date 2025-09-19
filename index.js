@@ -33,7 +33,7 @@ const io = new socketIO(server, {
         allowedHeaders: ["Authorization"], 
         credentials: true
     },
-    // transports: ["websocket"], 
+    transports: ["websocket"], 
 });
 
 // Middleware
