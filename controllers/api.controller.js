@@ -2215,7 +2215,8 @@ export const signupDriver = async (req, res) => {
     // Generate JWT token for the driver
     const token = jwt.sign(
       { email: newDriver.email, role: "driver",qr: true  },
-      JWT_SECRET, { expiresIn: "30d" }
+      JWT_SECRET,
+          { expiresIn: "30d" }
     );
     newDriver.token = token;
     await newDriver.save();
@@ -2276,7 +2277,7 @@ export const signupUser = async (req, res) => {
     });
 
     // Generate JWT token for the user
-    const token = jwt.sign({ email: newUser.email, role: "user" }, JWT_SECRET,{ expiresIn: "30d" }
+    const token = jwt.sign({ email: newUser.email, role: "user" }, JWT_SECRET,{ expiresIn: "30d" 
     });
     newUser.token = token; // Save the generated token
     await newUser.save();
