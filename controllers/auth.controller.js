@@ -138,7 +138,7 @@ const validUser = results[0] || null;
           httpOnly: true, // Prevents XSS
           secure: true, // Only sent over HTTPS
           sameSite: 'None', // cross-origin requests
-          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 Days
+          // maxAge: 7 * 24 * 60 * 60 * 1000, // 7 Days
       });
 
       // Exclude password and return user data
@@ -801,6 +801,20 @@ export const getMyBasics = async (req, res, next) => {
     });
   } catch (err) {
     next(err);
+  }
+};
+export const logout = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    // Remove refresh token from DB
+    await sequelize.query(
+      `UPDATE tbl_sm360_users SET refreshToken = NULL WHERE id = ?`,
+      { replacements: [userId] }
+    );
+    res.clearCookie("refreshToken");
+    res.json({ message: "Logged out successfully" });
+  } catch (error) {
+    next(error);
   }
 };
 
