@@ -151,34 +151,87 @@ const validUser = results[0] || null;
   }
 };
 
+// export const refreshAccessToken = async (req, res, next) => {
+//   try {
+//     const refreshToken = req.cookies.refreshToken;
+//     if (!refreshToken) return next(errorHandler(403, "Refresh token required"));
+
+//     const encryptedToken = crypto.createHmac("sha256", process.env.REFRESH_SECRET)
+//                                  .update(refreshToken)
+//                                  .digest("hex");
+
+//     const [user] = await sequelize.query(
+//       `SELECT id, isAdmin FROM tbl_sm360_users WHERE refreshToken = ?`,
+//       { replacements: [encryptedToken], type: sequelize.QueryTypes.SELECT }
+//     );
+
+//     if (!user) return next(errorHandler(403, "Invalid refresh token"));
+
+//     const newAccessToken = jwt.sign(
+//       { id: user.id, isAdmin: user.isAdmin },
+//       process.env.JWT_SECRET,
+//       { expiresIn: "8h" }
+//     );
+
+//     res.json({ accessToken: newAccessToken });
+
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
 export const refreshAccessToken = async (req, res, next) => {
   try {
-    const refreshToken = req.cookies.refreshToken;
+    // Accept token either from body (mobile) or cookie (web)
+    const refreshToken = req.body.refreshToken || req.cookies.refreshToken;
     if (!refreshToken) return next(errorHandler(403, "Refresh token required"));
 
-    const encryptedToken = crypto.createHmac("sha256", process.env.REFRESH_SECRET)
-                                 .update(refreshToken)
-                                 .digest("hex");
+    // Hash it before DB lookup
+    const encryptedToken = crypto
+      .createHmac("sha256", process.env.REFRESH_SECRET)
+      .update(refreshToken)
+      .digest("hex");
 
+    // Lookup user
     const [user] = await sequelize.query(
-      `SELECT id, isAdmin FROM tbl_sm360_users WHERE refreshToken = ?`,
+      `SELECT id, isAdmin, refreshToken, refreshTokenExpiry 
+       FROM tbl_sm360_users 
+       WHERE refreshToken = ?`,
       { replacements: [encryptedToken], type: sequelize.QueryTypes.SELECT }
     );
 
     if (!user) return next(errorHandler(403, "Invalid refresh token"));
 
+    // Check expiry
+    if (user.refreshTokenExpiry && new Date(user.refreshTokenExpiry) < new Date()) {
+      return next(errorHandler(403, "Refresh token expired"));
+    }
+
+    // Generate new access token
     const newAccessToken = jwt.sign(
       { id: user.id, isAdmin: user.isAdmin },
       process.env.JWT_SECRET,
       { expiresIn: "8h" }
     );
 
-    res.json({ accessToken: newAccessToken });
+    // 🔁 Rotate refresh token
+    const { refreshToken: newRefreshToken, encryptedToken: newEncrypted } = generateRefreshToken(user.id);
+    const expiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    await sequelize.query(
+      `UPDATE tbl_sm360_users SET refreshToken = ?, refreshTokenExpiry = ? WHERE id = ?`,
+      { replacements: [newEncrypted, expiry, user.id] }
+    );
+
+    // Respond with new tokens
+    res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
 
   } catch (error) {
-    next(error);
+    console.error("Refresh error:", error);
+    next(errorHandler(500, "Failed to refresh token"));
   }
 };
+
 
 
 // export const signin = async (req, res, next) => {
