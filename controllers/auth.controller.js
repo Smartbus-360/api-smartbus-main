@@ -144,7 +144,7 @@ const validUser = results[0] || null;
       // Exclude password and return user data
       const { password: pass, ...user } = validUser;
     
-      res.status(200).json({ accessToken, user });
+      res.status(200).json({ accessToken,refreshToken, user });
 
   } catch (error) {
       next(error);
