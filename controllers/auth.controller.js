@@ -193,19 +193,16 @@ export const refreshAccessToken = async (req, res, next) => {
       .digest("hex");
 
     // Lookup user
-    const [user] = await sequelize.query(
-      `SELECT id, isAdmin, refreshToken, refreshTokenExpiry 
-       FROM tbl_sm360_users 
-       WHERE refreshToken = ?`,
+        const [user] = await sequelize.query(
+      `SELECT id, isAdmin FROM tbl_sm360_users WHERE refreshToken = ?`,
       { replacements: [encryptedToken], type: sequelize.QueryTypes.SELECT }
     );
+
 
     if (!user) return next(errorHandler(403, "Invalid refresh token"));
 
     // Check expiry
-    if (user.refreshTokenExpiry && new Date(user.refreshTokenExpiry) < new Date()) {
-      return next(errorHandler(403, "Refresh token expired"));
-    }
+
 
     // Generate new access token
     const newAccessToken = jwt.sign(
@@ -215,13 +212,13 @@ export const refreshAccessToken = async (req, res, next) => {
     );
 
     // 🔁 Rotate refresh token
-    const { refreshToken: newRefreshToken, encryptedToken: newEncrypted } = generateRefreshToken(user.id);
-    const expiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    // const { refreshToken: newRefreshToken, encryptedToken: newEncrypted } = generateRefreshToken(user.id);
+    // const expiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-    await sequelize.query(
-      `UPDATE tbl_sm360_users SET refreshToken = ?, refreshTokenExpiry = ? WHERE id = ?`,
-      { replacements: [newEncrypted, expiry, user.id] }
-    );
+    // await sequelize.query(
+    //   `UPDATE tbl_sm360_users SET refreshToken = ?, refreshTokenExpiry = ? WHERE id = ?`,
+    //   { replacements: [newEncrypted, expiry, user.id] }
+    // );
 
     // Respond with new tokens
     res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
