@@ -138,97 +138,47 @@ const validUser = results[0] || null;
           httpOnly: true, // Prevents XSS
           secure: true, // Only sent over HTTPS
           sameSite: 'None', // cross-origin requests
-          // maxAge: 7 * 24 * 60 * 60 * 1000, // 7 Days
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 Days
       });
 
       // Exclude password and return user data
       const { password: pass, ...user } = validUser;
     
-      res.status(200).json({ accessToken,refreshToken, user });
+      res.status(200).json({ accessToken, user });
 
   } catch (error) {
       next(error);
   }
 };
 
-// export const refreshAccessToken = async (req, res, next) => {
-//   try {
-//     const refreshToken = req.cookies.refreshToken;
-//     if (!refreshToken) return next(errorHandler(403, "Refresh token required"));
-
-//     const encryptedToken = crypto.createHmac("sha256", process.env.REFRESH_SECRET)
-//                                  .update(refreshToken)
-//                                  .digest("hex");
-
-//     const [user] = await sequelize.query(
-//       `SELECT id, isAdmin FROM tbl_sm360_users WHERE refreshToken = ?`,
-//       { replacements: [encryptedToken], type: sequelize.QueryTypes.SELECT }
-//     );
-
-//     if (!user) return next(errorHandler(403, "Invalid refresh token"));
-
-//     const newAccessToken = jwt.sign(
-//       { id: user.id, isAdmin: user.isAdmin },
-//       process.env.JWT_SECRET,
-//       { expiresIn: "8h" }
-//     );
-
-//     res.json({ accessToken: newAccessToken });
-
-//   } catch (error) {
-//     next(error);
-//   }
-// };
-
 export const refreshAccessToken = async (req, res, next) => {
   try {
-    // Accept token either from body (mobile) or cookie (web)
-    const refreshToken = req.body.refreshToken || req.cookies.refreshToken;
+    const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) return next(errorHandler(403, "Refresh token required"));
 
-    // Hash it before DB lookup
-    const encryptedToken = crypto
-      .createHmac("sha256", process.env.REFRESH_SECRET)
-      .update(refreshToken)
-      .digest("hex");
+    const encryptedToken = crypto.createHmac("sha256", process.env.REFRESH_SECRET)
+                                 .update(refreshToken)
+                                 .digest("hex");
 
-    // Lookup user
-        const [user] = await sequelize.query(
+    const [user] = await sequelize.query(
       `SELECT id, isAdmin FROM tbl_sm360_users WHERE refreshToken = ?`,
       { replacements: [encryptedToken], type: sequelize.QueryTypes.SELECT }
     );
 
-
     if (!user) return next(errorHandler(403, "Invalid refresh token"));
 
-    // Check expiry
-
-
-    // Generate new access token
     const newAccessToken = jwt.sign(
       { id: user.id, isAdmin: user.isAdmin },
       process.env.JWT_SECRET,
       { expiresIn: "8h" }
     );
 
-    // 🔁 Rotate refresh token
-    // const { refreshToken: newRefreshToken, encryptedToken: newEncrypted } = generateRefreshToken(user.id);
-    // const expiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-
-    // await sequelize.query(
-    //   `UPDATE tbl_sm360_users SET refreshToken = ?, refreshTokenExpiry = ? WHERE id = ?`,
-    //   { replacements: [newEncrypted, expiry, user.id] }
-    // );
-
-    // Respond with new tokens
-    res.json({ accessToken: newAccessToken , refreshToken });
+    res.json({ accessToken: newAccessToken });
 
   } catch (error) {
-    console.error("Refresh error:", error);
-    next(errorHandler(500, "Failed to refresh token"));
+    next(error);
   }
 };
-
 
 
 // export const signin = async (req, res, next) => {
@@ -853,18 +803,3 @@ export const getMyBasics = async (req, res, next) => {
     next(err);
   }
 };
-export const logout = async (req, res, next) => {
-  try {
-    const userId = req.user.id;
-    // Remove refresh token from DB
-    await sequelize.query(
-      `UPDATE tbl_sm360_users SET refreshToken = NULL WHERE id = ?`,
-      { replacements: [userId] }
-    );
-    res.clearCookie("refreshToken");
-    res.json({ message: "Logged out successfully" });
-  } catch (error) {
-    next(error);
-  }
-};
-
