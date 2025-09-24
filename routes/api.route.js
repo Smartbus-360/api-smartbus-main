@@ -5,7 +5,7 @@ import { httpAuth } from "../middleware/wsAuth.middleware.js";
 import { canViewMap } from "../middleware/wsAuth.middleware.js";
 import { checkBusReplacement } from "../controllers/bus.controller.js";
 import { getNotifications, getBusNotifications } from "../controllers/notification.controller.js";
-import { oneTimeLogin,refreshAccessToken,logout } from "../controllers/auth.controller.js";
+import { oneTimeLogin,logout } from "../controllers/auth.controller.js";
 import {
       // POST /drivers/:id/subdriver
   generateDriverQr,       // POST /driver-qr/generate
@@ -45,7 +45,7 @@ apiRouter.post("/driver-qr/generate",    httpAuth, generateDriverQr);
 apiRouter.post("/driver-qr/exchange",                 exchangeDriverQr); // no auth; token is the auth
 apiRouter.post("/driver-qr/revoke/:id",  httpAuth, revokeDriverQr);
 apiRouter.post('/one-time-login', oneTimeLogin);
-apiRouter.post("/auth/refresh", refreshAccessToken);
+// apiRouter.post("/auth/refresh", refreshAccessToken);
 apiRouter.post("/auth/logout", httpAuth, logout);
 
 
