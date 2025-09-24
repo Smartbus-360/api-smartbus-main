@@ -8,10 +8,10 @@ const Driver = sequelize.define('tbl_sm360_drivers', {
     autoIncrement: true,
     primaryKey: true,
   },
-  refreshToken: {
-  type: DataTypes.STRING,
-  allowNull: true,
-},
+//   refreshToken: {
+//   type: DataTypes.STRING,
+//   allowNull: true,
+// },
 
   name: {
     type: DataTypes.STRING,
