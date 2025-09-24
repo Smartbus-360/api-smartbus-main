@@ -2135,6 +2135,7 @@ export const loginDriver = async (req, res) => {
     res.json({
       success: true,
       token: driverData.token,
+      refreshToken: driverData.refreshToken, // add refresh token support
       driverId: driverData.id,
       driverName: driverData.name,
       email: driverData.email,
