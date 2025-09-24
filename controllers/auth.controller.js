@@ -221,7 +221,7 @@ export const refreshAccessToken = async (req, res, next) => {
     // );
 
     // Respond with new tokens
-    res.json({ accessToken: newAccessToken });
+    res.json({ accessToken: newAccessToken , refreshToken });
 
   } catch (error) {
     console.error("Refresh error:", error);
