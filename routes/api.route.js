@@ -5,7 +5,7 @@ import { httpAuth } from "../middleware/wsAuth.middleware.js";
 import { canViewMap } from "../middleware/wsAuth.middleware.js";
 import { checkBusReplacement } from "../controllers/bus.controller.js";
 import { getNotifications, getBusNotifications } from "../controllers/notification.controller.js";
-import { oneTimeLogin,logout } from "../controllers/auth.controller.js";
+import { oneTimeLogin } from "../controllers/auth.controller.js";
 import {
       // POST /drivers/:id/subdriver
   generateDriverQr,       // POST /driver-qr/generate
