@@ -2062,12 +2062,22 @@ export const loginUser = async (req, res) => {
       }
     );
 
-    if (activeSessions.count >= 3) {
+        const sessionCount = Number(activeSessions.count) || 0;
+
+    if (sessionCount >= 3) {
       return res.status(403).json({
         success: false,
-        message: "You can only login on maximum 3 devices at a time. Please logout from another device."
+        message: "⚠️ You can only login on maximum 3 devices at the same time.",
       });
     }
+
+
+    // if (activeSessions.count >= 3) {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: "You can only login on maximum 3 devices at a time. Please logout from another device."
+    //   });
+    // }
 
     // new logic 
 await sequelize.query(
