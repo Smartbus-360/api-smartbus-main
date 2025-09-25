@@ -2040,6 +2040,12 @@ export const loginUser = async (req, res) => {
   }
 
   try {
+        await sequelize.query(
+      `UPDATE tbl_sm360_user_sessions
+       SET revokedAt = NOW()
+       WHERE expiresAt < NOW() AND revokedAt IS NULL`
+    );
+
     // Authenticate the user and get the token
     const userData = await getUserToken(usernameOrEmail, password);
 
