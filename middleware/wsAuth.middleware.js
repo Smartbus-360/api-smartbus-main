@@ -220,14 +220,14 @@ export const getUserToken = async (usernameOrEmail, password) => {
             // user.token = token; // Optionally save the token in the database
             // await user.save();
 
-            await User.sequelize.query(
-    `INSERT INTO tbl_sm360_user_sessions (userId, token, createdAt, expiresAt)
-     VALUES (:userId, :token, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY))`,
-    {
-      replacements: { userId: user.id, token },
-      type: User.sequelize.QueryTypes.INSERT,
-    }
-  );
+  //           await User.sequelize.query(
+  //   `INSERT INTO tbl_sm360_user_sessions (userId, token, createdAt, expiresAt)
+  //    VALUES (:userId, :token, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY))`,
+  //   {
+  //     replacements: { userId: user.id, token },
+  //     type: User.sequelize.QueryTypes.INSERT,
+  //   }
+  // );
             // Return token along with user id, username, and email
             return {
                 id: user.id,
