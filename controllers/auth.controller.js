@@ -121,7 +121,7 @@ const validUser = results[0] || null;
           { id: validUser.id, isAdmin: validUser.isAdmin,instituteId: validUser.instituteId || null, // include it
  },
           process.env.JWT_SECRET,
-          { expiresIn: '8h' } // Short-lived token
+          { expiresIn: '30d' } // Short-lived token
       );
 
       // Generate Refresh Token
@@ -138,7 +138,9 @@ const validUser = results[0] || null;
           httpOnly: true, // Prevents XSS
           secure: true, // Only sent over HTTPS
           sameSite: 'None', // cross-origin requests
-          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 Days
+          // maxAge: 7 * 24 * 60 * 60 * 1000, // 7 Days
+        maxAge: 30 * 24 * 60 * 60 * 1000, // ✅ 30 Days
+
       });
 
       // Exclude password and return user data
