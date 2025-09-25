@@ -2044,32 +2044,32 @@ export const loginUser = async (req, res) => {
 
     // Authenticate the user and get the token
     const userData = await getUserToken(usernameOrEmail, password);
-        await sequelize.query(
-      `UPDATE tbl_sm360_user_sessions
-       SET revokedAt = NOW()
-       WHERE expiresAt < NOW() AND revokedAt IS NULL`
-    );
+    //     await sequelize.query(
+    //   `UPDATE tbl_sm360_user_sessions
+    //    SET revokedAt = NOW()
+    //    WHERE expiresAt < NOW() AND revokedAt IS NULL`
+    // );
 
-        const [activeSessions] = await sequelize.query(
-      `SELECT COUNT(*) AS count 
-       FROM tbl_sm360_user_sessions 
-       WHERE userId = :uid 
-         AND revokedAt IS NULL 
-         AND expiresAt > NOW()`,
-      {
-        replacements: { uid: userData.id },
-        type: sequelize.QueryTypes.SELECT
-      }
-    );
+    //     const [activeSessions] = await sequelize.query(
+    //   `SELECT COUNT(*) AS count 
+    //    FROM tbl_sm360_user_sessions 
+    //    WHERE userId = :uid 
+    //      AND revokedAt IS NULL 
+    //      AND expiresAt > NOW()`,
+    //   {
+    //     replacements: { uid: userData.id },
+    //     type: sequelize.QueryTypes.SELECT
+    //   }
+    // );
 
-        const sessionCount = Number(activeSessions.count) || 0;
+    //     const sessionCount = Number(activeSessions.count) || 0;
 
-    if (sessionCount >= 3) {
-      return res.status(403).json({
-        success: false,
-        message: "⚠️ You can only login on maximum 3 devices at the same time.",
-      });
-    }
+    // if (sessionCount >= 3) {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: "⚠️ You can only login on maximum 3 devices at the same time.",
+    //   });
+    // }
 
 
     // if (activeSessions.count >= 3) {
