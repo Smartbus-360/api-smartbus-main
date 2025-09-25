@@ -121,7 +121,7 @@ const validUser = results[0] || null;
           { id: validUser.id, isAdmin: validUser.isAdmin,instituteId: validUser.instituteId || null, // include it
  },
           process.env.JWT_SECRET,
-          { expiresIn: '30d' } // Short-lived token
+          { expiresIn: '8h' } // Short-lived token
       );
 
       // Generate Refresh Token
