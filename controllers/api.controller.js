@@ -2043,6 +2043,25 @@ export const loginUser = async (req, res) => {
     // Authenticate the user and get the token
     const userData = await getUserToken(usernameOrEmail, password);
 
+        const [activeSessions] = await sequelize.query(
+      `SELECT COUNT(*) AS count 
+       FROM tbl_sm360_user_sessions 
+       WHERE userId = :uid 
+         AND revokedAt IS NULL 
+         AND expiresAt > NOW()`,
+      {
+        replacements: { uid: userData.id },
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
+
+    if (activeSessions.count >= 3) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only login on maximum 3 devices at a time. Please logout from another device."
+      });
+    }
+
     // new logic 
 await sequelize.query(
   `INSERT INTO tbl_sm360_user_sessions (userId, token, userAgent, ip, expiresAt)
