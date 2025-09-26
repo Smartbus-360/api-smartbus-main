@@ -2082,7 +2082,7 @@ export const loginUser = async (req, res) => {
     // new logic 
 await sequelize.query(
   `INSERT INTO tbl_sm360_user_sessions (userId, token, userAgent, ip, expiresAt)
-   VALUES (:uid, :token, :ua, :ip, DATE_ADD(NOW(), INTERVAL 8 HOUR))`,
+   VALUES (:uid, :token, :ua, :ip, DATE_ADD(NOW(), INTERVAL 30 DAY))`,
   {
     replacements: {
       uid: userData.id,
