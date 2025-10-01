@@ -4,6 +4,8 @@ import User from "../models/user.model.js";
 import Route from "../models/route.model.js";
 import Institute from "../models/institute.model.js";
 import sequelize from '../config/database.js';
+import StopReachLogs from "../models/stopReachLogs.model.js";
+
 
 export const getAllStoppages = async (req, res, next) => {
   const userId = req.user.id;
@@ -602,6 +604,38 @@ export const updateStop = async (req, res, next) => {
 //     next(error);
 //   }
 // };
+
+// ✅ Mark stop as reached
+export const markStopReached = async (req, res, next) => {
+  try {
+    const { stopId, routeId, tripType } = req.body;
+
+    if (!stopId || !routeId || !tripType) {
+      return res.status(400).json({ message: "stopId, routeId, and tripType are required." });
+    }
+
+    const now = new Date();
+
+    // 1. Update main stops table
+    await Stop.update(
+      { reached: true, reachDateTime: now },
+      { where: { id: stopId, routeId } }
+    );
+
+    // 2. Add to stop reach logs (history table)
+    await StopReachLogs.create({
+      stopId,
+      routeId,
+      tripType,
+      reachDateTime: now,
+    });
+
+    res.json({ success: true, message: "Stop marked as reached", reachDateTime: now });
+  } catch (error) {
+    console.error("Error marking stop reached:", error);
+    res.status(500).json({ message: "Failed to mark stop reached" });
+  }
+};
 
 export const deleteStop = async (req, res, next) => {
   const userId = req.user.id;
