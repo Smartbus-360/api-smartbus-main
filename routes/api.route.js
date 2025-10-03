@@ -13,7 +13,7 @@ import {
   revokeDriverQr          // POST /driver-qr/revoke/:id
 } from "../controllers/driverQr.controller.js";
 import { getDriverSelf } from "../controllers/driver.controller.js";
-import { markStopReached } from "../controllers/stoppage.controller.js";
+import { markStopReached, getLastReachedStop } from "../controllers/stoppage.controller.js";
 
 
 const apiRouter = express.Router();
@@ -49,6 +49,8 @@ apiRouter.post('/one-time-login', oneTimeLogin);
 // apiRouter.post("/auth/refresh", refreshAccessToken);
 // apiRouter.post("/auth/logout", httpAuth, logout);
 apiRouter.post("/stoppage/reached", httpAuth, markStopReached);
+apiRouter.get("/stoppage/last", httpAuth, getLastReachedStop);
+
 
 
 
