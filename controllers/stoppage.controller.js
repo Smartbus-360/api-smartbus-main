@@ -636,6 +636,31 @@ export const markStopReached = async (req, res, next) => {
     res.status(500).json({ message: "Failed to mark stop reached" });
   }
 };
+// ✅ Get last reached stoppage
+export const getLastReachedStop = async (req, res) => {
+  try {
+    const { routeId, tripType } = req.query;
+
+    if (!routeId || !tripType) {
+      return res.status(400).json({ message: "routeId and tripType are required" });
+    }
+
+    const lastStop = await StopReachLogs.findOne({
+      where: { routeId, tripType },
+      order: [["reachDateTime", "DESC"]],
+    });
+
+    if (!lastStop) {
+      return res.json({ success: true, message: "No stop reached yet" });
+    }
+
+    res.json({ success: true, lastStop });
+  } catch (error) {
+    console.error("Error fetching last reached stop:", error);
+    res.status(500).json({ message: "Failed to get last reached stop" });
+  }
+};
+
 
 export const deleteStop = async (req, res, next) => {
   const userId = req.user.id;
