@@ -4,7 +4,7 @@ import User from "../models/user.model.js";
 import Route from "../models/route.model.js";
 import Institute from "../models/institute.model.js";
 import sequelize from '../config/database.js';
-import StopReachLogs from "../models/stopReachLogs.model.js";
+// import StopReachLogs from "../models/stopReachLogs.model.js";
 
 
 export const getAllStoppages = async (req, res, next) => {
@@ -606,36 +606,36 @@ export const updateStop = async (req, res, next) => {
 // };
 
 // ✅ Mark stop as reached
-export const markStopReached = async (req, res, next) => {
-  try {
-    const { stopId, routeId, tripType } = req.body;
+// export const markStopReached = async (req, res, next) => {
+//   try {
+//     const { stopId, routeId, tripType } = req.body;
 
-    if (!stopId || !routeId || !tripType) {
-      return res.status(400).json({ message: "stopId, routeId, and tripType are required." });
-    }
+//     if (!stopId || !routeId || !tripType) {
+//       return res.status(400).json({ message: "stopId, routeId, and tripType are required." });
+//     }
 
-    const now = new Date();
+//     const now = new Date();
 
-    // 1. Update main stops table
-    await Stop.update(
-      { reached: true, reachDateTime: now },
-      { where: { id: stopId, routeId } }
-    );
+//     // 1. Update main stops table
+//     await Stop.update(
+//       { reached: true, reachDateTime: now },
+//       { where: { id: stopId, routeId } }
+//     );
 
-    // 2. Add to stop reach logs (history table)
-    await StopReachLogs.create({
-      stopId,
-      routeId,
-      tripType,
-      reachDateTime: now,
-    });
+//     // 2. Add to stop reach logs (history table)
+//     await StopReachLogs.create({
+//       stopId,
+//       routeId,
+//       tripType,
+//       reachDateTime: now,
+//     });
 
-    res.json({ success: true, message: "Stop marked as reached", reachDateTime: now });
-  } catch (error) {
-    console.error("Error marking stop reached:", error);
-    res.status(500).json({ message: "Failed to mark stop reached" });
-  }
-};
+//     res.json({ success: true, message: "Stop marked as reached", reachDateTime: now });
+//   } catch (error) {
+//     console.error("Error marking stop reached:", error);
+//     res.status(500).json({ message: "Failed to mark stop reached" });
+//   }
+// };
 // ✅ Get last reached stoppage
 
 
