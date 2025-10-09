@@ -252,7 +252,7 @@ socket.on('shiftUpdated', (data) => {
         });
 
         socket.on('locationUpdate', (data) => {
-            const { driverId, latitude, longitude,speed = 0,placeName='' ,shiftType = null} = data;
+            const { driverId, latitude, longitude,speed = 0,placeName='',nextStoppage = null ,shiftType = null} = data;
             const numericDriverId = parseInt(driverId, 10);
             if (!numericDriverId || latitude === undefined || longitude === undefined) {
                 return console.error(`⚠️ Invalid or missing location data from driver ${driverId}`);
@@ -276,6 +276,7 @@ socket.on('shiftUpdated', (data) => {
                     longitude,
                     speed,
                     placeName,
+                    nextStoppage,  // ✅ Added field
                     shiftType: effectiveShift
                 });
                 // ✅ Also notify admin namespace
@@ -290,6 +291,7 @@ adminNotificationNamespace.to(`driver_${numericDriverId}`).emit('locationUpdate'
     longitude,
     speed,
     placeName,
+    nextStoppage,  
     shiftType: effectiveShift
 });
 
