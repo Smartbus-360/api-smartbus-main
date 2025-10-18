@@ -31,7 +31,11 @@ export const generateQrForStudent = async (req, res, next) => {
     const qrFilePath = path.join(uploadsDir, `${student.registrationNumber}.png`);
     await QRCode.toFile(qrFilePath, JSON.stringify(qrData));
 
-    const qrImageUrl = `/uploads/qrcodes/${student.registrationNumber}.png`;
+    
+    // const qrImageUrl = `/uploads/qrcodes/${student.registrationNumber}.png`;
+    const baseURL = process.env.SITE_URL || "https://api.smartbus360.com";
+const qrImageUrl = `${baseURL}/uploads/qrcodes/${student.registrationNumber}.png`;
+
 
     // Save or update in DB
     const [record, created] = await QrCode.findOrCreate({
