@@ -33,8 +33,8 @@ export const generateQrForStudent = async (req, res, next) => {
 
     
     // const qrImageUrl = `/uploads/qrcodes/${student.registrationNumber}.png`;
-    const baseURL = process.env.SITE_URL || "https://api.smartbus360.com";
-const qrImageUrl = `${baseURL}/uploads/qrcodes/${student.registrationNumber}.png`;
+    
+const qrImageUrl = `https://api.smartbus360.com/uploads/qrcodes/${student.registrationNumber}.png`;
 
 
     // Save or update in DB
