@@ -345,6 +345,49 @@ export const deleteUser = async (req, res, next) => {
     res.status(500).json({ message: error.message });
   }
 };
+export const getSchoolStudents = async (req, res) => {
+  try {
+    const { instituteId, isAdmin } = req.user;
+
+    if (!instituteId && Number(isAdmin) !== 1) {
+      return res.status(400).json({ message: "Institute ID missing in user context" });
+    }
+
+    const whereCondition =
+      Number(isAdmin) === 1
+        ? {} // Super admin → all institutes
+        : { instituteId };
+
+    // 🟢 Include QrCode with correct alias
+    const students = await User.findAll({
+      where: whereCondition,
+      include: [
+        {
+          model: QrCode,
+          as: "tbl_sm360_qr_code", // ✅ add alias name (or "QrCode" if you define manually)
+          attributes: ["qr_image_url", "is_active"],
+          required: false,
+        },
+      ],
+      order: [["username", "ASC"]],
+    });
+
+    // 🟢 Use correct field reference from alias
+    const formatted = students.map((s) => ({
+      id: s.id,
+      username: s.username,
+      registrationNumber: s.registrationNumber,
+      qr_image_url: s.tbl_sm360_qr_code?.qr_image_url || null,
+      is_active: s.tbl_sm360_qr_code?.is_active || false,
+    }));
+
+    res.status(200).json(formatted);
+  } catch (err) {
+    console.error("Error fetching students:", err);
+    res.status(500).json({ message: "Failed to load students", error: err.message });
+  }
+};
+
 
 // export const searchUser = async (req, res, next) => {
 //   try {
