@@ -86,6 +86,10 @@ import {
 } from "../controllers/advertisement.controller.js";
 import { verifyToken } from "../utils/verifyUser.js";
 import { getNotifications, createNotification, deleteNotification, getBusNotifications, createBusNotification, deleteBusNotification } from "../controllers/notification.controller.js";
+import { generateQrForStudent, revokeQrForStudent } from "../controllers/qr.Controller.js";
+import { adminExportAttendance } from "../controllers/attendanceExport.controller.js";
+import { getSchoolStudents } from "../controllers/user.controller.js";
+import { getAttendanceByStudent } from "../controllers/attendance.controller.js";
 
 const router = express.Router();
 
@@ -110,6 +114,8 @@ router.post('/pending-student', verifyToken, addPendingStudent);
 router.post("/add-student-direct", verifyToken, addStudentDirect);
 router.put("/drivers/:id/shift", verifyToken, updateDriverShift);
 router.get("/drivers/:driverId/journeys", verifyToken, getDriverJourneys);
+router.post("/generate/:studentId", httpAuth, generateQrForStudent);
+router.post("/revoke/:studentId", httpAuth, revokeQrForStudent);
 
 
 
@@ -135,6 +141,7 @@ router.post("/drivers", verifyToken, uploadDriverImage.single("profilePicture"),
 router.put("/drivers/:id", verifyToken, uploadDriverImage.single("profilePicture"), updateDriver);
 router.delete("/drivers/:id", verifyToken, deleteDriver);
 router.post("/drivers/routes", addUpdateDriverRoute);
+router.get("/admin/export", httpAuth, adminExportAttendance);
 
 router.post("/driver-qr/generate", verifyToken, generateDriverQr);
 // Revoke a driver QR token
@@ -166,6 +173,10 @@ router.delete("/users/:id", verifyToken, deleteUser);
 router.post('/self-register', studentSelfRegister);
 router.put('/auth/change-student-password', changeStudentPassword);
 router.get('/auth/me/basic', httpAuth, getMyBasics);
+router.get("/users/school-students", verifyToken, getSchoolStudents);
+router.get("/attendance/student/:registrationNumber", verifyToken, getAttendanceByStudent);
+router.post("/attendance/qr/generate/:studentId", verifyToken, generateQrForStudent);
+router.post("/attendance/qr/revoke/:studentId", verifyToken, revokeQrForStudent);
 
 
 
