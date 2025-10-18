@@ -8,6 +8,7 @@ import Bus from './bus.model.js';
 import UserStop from './userStop.model.js';
 import Notification from './notification.model.js';
 import BusNotification from './bus_notification.model.js';
+import QrCode from "./qrCode.model.js";
 
 // Setup Associations
 const setupAssociations = () => {
@@ -45,6 +46,10 @@ Institute.hasMany(User, {
     // User-Stop relationship (Many-to-Many)
     User.belongsToMany(Stop, { through: UserStop, foreignKey: 'userId' });
     Stop.belongsToMany(User, { through: UserStop, foreignKey: 'stopId' });
+
+    User.hasOne(QrCode, { foreignKey: "student_id" });
+  QrCode.belongsTo(User, { foreignKey: "student_id" });
+
 
     // Driver-Bus relationship
     Driver.hasOne(Bus, { foreignKey: 'driverId', onDelete: 'SET NULL' });
