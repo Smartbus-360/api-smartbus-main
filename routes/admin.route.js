@@ -86,7 +86,7 @@ import {
 } from "../controllers/advertisement.controller.js";
 import { verifyToken } from "../utils/verifyUser.js";
 import { getNotifications, createNotification, deleteNotification, getBusNotifications, createBusNotification, deleteBusNotification } from "../controllers/notification.controller.js";
-import { generateQrForStudent, revokeQrForStudent } from "../controllers/qr.Controller.js";
+import { generateQrForStudent, revokeQrForStudent } from "../controllers/qr.controller.js";
 import { adminExportAttendance } from "../controllers/attendanceExport.controller.js";
 import { getSchoolStudents } from "../controllers/user.controller.js";
 import { getAttendanceByStudent } from "../controllers/attendance.controller.js";
