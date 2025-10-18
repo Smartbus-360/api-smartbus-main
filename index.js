@@ -13,6 +13,8 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import './cronJobs.js';
 import { setupAssociations } from './models/associations.js';
+import attendanceRoutes from "./routes/attendance.route.js";
+
 
 
 // Sync models and setup associations
