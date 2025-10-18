@@ -4,6 +4,8 @@ import { errorHandler } from '../utils/error.js';
 import sequelize from '../config/database.js';
 import multer from "multer";
 import process from 'process';
+import QrCode from "../models/qrCode.model.js";
+
 
 const baseURL = "https://api.smartbus360.com";
 
