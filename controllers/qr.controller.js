@@ -97,11 +97,35 @@ console.log("📦 QR record saved to:", QrCode.getTableName());
 };
 
 // 🔴 Revoke QR
+// export const revokeQrForStudent = async (req, res, next) => {
+//   try {
+//     const { studentId } = req.params;
+//     const admin = req.user;
+
+//     const qrRecord = await QrCode.findOne({
+//       include: { model: User, where: { instituteId: admin.instituteId } },
+//       where: { student_id: studentId },
+//     });
+
+//     if (!qrRecord)
+//       return res.status(404).json({ message: "QR not found or not under your institute" });
+
+//     qrRecord.is_active = false;
+//     await qrRecord.save();
+
+//     res.status(200).json({ success: true, message: "QR revoked successfully" });
+//   } catch (err) {
+//     next(errorHandler(500, err.message || "QR revocation failed"));
+//   }
+// };
+
+// 🔴 Revoke QR (delete image + deactivate)
 export const revokeQrForStudent = async (req, res, next) => {
   try {
     const { studentId } = req.params;
     const admin = req.user;
 
+    // Verify the student belongs to this admin’s institute
     const qrRecord = await QrCode.findOne({
       include: { model: User, where: { instituteId: admin.instituteId } },
       where: { student_id: studentId },
@@ -110,10 +134,26 @@ export const revokeQrForStudent = async (req, res, next) => {
     if (!qrRecord)
       return res.status(404).json({ message: "QR not found or not under your institute" });
 
+    // 🧹 Delete the old QR image file if it exists
+    const oldFileName = path.basename(qrRecord.qr_image_url || "");
+    const oldFilePath = path.join(uploadsDir, oldFileName);
+    if (fs.existsSync(oldFilePath)) {
+      fs.unlinkSync(oldFilePath);
+      console.log(`🗑️ Deleted old QR image: ${oldFilePath}`);
+    } else {
+      console.log("⚠️ No QR image found to delete for:", oldFilePath);
+    }
+
+    // ❌ Mark record inactive
     qrRecord.is_active = false;
+    qrRecord.qr_token = null;      // clear old token
+    qrRecord.qr_image_url = null;  // clear old image URL
     await qrRecord.save();
 
-    res.status(200).json({ success: true, message: "QR revoked successfully" });
+    res.status(200).json({
+      success: true,
+      message: "QR revoked successfully — old QR removed",
+    });
   } catch (err) {
     next(errorHandler(500, err.message || "QR revocation failed"));
   }
