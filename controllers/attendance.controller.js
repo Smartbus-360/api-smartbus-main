@@ -84,13 +84,17 @@ export const markAttendance = async (req, res, next) => {
     }
 
     // 1️⃣ Validate QR token
+    console.log("1️⃣ Checking QR token:", token);
     const qr = await QrCode.findOne({ where: { qr_token: token, is_active: true } });
+    console.log("1️⃣ Result:", qr ? "✅ Valid QR" : "❌ Invalid QR");
     if (!qr) {
       return res.status(401).json({ message: "Invalid or revoked QR token" });
     }
 
     // 2️⃣ Validate student exists
+    console.log("2️⃣ Checking student:", registrationNumber);
     const student = await User.findOne({ where: { registrationNumber: registrationNumber } });
+    console.log("2️⃣ Result:", student ? `✅ Found student ID ${student.id}` : "❌ Student not found");
     if (!student) {
       return res.status(404).json({ message: "Student not found" });
     }
@@ -101,6 +105,7 @@ export const markAttendance = async (req, res, next) => {
     );
 
     const instituteName = institute ? institute.name : "Unknown";
+console.log("3️⃣ Proceeding to create attendance record...");
 
     // 3️⃣ Save attendance permanently
     const record = await Attendance.create({
