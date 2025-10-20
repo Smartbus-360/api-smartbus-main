@@ -49,7 +49,7 @@ const qrImageUrl = `https://api.smartbus360.com/uploads/qrcodes/${student.regist
 
 
     // Save or update in DB
-let record = await QrCode.findOne({ where: { student_id: student.id } });
+// let record = await QrCode.findOne({ where: { student_id: student.id } });
 
 if (record) {
   // Update existing record
