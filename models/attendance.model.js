@@ -21,13 +21,13 @@ const Attendance = sequelize.define('tbl_sm360_attendance', {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  student_id: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: { model: User, key: 'id' },
-    onUpdate: 'CASCADE',
-    onDelete: 'SET NULL',
-  },
+  // student_id: {
+  //   type: DataTypes.INTEGER,
+  //   allowNull: true,
+  //   references: { model: User, key: 'id' },
+  //   onUpdate: 'CASCADE',
+  //   onDelete: 'SET NULL',
+  // },
   driver_id: {
     type: DataTypes.INTEGER,
     allowNull: true,
