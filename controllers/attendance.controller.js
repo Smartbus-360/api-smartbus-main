@@ -94,11 +94,18 @@ export const markAttendance = async (req, res, next) => {
       return res.status(404).json({ message: "Student not found" });
     }
 
+    const [institute] = await sequelize.query(
+      "SELECT name FROM tbl_sm360_institutes WHERE id = :id",
+      { replacements: { id: student.instituteId }, type: sequelize.QueryTypes.SELECT }
+    );
+
+    const instituteName = institute ? institute.name : "Unknown";
+
     // 3️⃣ Save attendance permanently
     const record = await Attendance.create({
       registrationNumber: student.registrationNumber,
       username: student.username,
-      instituteName: student.institute_name || "Unknown",
+      instituteName,
       bus_id,
       driver_id,
       latitude,
@@ -110,7 +117,7 @@ export const markAttendance = async (req, res, next) => {
     await DriverAttendanceTemp.create({
       registrationNumber: student.registrationNumber,
       username: student.username,
-      instituteName: student.institute_name || "Unknown",
+      instituteName,
       bus_id,
       driver_id,
       latitude,
