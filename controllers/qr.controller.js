@@ -38,17 +38,41 @@ const qrImageUrl = `https://api.smartbus360.com/uploads/qrcodes/${student.regist
 
 
     // Save or update in DB
-    const [record, created] = await QrCode.findOrCreate({
-      where: { student_id: student.id },
-      defaults: { qr_image_url: qrImageUrl, qr_token: qrToken, is_active: true },
-    });
+let record = await QrCode.findOne({ where: { student_id: student.id } });
 
-    if (!created) {
-      record.qr_image_url = qrImageUrl;
-      record.qr_token = qrToken;
-      record.is_active = true;
-      await record.save();
-    }
+if (record) {
+  // Update existing record
+  record.qr_image_url = qrImageUrl;
+  record.qr_token = qrToken;
+  record.is_active = true;
+  await record.save();
+  console.log("✅ Existing QR updated for student:", student.username);
+} else {
+  // Create new record
+  record = await QrCode.create({
+    student_id: student.id,
+    qr_image_url: qrImageUrl,
+    qr_token: qrToken,
+    is_active: true,
+  });
+  console.log("✅ New QR record inserted for student:", student.username);
+}
+
+console.log("📦 QR record saved to:", QrCode.getTableName());
+    console.log("Saved QR:", record.toJSON());   // 🟢 <--- Add here
+
+
+    // const [record, created] = await QrCode.findOrCreate({
+    //   where: { student_id: student.id },
+    //   defaults: { qr_image_url: qrImageUrl, qr_token: qrToken, is_active: true },
+    // });
+
+    // if (!created) {
+    //   record.qr_image_url = qrImageUrl;
+    //   record.qr_token = qrToken;
+    //   record.is_active = true;
+    //   await record.save();
+    // }
 
     return res.status(201).json({
       success: true,
