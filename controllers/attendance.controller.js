@@ -76,6 +76,7 @@ const toIST = (date) => {
 
 export const markAttendance = async (req, res, next) => {
   try {
+    console.log("🟢 markAttendance called with body:", req.body);
     const { registrationNumber, token, driver_id, bus_id, latitude, longitude } = req.body;
 
     if (!registrationNumber || !token) {
