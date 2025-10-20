@@ -22,11 +22,22 @@ export const generateQrForStudent = async (req, res, next) => {
     if (!student) return res.status(404).json({ message: "Student not found in your institute" });
 
     // Generate QR token and image
-    const qrToken = uuidv4();
-    const qrData = {
-      registrationNumber: student.registrationNumber,
-      token: qrToken,
-    };
+    // const qrToken = uuidv4();
+    // const qrData = {
+    //   registrationNumber: student.registrationNumber,
+    //   token: qrToken,
+    // };
+    let record = await QrCode.findOne({ where: { student_id: student.id } });
+
+let qrToken = record?.qr_token && record.is_active
+  ? record.qr_token           // ✅ Reuse active token
+  : uuidv4();                 // ✅ Only generate new one when necessary
+
+const qrData = {
+  registrationNumber: student.registrationNumber,
+  token: qrToken,
+};
+
 
     const qrFilePath = path.join(uploadsDir, `${student.registrationNumber}.png`);
     await QRCode.toFile(qrFilePath, JSON.stringify(qrData));
