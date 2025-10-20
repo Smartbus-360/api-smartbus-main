@@ -114,8 +114,8 @@ router.post('/pending-student', verifyToken, addPendingStudent);
 router.post("/add-student-direct", verifyToken, addStudentDirect);
 router.put("/drivers/:id/shift", verifyToken, updateDriverShift);
 router.get("/drivers/:driverId/journeys", verifyToken, getDriverJourneys);
-router.post("/generate/:studentId", httpAuth, generateQrForStudent);
-router.post("/revoke/:studentId", httpAuth, revokeQrForStudent);
+router.post("/qr/generate/:studentId", httpAuth, generateQrForStudent);
+router.post("/qr/revoke/:studentId", httpAuth, revokeQrForStudent);
 
 
 
