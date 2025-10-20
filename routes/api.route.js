@@ -14,6 +14,7 @@ import {
 } from "../controllers/driverQr.controller.js";
 import { getDriverSelf } from "../controllers/driver.controller.js";
 // import { markStopReached, getLastReachedStop } from "../controllers/stoppage.controller.js";
+import attendanceRoutes from "./attendance.route.js";
 
 
 const apiRouter = express.Router();
@@ -26,6 +27,7 @@ apiRouter.get("/user/details/:id", httpAuth, getUserDetails);
 apiRouter.get("/driver/details/:id", httpAuth, getDriverDetails);
 apiRouter.get("/driver/self", httpAuth, getDriverSelf);
 apiRouter.post("/logout/user", httpAuth, logoutUser);
+apiRouter.use("/attendance", attendanceRoutes);
 
 
 // ⬇️ put this near your other routes
