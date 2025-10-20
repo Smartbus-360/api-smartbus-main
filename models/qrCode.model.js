@@ -13,6 +13,8 @@ const QrCode = sequelize.define("tbl_sm360_qr_codes", {
   qr_image_url: { type: DataTypes.STRING, allowNull: true },
   qr_token: { type: DataTypes.STRING, allowNull: true },
   is_active: { type: DataTypes.BOOLEAN, defaultValue: true },
-}, { timestamps: true });
+}, { 
+ tableName: "tbl_sm360_qr_codes",  
+  timestamps: true });
 
 export default QrCode;
