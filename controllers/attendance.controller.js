@@ -214,4 +214,46 @@ export const getAttendanceByStudent = async (req, res, next) => {
     next(errorHandler(500, error.message || "Error fetching attendance records"));
   }
 };
+// ✅ New: Get logged-in student's attendance (safe, does not affect drivers)
+export const getMyAttendance = async (req, res, next) => {
+  try {
+    const loggedInUser = req.user; // comes from httpAuth middleware
+    if (!loggedInUser) {
+      return res.status(401).json({ message: "Unauthorized access" });
+    }
+
+    // ensure only student accounts can access this
+    if (loggedInUser.accountType !== "student") {
+      return res.status(403).json({ message: "Access denied: Only students can view this." });
+    }
+
+    const user = await User.findByPk(loggedInUser.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const attendanceRecords = await Attendance.findAll({
+      where: { registrationNumber: user.registrationNumber },
+      order: [["scan_time", "DESC"]],
+    });
+
+    const toIST = (date) => {
+      const options = { timeZone: "Asia/Kolkata", hour12: false };
+      return new Date(date).toLocaleString("en-IN", options);
+    };
+
+    const formatted = attendanceRecords.map((a) => ({
+      ...a.dataValues,
+      scan_time: toIST(a.scan_time),
+    }));
+
+    res.status(200).json({
+      success: true,
+      registrationNumber: user.registrationNumber,
+      total: formatted.length,
+      attendance: formatted,
+    });
+  } catch (error) {
+    next(errorHandler(500, error.message || "Error fetching student's attendance"));
+  }
+};
+
 
