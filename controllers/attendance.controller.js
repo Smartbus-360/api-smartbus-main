@@ -201,7 +201,7 @@ export const getAttendanceByStudent = async (req, res, next) => {
       return next(errorHandler(400, "Missing registration number"));
 
     const attendanceRecords = await Attendance.findAll({
-  where: { student_id: loggedInUser.id },
+      where: { registrationNumber },
       order: [["scan_time", "DESC"]],
     });
 
@@ -232,7 +232,7 @@ export const getMyAttendance = async (req, res, next) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const attendanceRecords = await Attendance.findAll({
-      where: { registrationNumber: user.registrationNumber },
+      where: { student_id: loggedInUser.id },
       order: [["scan_time", "DESC"]],
     });
 
