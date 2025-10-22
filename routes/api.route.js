@@ -15,6 +15,7 @@ import {
 import { getDriverSelf } from "../controllers/driver.controller.js";
 // import { markStopReached, getLastReachedStop } from "../controllers/stoppage.controller.js";
 import attendanceRoutes from "./attendance.route.js";
+import { getMyAttendance, getAttendanceByStudent } from "../controllers/attendance.controller.js";
 
 
 const apiRouter = express.Router();
@@ -28,7 +29,10 @@ apiRouter.get("/driver/details/:id", httpAuth, getDriverDetails);
 apiRouter.get("/driver/self", httpAuth, getDriverSelf);
 apiRouter.post("/logout/user", httpAuth, logoutUser);
 apiRouter.use("/attendance", attendanceRoutes);
+apiRouter.get("/attendance/student/self", httpAuth, getMyAttendance);
 
+// Then this one
+apiRouter.get("/attendance/student/:registrationNumber", getAttendanceByStudent
 
 // ⬇️ put this near your other routes
 apiRouter.get("/map/access-check", httpAuth, canViewMap, (req, res) => {
