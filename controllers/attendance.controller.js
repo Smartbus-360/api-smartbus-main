@@ -215,7 +215,6 @@ export const getAttendanceByStudent = async (req, res, next) => {
     next(errorHandler(500, error.message || "Error fetching attendance records"));
   }
 };
-✅ New: Get logged-in student's attendance (safe, does not affect drivers)
 export const getMyAttendance = async (req, res, next) => {
   try {
     const loggedInUser = req.user; // comes from httpAuth middleware
