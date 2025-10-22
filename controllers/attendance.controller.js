@@ -217,23 +217,34 @@ export const getAttendanceByStudent = async (req, res, next) => {
 };
 export const getMyAttendance = async (req, res, next) => {
   try {
+        console.log("🟢 [getMyAttendance] Endpoint hit");
     const loggedInUser = req.user; // comes from httpAuth middleware
+        console.log("🔹 Logged-in user from token:", loggedInUser);
     if (!loggedInUser) {
+            console.warn("⚠️ No logged-in user found in request");
       return res.status(401).json({ message: "Unauthorized access" });
     }
 
     // ensure only student accounts can access this
     if (loggedInUser.accountType !== "student") {
+            console.warn(`⚠️ Access denied for non-student accountType: ${loggedInUser.accountType}`);
       return res.status(403).json({ message: "Access denied: Only students can view this." });
     }
-
+    console.log(`🔍 Fetching user record for ID: ${loggedInUser.id}`);
     const user = await User.findByPk(loggedInUser.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    // if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (!user) {
+      console.error(`❌ User with ID ${loggedInUser.id} not found`);
+      return res.status(404).json({ message: "User not found" });
+    }
+    console.log(`✅ Found user: ${user.username} (Reg No: ${user.registrationNumber})`);
 
     const attendanceRecords = await Attendance.findAll({
       where: { student_id: loggedInUser.id },
       order: [["scan_time", "DESC"]],
     });
+    console.log(`🧾 Attendance records fetched: ${attendanceRecords.length}`);
 
     const toIST = (date) => {
       const options = { timeZone: "Asia/Kolkata", hour12: false };
@@ -244,6 +255,7 @@ export const getMyAttendance = async (req, res, next) => {
       ...a.dataValues,
       scan_time: toIST(a.scan_time),
     }));
+    console.log("✅ Sending response with formatted attendance data");
 
     res.status(200).json({
       success: true,
@@ -252,6 +264,8 @@ export const getMyAttendance = async (req, res, next) => {
       attendance: formatted,
     });
   } catch (error) {
+        console.error("❌ [getMyAttendance] Error:", error);
+
     next(errorHandler(500, error.message || "Error fetching student's attendance"));
   }
 };
