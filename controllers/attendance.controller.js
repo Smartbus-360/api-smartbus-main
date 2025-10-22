@@ -256,62 +256,39 @@ export const getAttendanceByStudent = async (req, res, next) => {
 //     next(errorHandler(500, error.message || "Error fetching student's attendance"));
 //   }
 // };
-export const getMyAttendance = async (req, res, next) => {
+export const getAttendanceByStudent = async (req, res, next) => {
   try {
-    console.log("🟢 getMyAttendance called for logged-in user:", req.user);
+    console.log("🟢 getAttendanceByStudent called with:", req.params);
+    let { registrationNumber } = req.params;
 
-    const loggedInUser = req.user;
-    if (!loggedInUser) {
-      return res.status(401).json({ message: "Unauthorized access" });
-    }
+    // For backward compatibility, treat it as username
+    const username = registrationNumber;
+    console.log("🎯 Matching attendance by username =", username);
 
-    if (loggedInUser.accountType !== "student") {
-      return res.status(403).json({ message: "Access denied: Only students can view this." });
-    }
-
-    const user = await User.findByPk(loggedInUser.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    console.log(`🔍 Fetching attendance for student_id=${loggedInUser.id}, registrationNumber=${user.registrationNumber}`);
+    if (!username) return next(errorHandler(400, "Missing username"));
 
     const attendanceRecords = await Attendance.findAll({
-      where: { student_id: loggedInUser.id },
+      where: { username },   // ✅ Match by username instead of registrationNumber
       order: [["scan_time", "DESC"]],
     });
 
-    console.log(`✅ Found ${attendanceRecords.length} records in tbl_sm360_attendance`);
-    attendanceRecords.forEach((a, i) => {
-      console.log(`📄 Record ${i + 1}:`, {
-        id: a.id,
-        reg: a.registrationNumber,
-        username: a.username,
-        scan_time: a.scan_time,
-      });
-    });
-
-    const toIST = (date) => {
-      const options = { timeZone: "Asia/Kolkata", hour12: false };
-      return new Date(date).toLocaleString("en-IN", options);
-    };
+    console.log(`✅ Found ${attendanceRecords.length} records for ${username}`);
 
     const formatted = attendanceRecords.map((a) => ({
       ...a.dataValues,
       scan_time: toIST(a.scan_time),
     }));
 
-    // 🔍 Final response payload log
-    console.log("🚀 Sending formatted attendance response:", JSON.stringify(formatted, null, 2));
+    console.log("🚀 Sending response:", formatted.length, "records");
 
     res.status(200).json({
       success: true,
-      registrationNumber: user.registrationNumber,
+      username,
       total: formatted.length,
       attendance: formatted,
     });
   } catch (error) {
-    console.error("❌ Error in getMyAttendance:", error);
-    next(errorHandler(500, error.message || "Error fetching student's attendance"));
+    console.error("❌ Error in getAttendanceByStudent:", error);
+    next(errorHandler(500, error.message || "Error fetching attendance records"));
   }
 };
-
-
