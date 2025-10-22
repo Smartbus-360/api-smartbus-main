@@ -109,6 +109,7 @@ console.log("3️⃣ Proceeding to create attendance record...");
 
     // 3️⃣ Save attendance permanently
     const record = await Attendance.create({
+        student_id: req.user.id,
       registrationNumber: student.registrationNumber,
       username: student.username,
       instituteName,
@@ -200,7 +201,7 @@ export const getAttendanceByStudent = async (req, res, next) => {
       return next(errorHandler(400, "Missing registration number"));
 
     const attendanceRecords = await Attendance.findAll({
-      where: { registrationNumber },
+  where: { student_id: loggedInUser.id },
       order: [["scan_time", "DESC"]],
     });
 
