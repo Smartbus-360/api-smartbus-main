@@ -216,14 +216,55 @@ export const getAttendanceByStudent = async (req, res, next) => {
   }
 };
 // ✅ New: Get logged-in student's attendance (safe, does not affect drivers)
+// export const getMyAttendance = async (req, res, next) => {
+//   try {
+//     const loggedInUser = req.user; // comes from httpAuth middleware
+//     if (!loggedInUser) {
+//       return res.status(401).json({ message: "Unauthorized access" });
+//     }
+
+//     // ensure only student accounts can access this
+//     if (loggedInUser.accountType !== "student") {
+//       return res.status(403).json({ message: "Access denied: Only students can view this." });
+//     }
+
+//     const user = await User.findByPk(loggedInUser.id);
+//     if (!user) return res.status(404).json({ message: "User not found" });
+
+//     const attendanceRecords = await Attendance.findAll({
+//       where: { student_id: loggedInUser.id },
+//       order: [["scan_time", "DESC"]],
+//     });
+
+//     const toIST = (date) => {
+//       const options = { timeZone: "Asia/Kolkata", hour12: false };
+//       return new Date(date).toLocaleString("en-IN", options);
+//     };
+
+//     const formatted = attendanceRecords.map((a) => ({
+//       ...a.dataValues,
+//       scan_time: toIST(a.scan_time),
+//     }));
+
+//     res.status(200).json({
+//       success: true,
+//       registrationNumber: user.registrationNumber,
+//       total: formatted.length,
+//       attendance: formatted,
+//     });
+//   } catch (error) {
+//     next(errorHandler(500, error.message || "Error fetching student's attendance"));
+//   }
+// };
 export const getMyAttendance = async (req, res, next) => {
   try {
-    const loggedInUser = req.user; // comes from httpAuth middleware
+    console.log("🟢 getMyAttendance called for logged-in user:", req.user);
+
+    const loggedInUser = req.user;
     if (!loggedInUser) {
       return res.status(401).json({ message: "Unauthorized access" });
     }
 
-    // ensure only student accounts can access this
     if (loggedInUser.accountType !== "student") {
       return res.status(403).json({ message: "Access denied: Only students can view this." });
     }
@@ -231,9 +272,21 @@ export const getMyAttendance = async (req, res, next) => {
     const user = await User.findByPk(loggedInUser.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    console.log(`🔍 Fetching attendance for student_id=${loggedInUser.id}, registrationNumber=${user.registrationNumber}`);
+
     const attendanceRecords = await Attendance.findAll({
       where: { student_id: loggedInUser.id },
       order: [["scan_time", "DESC"]],
+    });
+
+    console.log(`✅ Found ${attendanceRecords.length} records in tbl_sm360_attendance`);
+    attendanceRecords.forEach((a, i) => {
+      console.log(`📄 Record ${i + 1}:`, {
+        id: a.id,
+        reg: a.registrationNumber,
+        username: a.username,
+        scan_time: a.scan_time,
+      });
     });
 
     const toIST = (date) => {
@@ -246,6 +299,9 @@ export const getMyAttendance = async (req, res, next) => {
       scan_time: toIST(a.scan_time),
     }));
 
+    // 🔍 Final response payload log
+    console.log("🚀 Sending formatted attendance response:", JSON.stringify(formatted, null, 2));
+
     res.status(200).json({
       success: true,
       registrationNumber: user.registrationNumber,
@@ -253,6 +309,7 @@ export const getMyAttendance = async (req, res, next) => {
       attendance: formatted,
     });
   } catch (error) {
+    console.error("❌ Error in getMyAttendance:", error);
     next(errorHandler(500, error.message || "Error fetching student's attendance"));
   }
 };
