@@ -2,7 +2,8 @@ import express from "express";
 import {
   markAttendance,
   getAttendanceByStudent,
-  getAttendanceByDate
+  getAttendanceByDate,
+  getMyAttendance,
 } from "../controllers/attendance.controller.js";
 import { httpAuth } from "../middleware/wsAuth.middleware.js";
 
@@ -16,5 +17,7 @@ router.get("/student/:registrationNumber", httpAuth, getAttendanceByStudent);
 
 // Get attendance by date (optional)
 router.get("/date/:date", httpAuth, getAttendanceByDate);
+router.get("/student/self", httpAuth, getMyAttendance);
+
 
 export default router;
