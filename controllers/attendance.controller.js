@@ -169,28 +169,6 @@ export const getAttendanceByDate = async (req, res, next) => {
   }
 };
 
-// GET attendance by student
-// export const getAttendanceByStudent = async (req, res, next) => {
-//   try {
-//     console.log("🟢 getAttendanceByStudent called with:", req.params);
-//     // const { registrationNumber } = req.params;
-//     const { studentId } = req.params;
-// const registrationNumber = studentId;
-//     const attendanceRecords = await Attendance.findAll({
-//       where: { registrationNumber },
-//       order: [["scan_time", "DESC"]],
-//     });
-
-//     const formatted = attendanceRecords.map((a) => ({
-//       ...a.dataValues,
-//       scan_time: toIST(a.scan_time),
-//     }));
-
-//     res.status(200).json(formatted);
-//   } catch (error) {
-//     next(errorHandler(500, error.message || "Error fetching attendance records"));
-//   }
-// };
 
 export const getAttendanceByStudent = async (req, res, next) => {
   try {
