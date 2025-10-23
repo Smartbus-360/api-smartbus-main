@@ -9,17 +9,11 @@ import { httpAuth } from "../middleware/wsAuth.middleware.js";
 
 const router = express.Router();
 
-// Mark attendance (already used by driver)
-router.post("/mark", markAttendance);
-
-// Get attendance by student registration number
+// attendance.route.js (fixed)
+router.get("/student/self", httpAuth, getMyAttendance);  // must come FIRST
 router.get("/student/:registrationNumber", httpAuth, getAttendanceByStudent);
 router.get("/attendance/:registrationNumber", getAttendanceByStudent);
-
-
-// Get attendance by date (optional)
 router.get("/date/:date", httpAuth, getAttendanceByDate);
-router.get("/student/self", httpAuth, getMyAttendance);
 
 
 export default router;
