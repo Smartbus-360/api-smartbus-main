@@ -10,7 +10,7 @@ import { httpAuth } from "../middleware/wsAuth.middleware.js";
 const router = express.Router();
 
 // Mark attendance (already used by driver)
-router.post("/mark",httpAuth, markAttendance);
+router.post("/mark", markAttendance);
 
 // Get attendance by student registration number
 router.get("/student/:registrationNumber", httpAuth, getAttendanceByStudent);
