@@ -174,6 +174,11 @@ export const getAttendanceByStudent = async (req, res, next) => {
     console.log("🟢 getAttendanceByStudent called with:", req.params);
     const { registrationNumber } = req.params;       // ← use correct param name
 
+    if (registrationNumber === 'self' && req.user) {
+      registrationNumber = req.user.registrationNumber;
+      console.log(`⚙️ Auto-mapped 'self' → ${registrationNumber}`);
+    }
+
     if (!registrationNumber)
       return next(errorHandler(400, "Missing registration number"));
 
