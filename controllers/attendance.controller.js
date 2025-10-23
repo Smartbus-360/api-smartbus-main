@@ -109,7 +109,7 @@ console.log("3️⃣ Proceeding to create attendance record...");
 
     // 3️⃣ Save attendance permanently
     const record = await Attendance.create({
-        student_id: req.user.id,
+        // student_id: req.user.id,
       registrationNumber: student.registrationNumber,
       username: student.username,
       instituteName,
