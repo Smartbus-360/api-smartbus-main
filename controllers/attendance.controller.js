@@ -3,8 +3,10 @@ import Attendance from "../models/attendance.model.js";
 import User from "../models/user.model.js";
 import { errorHandler } from "../utils/error.js";
 import { io } from "../index.js";  // to use global Socket.IO instance
-import DriverAttendanceTemp from "../models/driverAttendanceTemp.model.js";
+// import DriverAttendanceTemp from "../models/driverAttendanceTemp.model.js";
 import QrCode from "../models/qrCode.model.js";
+import AttendanceTakerAttendanceTemp from "../models/attendanceTakerAttendanceTemp.model.js";  // ✅ new temp table
+
 
 
 // Convert UTC → IST helper
@@ -77,7 +79,7 @@ const toIST = (date) => {
 export const markAttendance = async (req, res, next) => {
   try {
     console.log("🟢 markAttendance called with body:", req.body);
-    const { registrationNumber, token, driver_id, bus_id, latitude, longitude } = req.body;
+    const { registrationNumber, token, attendance_taker_id, bus_id, latitude, longitude } = req.body;
 
     if (!registrationNumber || !token) {
       return res.status(400).json({ message: "Missing registration number or token" });
@@ -113,7 +115,7 @@ console.log("3️⃣ Proceeding to create attendance record...");
       username: student.username,
       instituteName,
       bus_id,
-      driver_id,
+     attendance_taker_id,
       latitude,
       longitude,
       scan_time: new Date()
@@ -125,7 +127,7 @@ console.log("3️⃣ Proceeding to create attendance record...");
       username: student.username,
       instituteName,
       bus_id,
-      driver_id,
+     attendance_taker_id,
       latitude,
       longitude,
       scan_time: new Date()
