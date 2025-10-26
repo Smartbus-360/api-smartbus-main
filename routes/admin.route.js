@@ -90,6 +90,8 @@ import { generateQrForStudent, revokeQrForStudent } from "../controllers/qr.cont
 import { adminExportAttendance } from "../controllers/attendanceExport.controller.js";
 import { getSchoolStudents } from "../controllers/user.controller.js";
 import { getAttendanceByStudent } from "../controllers/attendance.controller.js";
+import attendanceTakerRoutes from "./attendanceTaker.route.js";
+
 
 const router = express.Router();
 
@@ -102,6 +104,7 @@ router.post("/join-us", joinUs);
 router.get("/enquiries", verifyToken, getEnquiries);
 router.post('/one-time-login', oneTimeLogin);
 router.get('/check-username', checkUsername); // ✅ new route
+router.use("/attendance-takers", attendanceTakerRoutes);
 
 
 
