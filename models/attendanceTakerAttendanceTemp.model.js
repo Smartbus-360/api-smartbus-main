@@ -19,9 +19,12 @@ const DriverAttendanceTemp = sequelize.define('tbl_sm360_driver_attendance_temp'
     type: DataTypes.STRING,
     allowNull: true,
   },
-  driver_id: {
+  attendance_taker_id: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
+    references: { model: AttendanceTaker, key: "id" },
+    onUpdate: "CASCADE",
+    onDelete: "SET NULL",
   },
   bus_id: {
     type: DataTypes.STRING,
@@ -44,4 +47,4 @@ const DriverAttendanceTemp = sequelize.define('tbl_sm360_driver_attendance_temp'
   tableName: 'tbl_sm360_driver_attendance_temp',
 });
 
-export default DriverAttendanceTemp;
+export default AttendanceTakerAttendanceTemp;
