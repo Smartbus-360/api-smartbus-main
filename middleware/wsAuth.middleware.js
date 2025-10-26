@@ -7,6 +7,7 @@ import { Op } from 'sequelize';
 import Institute from "../models/institute.model.js";
 import { findActiveQrOverride } from "../utils/qrOverride.js";
 import DriverQrToken from '../models/driverQrToken.model.js';
+import AttendanceTaker from '../models/attendanceTaker.model.js';  // ⬅️ add this import at top
 
 
 dotenv.config();
@@ -70,6 +71,17 @@ return next();
         req.user = driver;
         return next();
     }
+        // ✅ Attendance-Taker token lane
+if (payload.role === 'attendance_taker') {
+    const attendanceTaker = await AttendanceTaker.findOne({ where: { email: payload.email, token } });
+    if (!attendanceTaker) {
+        return res.status(401).json({ message: 'Authentication error: Invalid or expired token' });
+    }
+
+    req.user = attendanceTaker;
+    return next();
+}
+
 
     // Normal token lane
     const driver = await Driver.findOne({ where: { email: payload.email, token } });
