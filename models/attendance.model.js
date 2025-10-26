@@ -2,6 +2,7 @@ import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
 import Driver from './driver.model.js';
 import User from './user.model.js';
+import AttendanceTaker from './attendanceTaker.model.js';
 
 const Attendance = sequelize.define('tbl_sm360_attendance', {
   id: {
@@ -52,6 +53,13 @@ const Attendance = sequelize.define('tbl_sm360_attendance', {
     type: DataTypes.FLOAT,
     allowNull: true,
   },
+  attendance_taker_id: {
+  type: DataTypes.INTEGER,
+  allowNull: true,
+  references: { model: AttendanceTaker, key: 'id' },
+  onUpdate: 'CASCADE',
+  onDelete: 'SET NULL',
+},
 }, {
   timestamps: true,
   tableName: 'tbl_sm360_attendance'
