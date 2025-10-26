@@ -1321,6 +1321,7 @@ import axios from "axios";
 import Stop from "../models/stop.model.js";
 import { io } from '../index.js';
 import { findActiveQrOverride } from "../utils/qrOverride.js";
+import AttendanceTaker from '../models/attendanceTaker.model.js';
 
 // const OSRM_URL = "http://router.project-osrm.org/route/v1/driving";
 
@@ -2642,6 +2643,31 @@ export const getReachTimesForRoute = async (req, res) => {
     res.json({ success: true, data: reachTimes });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+export const loginAttendanceTaker = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const taker = await AttendanceTaker.findOne({ where: { email } });
+    if (!taker) return res.status(404).json({ message: 'Attendance-Taker not found' });
+
+    const isMatch = await bcrypt.compare(password, taker.password);
+    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+
+    const token = jwt.sign(
+      { id: taker.id, email: taker.email, role: 'attendance_taker' },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    taker.token = token;
+    taker.lastLogin = new Date();
+    await taker.save();
+
+    res.json({ message: 'Login successful', token, taker });
+  } catch (err) {
+    console.error('Login Error:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
 
