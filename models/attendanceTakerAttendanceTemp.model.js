@@ -72,7 +72,7 @@ const AttendanceTakerAttendanceTemp = sequelize.define(
       allowNull: true,
     },
     attendance_taker: {
-      type: DataTypes.STRING, // ✅ changed: plain column, no FK
+      type: DataTypes.STRING, // ✅ plain text (no foreign key)
       allowNull: true,
     },
     bus_id: {
@@ -97,6 +97,9 @@ const AttendanceTakerAttendanceTemp = sequelize.define(
     tableName: "tbl_sm360_driver_attendance_temp",
   }
 );
+
+export default AttendanceTakerAttendanceTemp;
+
 
 export default AttendanceTakerAttendanceTemp;
 
