@@ -1,8 +1,10 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
-import AttendanceTaker from "./attendanceTaker.model.js";
 
-// Define Model
+// ❌ Remove direct import — it causes circular reference on startup
+// import AttendanceTaker from "./attendanceTaker.model.js";
+
+// ✅ Define model first
 const AttendanceTakerAttendanceTemp = sequelize.define(
   "AttendanceTakerAttendanceTemp",
   {
@@ -53,10 +55,12 @@ const AttendanceTakerAttendanceTemp = sequelize.define(
   }
 );
 
-// ✅ Define association AFTER the model
-AttendanceTakerAttendanceTemp.belongsTo(AttendanceTaker, {
-  foreignKey: "attendance_taker_id",
-  as: "attendanceTaker",
-});
+// ✅ Lazy associate pattern — no circular import
+AttendanceTakerAttendanceTemp.associate = (models) => {
+  AttendanceTakerAttendanceTemp.belongsTo(models.AttendanceTaker, {
+    foreignKey: "attendance_taker_id",
+    as: "attendanceTaker",
+  });
+};
 
 export default AttendanceTakerAttendanceTemp;
