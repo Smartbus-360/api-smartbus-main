@@ -9,6 +9,9 @@ import UserStop from './userStop.model.js';
 import Notification from './notification.model.js';
 import BusNotification from './bus_notification.model.js';
 import QrCode from "./qrCode.model.js";
+import AttendanceTaker from "./attendanceTaker.model.js";
+import AttendanceTakerAttendanceTemp from "./attendanceTakerAttendanceTemp.model.js";
+
 
 // Setup Associations
 const setupAssociations = () => {
@@ -54,6 +57,19 @@ Institute.hasMany(User, {
     // Driver-Bus relationship
     Driver.hasOne(Bus, { foreignKey: 'driverId', onDelete: 'SET NULL' });
     Bus.belongsTo(Driver, { foreignKey: 'driverId' });
+};
+Institute.hasMany(AttendanceTaker, { foreignKey: 'instituteId', onDelete: 'CASCADE' });
+  AttendanceTaker.belongsTo(Institute, { foreignKey: 'instituteId' });
+
+  // AttendanceTaker-AttendanceTemp relationship
+  AttendanceTaker.hasMany(AttendanceTakerAttendanceTemp, {
+    foreignKey: "attendance_taker_id",
+    as: "attendanceRecords",
+  });
+  AttendanceTakerAttendanceTemp.belongsTo(AttendanceTaker, {
+    foreignKey: "attendance_taker_id",
+    as: "attendanceTaker",
+  });
 };
 
 
