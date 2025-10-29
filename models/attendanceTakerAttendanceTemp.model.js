@@ -1,7 +1,7 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
 
-const DriverAttendanceTemp = sequelize.define('tbl_sm360_driver_attendance_temp', {
+const AttendanceTakerAttendanceTemp = sequelize.define('tbl_sm360_driver_attendance_temp', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
