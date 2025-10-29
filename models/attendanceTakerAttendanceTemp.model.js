@@ -47,6 +47,5 @@ const AttendanceTakerAttendanceTemp = sequelize.define('tbl_sm360_driver_attenda
   tableName: 'tbl_sm360_driver_attendance_temp',
 });
 
-import AttendanceTaker from "./attendanceTaker.model.js";
 
 export default AttendanceTakerAttendanceTemp;
