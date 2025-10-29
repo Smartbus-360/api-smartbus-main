@@ -2,7 +2,7 @@ import ExcelJS from "exceljs";
 import Attendance from "../models/attendance.model.js";
 import { errorHandler } from "../utils/error.js";
 import sequelize from "../config/database.js";
-import AttendanceTakerAttendanceTemp from "../models/AttendanceTakerAttendanceTemp.model.js";
+import AttendanceTakerAttendanceTemp from "../models/attendanceTakerAttendanceTemp.model.js";
 
 const toIST = (date) => {
   const options = { timeZone: "Asia/Kolkata", hour12: false };
