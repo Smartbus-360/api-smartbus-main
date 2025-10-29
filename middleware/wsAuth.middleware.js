@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js';
 import Driver from '../models/driver.model.js';
 import dotenv from 'dotenv';
-import bcrypt from 'bcrypt'; 
+import bcrypt from 'bcryptjs'; 
 import { Op } from 'sequelize'; 
 import Institute from "../models/institute.model.js";
 import { findActiveQrOverride } from "../utils/qrOverride.js";
