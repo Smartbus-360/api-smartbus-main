@@ -1,6 +1,5 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
-import AttendanceTaker from "./attendanceTaker.model.js";
 
 const AttendanceTakerAttendanceTemp = sequelize.define('tbl_sm360_driver_attendance_temp', {
   id: {
@@ -47,5 +46,7 @@ const AttendanceTakerAttendanceTemp = sequelize.define('tbl_sm360_driver_attenda
   timestamps: true,
   tableName: 'tbl_sm360_driver_attendance_temp',
 });
+
+import AttendanceTaker from "./attendanceTaker.model.js";
 
 export default AttendanceTakerAttendanceTemp;
