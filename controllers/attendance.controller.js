@@ -76,6 +76,75 @@ const toIST = (date) => {
 // };
 
 
+// export const markAttendance = async (req, res, next) => {
+//   try {
+//     console.log("🟢 markAttendance called with body:", req.body);
+//     const { registrationNumber, token, attendance_taker_id, bus_id, latitude, longitude } = req.body;
+
+//     if (!registrationNumber || !token) {
+//       return res.status(400).json({ message: "Missing registration number or token" });
+//     }
+
+//     // 1️⃣ Validate QR token
+//     console.log("1️⃣ Checking QR token:", token);
+//     const qr = await QrCode.findOne({ where: { qr_token: token, is_active: true } });
+//     console.log("1️⃣ Result:", qr ? "✅ Valid QR" : "❌ Invalid QR");
+//     if (!qr) {
+//       return res.status(401).json({ message: "Invalid or revoked QR token" });
+//     }
+
+//     // 2️⃣ Validate student exists
+//     console.log("2️⃣ Checking student:", registrationNumber);
+//     const student = await User.findOne({ where: { registrationNumber: registrationNumber } });
+//     console.log("2️⃣ Result:", student ? `✅ Found student ID ${student.id}` : "❌ Student not found");
+//     if (!student) {
+//       return res.status(404).json({ message: "Student not found" });
+//     }
+
+//     const [institute] = await sequelize.query(
+//       "SELECT name FROM tbl_sm360_institutes WHERE id = :id",
+//       { replacements: { id: student.instituteId }, type: sequelize.QueryTypes.SELECT }
+//     );
+
+//     const instituteName = institute ? institute.name : "Unknown";
+// console.log("3️⃣ Proceeding to create attendance record...");
+
+//     // 3️⃣ Save attendance permanently
+//     const record = await Attendance.create({
+//       registrationNumber: student.registrationNumber,
+//       username: student.username,
+//       instituteName,
+//       bus_id,
+//      attendance_taker_id,
+//       latitude,
+//       longitude,
+//       scan_time: new Date()
+//     });
+
+//     // 4️⃣ Save to driver's daily temp record
+//     await DriverAttendanceTemp.create({
+//       registrationNumber: student.registrationNumber,
+//       username: student.username,
+//       instituteName,
+//       bus_id,
+//      attendance_taker_id,
+//       latitude,
+//       longitude,
+//       scan_time: new Date()
+//     });
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Attendance marked successfully",
+//       record
+//     });
+
+//   } catch (error) {
+//     console.error("Error marking attendance:", error);
+//     res.status(500).json({ message: "Error marking attendance", error: error.message });
+//   }
+// };
+
 export const markAttendance = async (req, res, next) => {
   try {
     console.log("🟢 markAttendance called with body:", req.body);
@@ -95,55 +164,67 @@ export const markAttendance = async (req, res, next) => {
 
     // 2️⃣ Validate student exists
     console.log("2️⃣ Checking student:", registrationNumber);
-    const student = await User.findOne({ where: { registrationNumber: registrationNumber } });
-    console.log("2️⃣ Result:", student ? `✅ Found student ID ${student.id}` : "❌ Student not found");
+    const student = await User.findOne({ where: { registrationNumber } });
     if (!student) {
       return res.status(404).json({ message: "Student not found" });
     }
 
+    // 3️⃣ Validate attendance taker exists
+    const [taker] = await sequelize.query(
+      "SELECT id, name FROM tbl_sm360_attendance_takers WHERE id = :id",
+      { replacements: { id: attendance_taker_id }, type: sequelize.QueryTypes.SELECT }
+    );
+    if (!taker) {
+      return res.status(403).json({ message: "Invalid attendance taker ID" });
+    }
+
+    // 4️⃣ Fetch institute name
     const [institute] = await sequelize.query(
       "SELECT name FROM tbl_sm360_institutes WHERE id = :id",
       { replacements: { id: student.instituteId }, type: sequelize.QueryTypes.SELECT }
     );
-
     const instituteName = institute ? institute.name : "Unknown";
-console.log("3️⃣ Proceeding to create attendance record...");
 
-    // 3️⃣ Save attendance permanently
+    console.log("3️⃣ Proceeding to create attendance record...");
+
+    // 5️⃣ Save permanent attendance record
     const record = await Attendance.create({
       registrationNumber: student.registrationNumber,
       username: student.username,
       instituteName,
       bus_id,
-     attendance_taker_id,
+      attendance_taker_id,
       latitude,
       longitude,
-      scan_time: new Date()
+      scan_time: new Date(),
     });
 
-    // 4️⃣ Save to driver's daily temp record
-    await DriverAttendanceTemp.create({
+    // 6️⃣ Save to attendance taker’s temporary table
+    await AttendanceTakerAttendanceTemp.create({
       registrationNumber: student.registrationNumber,
       username: student.username,
       instituteName,
       bus_id,
-     attendance_taker_id,
+      attendance_taker_id,
       latitude,
       longitude,
-      scan_time: new Date()
+      scan_time: new Date(),
     });
+
+    console.log("✅ Attendance saved successfully");
 
     res.status(200).json({
       success: true,
       message: "Attendance marked successfully",
-      record
+      record,
     });
 
   } catch (error) {
-    console.error("Error marking attendance:", error);
-    res.status(500).json({ message: "Error marking attendance", error: error.message });
+    console.error("❌ Error marking attendance:", error);
+    next(errorHandler(500, error.message || "Error marking attendance"));
   }
 };
+
 
 // GET attendance by date
 export const getAttendanceByDate = async (req, res, next) => {
