@@ -15,12 +15,15 @@ import {
 import { getDriverSelf } from "../controllers/driver.controller.js";
 // import { markStopReached, getLastReachedStop } from "../controllers/stoppage.controller.js";
 import attendanceRoutes from "./attendance.route.js";
+import { loginAttendanceTaker } from "../controllers/api.controller.js";
+
 
 
 const apiRouter = express.Router();
 
 apiRouter.post("/login/user",  loginUser);
 apiRouter.post("/login/driver", loginDriver);
+apiRouter.post("/login/attendance-taker", loginAttendanceTaker);
 apiRouter.post("/signup/driver", signupUser);
 apiRouter.post("/signup/user", signupDriver);
 apiRouter.get("/user/details/:id", httpAuth, getUserDetails);
