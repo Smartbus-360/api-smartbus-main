@@ -38,13 +38,13 @@ const toIST = (date) => {
 //   }
 // };
 
-export const getTodayAttendanceForDriver = async (req, res, next) => {
+export const getTodayAttendanceForTaker = async (req, res, next) => {
   try {
-    const driver_id = req.params.driverId;
+    const taker_id = req.params.takerId;
 
     // Fetch directly from temporary table — no date filter needed since cron clears it every midnight
-    const records = await DriverAttendanceTemp.findAll({
-      where: { driver_id },
+    const records = await AttendanceTakerAttendanceTemp.findAll({
+      where: { attendance_taker_id: taker_id },
       order: [["scan_time", "ASC"]],
     });
 
@@ -120,12 +120,12 @@ export const getTodayAttendanceForDriver = async (req, res, next) => {
 
 export const downloadAttendanceExcel = async (req, res, next) => {
   try {
-    const driver_id = req.params.driverId;
+const taker_id = req.params.takerId;
     const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
 
     // Fetch from temp table (driver’s 24-hour cache)
-    const records = await DriverAttendanceTemp.findAll({
-      where: { driver_id },
+    const records = await AttendanceTakerAttendanceTemp.findAll({
+      where: { attendance_taker_id: taker_id },
       order: [["scan_time", "ASC"]],
     });
 
@@ -160,7 +160,7 @@ export const downloadAttendanceExcel = async (req, res, next) => {
     );
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename=attendance_${today}_driver${driver_id}.xlsx`
+      `attachment; filename=attendance_${today}_taker${taker_id}.xlsx`
     );
 
     await workbook.xlsx.write(res);
