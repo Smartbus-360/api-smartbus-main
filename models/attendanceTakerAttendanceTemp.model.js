@@ -47,7 +47,7 @@ const AttendanceTakerAttendanceTemp = sequelize.define(
   },
   {
     timestamps: true,
-    tableName: "tbl_sm360_driver_attendance_temp",
+    tableName: "tbl_sm360_attendance_taker_attendance_temp",
   }
 );
 
