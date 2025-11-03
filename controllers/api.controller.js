@@ -2646,28 +2646,45 @@ export const getReachTimesForRoute = async (req, res) => {
   }
 };
 export const loginAttendanceTaker = async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password)
+    return res
+      .status(400)
+      .json({ success: false, message: "Email and password are required" });
+
   try {
-    const { email, password } = req.body;
     const taker = await AttendanceTaker.findOne({ where: { email } });
-    if (!taker) return res.status(404).json({ message: 'Attendance-Taker not found' });
+    if (!taker)
+      return res
+        .status(404)
+        .json({ success: false, message: "Attendance taker not found" });
 
     const isMatch = await bcrypt.compare(password, taker.password);
-    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+    if (!isMatch)
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid password" });
 
     const token = jwt.sign(
-      { id: taker.id, email: taker.email, role: 'attendance_taker' },
+      { id: taker.id, role: "attendance_taker" },
       process.env.JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: "8h" }
     );
 
-    taker.token = token;
-    taker.lastLogin = new Date();
-    await taker.save();
-
-    res.json({ message: 'Login successful', token, taker });
-  } catch (err) {
-    console.error('Login Error:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.json({
+      success: true,
+      message: "Login successful",
+      token,
+      attendanceTakerId: taker.id,
+      name: taker.name,
+      email: taker.email,
+    });
+  } catch (error) {
+    console.error("Error logging in attendance taker:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Server error during login" });
   }
 };
 
