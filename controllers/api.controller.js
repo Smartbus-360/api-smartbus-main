@@ -2660,7 +2660,7 @@ export const loginAttendanceTaker = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Attendance taker not found" });
 
-    const isMatch = await bcrypt.compare(password, taker.password);
+    const isMatch = await bcryptjs.compare(password, taker.password);
     if (!isMatch)
       return res
         .status(401)
