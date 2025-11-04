@@ -185,6 +185,25 @@ export const markAttendance = async (req, res, next) => {
     );
     const instituteName = institute ? institute.name : "Unknown";
 
+    const [busInfo] = await sequelize.query(`
+      SELECT b.id AS bus_id, b.busNumber
+      FROM tbl_sm360_users u
+      LEFT JOIN tbl_sm360_stops s ON u.stopId = s.id
+      LEFT JOIN tbl_sm360_driver_routes dr ON s.routeId = dr.routeId
+      LEFT JOIN tbl_sm360_drivers d ON dr.driverId = d.id
+      LEFT JOIN tbl_sm360_buses b ON d.id = b.driverId
+      WHERE u.id = :userId
+      LIMIT 1
+    `, {
+      replacements: { userId: student.id },
+      type: sequelize.QueryTypes.SELECT,
+    });
+
+    const derivedBusId = busInfo ? busInfo.bus_id : null;
+    console.log("🚌 Derived bus ID:", derivedBusId || "❌ Not found");
+
+
+
     console.log("3️⃣ Proceeding to create attendance record...");
 
     // 5️⃣ Save permanent attendance record
@@ -192,7 +211,8 @@ export const markAttendance = async (req, res, next) => {
       registrationNumber: student.registrationNumber,
       username: student.username,
       instituteName,
-      bus_id,
+      // bus_id,
+      bus_id: derivedBusId,
       attendance_taker_id,
       latitude,
       longitude,
@@ -204,7 +224,7 @@ export const markAttendance = async (req, res, next) => {
       registrationNumber: student.registrationNumber,
       username: student.username,
       instituteName,
-      bus_id,
+      bus_id: derivedBusId,
       attendance_taker_id,
       latitude,
       longitude,
