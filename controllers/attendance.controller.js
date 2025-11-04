@@ -214,6 +214,7 @@ console.log("🚌 Derived bus number:", derivedBusNumber || "❌ Not found");
       // bus_id,
       bus_id: derivedBusNumber,
       attendance_taker_id,
+      student_id: student.id,
       latitude,
       longitude,
       scan_time: new Date(),
@@ -226,6 +227,7 @@ console.log("🚌 Derived bus number:", derivedBusNumber || "❌ Not found");
       instituteName,
       bus_id: derivedBusNumber,
       attendance_taker_id,
+      student_id: student.id,
       latitude,
       longitude,
       scan_time: new Date(),
@@ -355,3 +357,31 @@ export const getMyAttendance = async (req, res, next) => {
     next(errorHandler(500, error.message || "Error fetching student's attendance"));
   }
 };
+// ✅ New: fetch 24-hour sheet for a specific attendance taker
+export const getTakerTempAttendance = async (req, res, next) => {
+  try {
+    const { takerId } = req.params;
+    if (!takerId) return res.status(400).json({ message: "Missing attendance taker ID" });
+
+    const now = new Date();
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    const records = await AttendanceTakerAttendanceTemp.findAll({
+      where: {
+        attendance_taker_id: takerId,
+        scan_time: { [sequelize.Op.between]: [yesterday, now] },
+      },
+      order: [["scan_time", "DESC"]],
+    });
+
+    const formatted = records.map((a) => ({
+      ...a.dataValues,
+      scan_time: new Date(a.scan_time).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+    }));
+
+    res.status(200).json({ success: true, total: formatted.length, attendance: formatted });
+  } catch (error) {
+    next(errorHandler(500, error.message || "Error fetching taker attendance sheet"));
+  }
+};
+
