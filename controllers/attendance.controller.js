@@ -8,6 +8,7 @@ import QrCode from "../models/qrCode.model.js";
 import AttendanceTakerAttendanceTemp from "../models/attendanceTakerAttendanceTemp.model.js";  // ✅ new temp table
 
 
+console.log("✅ Temp Model Fields:", Object.keys(AttendanceTakerAttendanceTemp.rawAttributes));
 
 // Convert UTC → IST helper
 const toIST = (date) => {
@@ -222,6 +223,7 @@ console.log("🚌 Derived bus number:", derivedBusNumber || "❌ Not found");
 
     // 6️⃣ Save to attendance taker’s temporary table
     await AttendanceTakerAttendanceTemp.create({
+        console.error("❌ student_id missing in AttendanceTakerAttendanceTemp model!");
       registrationNumber: student.registrationNumber,
       username: student.username,
       instituteName,
