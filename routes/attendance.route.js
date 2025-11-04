@@ -6,6 +6,7 @@ import {
   getMyAttendance,
 } from "../controllers/attendance.controller.js";
 import { httpAuth } from "../middleware/wsAuth.middleware.js";
+import { markAttendance } from "../controllers/attendance.controller.js";
 
 const router = express.Router();
 
@@ -14,6 +15,7 @@ router.get("/student/self", httpAuth, getMyAttendance);  // must come FIRST
 router.get("/student/:registrationNumber", httpAuth, getAttendanceByStudent);
 router.get("/attendance/:registrationNumber", getAttendanceByStudent);
 router.get("/date/:date", httpAuth, getAttendanceByDate);
+router.post("/mark", markAttendance);
 
 
 export default router;
