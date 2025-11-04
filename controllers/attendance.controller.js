@@ -222,8 +222,8 @@ console.log("🚌 Derived bus number:", derivedBusNumber || "❌ Not found");
     });
 
     // 6️⃣ Save to attendance taker’s temporary table
+            console.error("❌ student_id missing in AttendanceTakerAttendanceTemp model!");
     await AttendanceTakerAttendanceTemp.create({
-        console.error("❌ student_id missing in AttendanceTakerAttendanceTemp model!");
       registrationNumber: student.registrationNumber,
       username: student.username,
       instituteName,
