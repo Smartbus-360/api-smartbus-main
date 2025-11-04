@@ -255,7 +255,8 @@ export const getAttendanceByDate = async (req, res, next) => {
 export const getAttendanceByStudent = async (req, res, next) => {
   try {
     console.log("🟢 getAttendanceByStudent called with:", req.params);
-    const { registrationNumber } = req.params;       // ← use correct param name
+    // const { registrationNumber } = req.params;       // ← use correct param name
+    let { registrationNumber } = req.params;
 
     if (registrationNumber === 'self' && req.user) {
       registrationNumber = req.user.registrationNumber;
