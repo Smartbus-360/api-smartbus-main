@@ -200,7 +200,7 @@ export const markAttendance = async (req, res, next) => {
     });
 
     const derivedBusNumber = busInfo ? busInfo.busNumber : null;
-    console.log("🚌 Derived bus ID:", derivedBusId || "❌ Not found");
+console.log("🚌 Derived bus number:", derivedBusNumber || "❌ Not found");
 
 
 
@@ -212,7 +212,7 @@ export const markAttendance = async (req, res, next) => {
       username: student.username,
       instituteName,
       // bus_id,
-      bus_id: derivedBusId,
+      bus_id: derivedBusNumber,
       attendance_taker_id,
       latitude,
       longitude,
@@ -224,7 +224,7 @@ export const markAttendance = async (req, res, next) => {
       registrationNumber: student.registrationNumber,
       username: student.username,
       instituteName,
-      bus_id: derivedBusId,
+      bus_id: derivedBusNumber,
       attendance_taker_id,
       latitude,
       longitude,
