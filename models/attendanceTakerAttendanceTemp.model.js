@@ -21,6 +21,13 @@ const AttendanceTakerAttendanceTemp = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    student_id: {
+  type: DataTypes.INTEGER,
+  allowNull: true,
+  references: { model: "tbl_sm360_users", key: "id" },
+  onUpdate: "CASCADE",
+  onDelete: "SET NULL",
+},
     attendance_taker_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
