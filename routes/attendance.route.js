@@ -6,7 +6,6 @@ import {
   getMyAttendance,
 } from "../controllers/attendance.controller.js";
 import { httpAuth } from "../middleware/wsAuth.middleware.js";
-import { markAttendance } from "../controllers/attendance.controller.js";
 
 const router = express.Router();
 
