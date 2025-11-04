@@ -4,6 +4,7 @@ import {
   getAttendanceByStudent,
   getAttendanceByDate,
   getMyAttendance,
+   getTakerTempAttendance,
 } from "../controllers/attendance.controller.js";
 import { httpAuth } from "../middleware/wsAuth.middleware.js";
 
@@ -15,6 +16,7 @@ router.get("/student/:registrationNumber", httpAuth, getAttendanceByStudent);
 router.get("/attendance/:registrationNumber", getAttendanceByStudent);
 router.get("/date/:date", httpAuth, getAttendanceByDate);
 router.post("/mark", markAttendance);
+router.get("/taker-sheet/:takerId", getTakerTempAttendance);
 
 
 export default router;
