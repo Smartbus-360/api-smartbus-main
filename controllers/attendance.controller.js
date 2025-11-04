@@ -186,7 +186,7 @@ export const markAttendance = async (req, res, next) => {
     const instituteName = institute ? institute.name : "Unknown";
 
     const [busInfo] = await sequelize.query(`
-      SELECT b.id AS bus_id, b.busNumber
+      SELECT b.busNumber
       FROM tbl_sm360_users u
       LEFT JOIN tbl_sm360_stops s ON u.stopId = s.id
       LEFT JOIN tbl_sm360_driver_routes dr ON s.routeId = dr.routeId
@@ -199,7 +199,7 @@ export const markAttendance = async (req, res, next) => {
       type: sequelize.QueryTypes.SELECT,
     });
 
-    const derivedBusId = busInfo ? busInfo.bus_id : null;
+    const derivedBusNumber = busInfo ? busInfo.busNumber : null;
     console.log("🚌 Derived bus ID:", derivedBusId || "❌ Not found");
 
 
