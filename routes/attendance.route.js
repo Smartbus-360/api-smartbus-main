@@ -14,7 +14,7 @@ router.get("/student/self", httpAuth, getMyAttendance);  // must come FIRST
 router.get("/student/:registrationNumber", httpAuth, getAttendanceByStudent);
 router.get("/attendance/:registrationNumber", getAttendanceByStudent);
 router.get("/date/:date", httpAuth, getAttendanceByDate);
-router.post("/mark",httpAuth, markAttendance);
+router.post("/mark", markAttendance);
 
 
 export default router;
