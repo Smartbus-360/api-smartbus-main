@@ -290,8 +290,8 @@ export const getTakerTempAttendance = async (req, res, next) => {
 
 return res.status(200).json({
       success: true,
-      count: records.length,
-      data: records,
+  total: records.length,    // was count
+  attendance: records
     });
   } catch (error) {
     console.error("❌ Error in getTakerTempAttendance:", error);
