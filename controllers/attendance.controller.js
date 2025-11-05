@@ -238,10 +238,10 @@ export const getMyAttendance = async (req, res, next) => {
     }
 
     // ensure only student accounts can access this
-    if (loggedInUser.accountType !== "student") {
-            console.warn(`⚠️ Access denied for non-student accountType: ${loggedInUser.accountType}`);
-      return res.status(403).json({ message: "Access denied: Only students can view this." });
-    }
+    // if (loggedInUser.accountType !== "student") {
+    //         console.warn(`⚠️ Access denied for non-student accountType: ${loggedInUser.accountType}`);
+    //   return res.status(403).json({ message: "Access denied: Only students can view this." });
+    // }
     console.log(`🔍 Fetching user record for ID: ${loggedInUser.id}`);
     const user = await User.findByPk(loggedInUser.id);
     // if (!user) return res.status(404).json({ message: "User not found" });
