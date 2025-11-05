@@ -241,21 +241,22 @@ console.log("🚌 Derived bus number:", derivedBusNumber || "❌ Not found");
     });
     console.log("✅ Successfully inserted into temp table for taker_id =", attendance_taker_id);
 // 🧩 Send attendance notification to the student
-    console.log(`✅ Attendance saved for ${registrationNumber} at ${moment().format("hh:mm:ss A")}`);
+console.log("✅ Attendance saved for " + registrationNumber + " at " + moment().format("hh:mm:ss A"));
+console.log("📢 Notification emitted to student_" + student.id);
 try {
   const student = await User.findOne({ where: { registrationNumber } });
   if (student) {
     const formattedTime = moment().format("hh:mm A");
     const formattedDate = moment().format("DD MMMM YYYY");
 
-    const message = `
-SMART BUS 360
-Attendance Notification Alert:
-Registration Number: ${registrationNumber}
-Attendance has been successfully marked.
-Time: ${formattedTime}
-Date: ${formattedDate}
-    `;
+const message =
+  "SMART BUS 360\n" +
+  "Attendance Notification Alert:\n" +
+  "Registration Number: " + registrationNumber + "\n" +
+  "Attendance has been successfully marked.\n" +
+  "Time: " + formattedTime + "\n" +
+  "Date: " + formattedDate;
+
 
     io.of("/students").to(`student_${student.id}`).emit("attendance_notification", {
       title: "SMART BUS 360",
