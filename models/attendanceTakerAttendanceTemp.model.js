@@ -53,7 +53,8 @@ const AttendanceTakerAttendanceTemp = sequelize.define(
     },
   },
   {
-    timestamps: true,
+freezeTableName: true,          
+    timestamps: false,              
     tableName: "tbl_sm360_attendance_taker_attendance_temp",
   }
 );
