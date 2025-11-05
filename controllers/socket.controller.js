@@ -386,6 +386,16 @@ adminNotificationNamespace.to(`driver_${numericDriverId}`).emit('locationUpdate'
                 socket.leave(`driver_${driverId}`);
             });
         });
+            studentNamespace.on("connection", (socket) => {
+    console.log("✅ Student connected to /students namespace");
+
+    socket.on("registerStudent", (studentId) => {
+      socket.join(`student_${studentId}`);
+      console.log(`🎓 Student ${studentId} joined room student_${studentId}`);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("❌ Student disconnected from /students namespace");
+    });
     });
 };
-
