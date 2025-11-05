@@ -7,6 +7,7 @@ import { io } from "../index.js";  // to use global Socket.IO instance
 import QrCode from "../models/qrCode.model.js";
 import AttendanceTakerAttendanceTemp from "../models/attendanceTakerAttendanceTemp.model.js";  // ✅ new temp table
 import moment from "moment";
+import { Op } from "sequelize";
 
 
 console.log("✅ Temp Model Fields:", Object.keys(AttendanceTakerAttendanceTemp.rawAttributes));
@@ -273,24 +274,32 @@ export const getTakerTempAttendance = async (req, res, next) => {
     if (!takerId) return res.status(400).json({ message: "Missing attendance taker ID" });
 
     const now = new Date();
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const istNow = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+    const ist24HrAgo = new Date(istNow.getTime() - 24 * 60 * 60 * 1000);
+
 
     const records = await AttendanceTakerAttendanceTemp.findAll({
       where: {
         attendance_taker_id: takerId,
-        scan_time: { [sequelize.Op.between]: [yesterday, now] },
+        scan_time: {
+          [Op.between]: [ist24HrAgo, istNow],
+        },
       },
       order: [["scan_time", "DESC"]],
     });
 
-    const formatted = records.map((a) => ({
-      ...a.dataValues,
-      scan_time: new Date(a.scan_time).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-    }));
-
-    res.status(200).json({ success: true, total: formatted.length, attendance: formatted });
+return res.status(200).json({
+      success: true,
+      count: records.length,
+      data: records,
+    });
   } catch (error) {
-    next(errorHandler(500, error.message || "Error fetching taker attendance sheet"));
+    console.error("❌ Error in getTakerTempAttendance:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching temporary attendance",
+      error: error.message,
+    });
   }
 };
 
