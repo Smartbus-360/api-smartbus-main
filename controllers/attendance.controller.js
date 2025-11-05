@@ -223,6 +223,7 @@ console.log("🚌 Derived bus number:", derivedBusNumber || "❌ Not found");
 
     // 6️⃣ Save to attendance taker’s temporary table
             console.error("❌ student_id missing in AttendanceTakerAttendanceTemp model!");
+    console.log("🟢 Creating temp attendance record for taker:", attendance_taker_id);
     await AttendanceTakerAttendanceTemp.create({
       registrationNumber: student.registrationNumber,
       username: student.username,
