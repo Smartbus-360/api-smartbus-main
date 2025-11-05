@@ -6,6 +6,7 @@ import { io } from "../index.js";  // to use global Socket.IO instance
 // import DriverAttendanceTemp from "../models/driverAttendanceTemp.model.js";
 import QrCode from "../models/qrCode.model.js";
 import AttendanceTakerAttendanceTemp from "../models/attendanceTakerAttendanceTemp.model.js";  // ✅ new temp table
+import moment from "moment";
 
 
 console.log("✅ Temp Model Fields:", Object.keys(AttendanceTakerAttendanceTemp.rawAttributes));
@@ -222,7 +223,7 @@ console.log("🚌 Derived bus number:", derivedBusNumber || "❌ Not found");
     });
 
     // 6️⃣ Save to attendance taker’s temporary table
-            console.error("❌ student_id missing in AttendanceTakerAttendanceTemp model!");
+            // console.error("❌ student_id missing in AttendanceTakerAttendanceTemp model!");
     console.log("🟢 Creating temp attendance record for taker:", attendance_taker_id);
     await AttendanceTakerAttendanceTemp.create({
       registrationNumber: student.registrationNumber,
@@ -235,6 +236,35 @@ console.log("🚌 Derived bus number:", derivedBusNumber || "❌ Not found");
       longitude,
       scan_time: new Date(),
     });
+// 🧩 Send attendance notification to the student
+    console.log(`✅ Attendance saved for ${registrationNumber} at ${moment().format("hh:mm:ss A")}`);
+try {
+  const student = await User.findOne({ where: { registrationNumber } });
+  if (student) {
+    const formattedTime = moment().format("hh:mm A");
+    const formattedDate = moment().format("DD MMMM YYYY");
+
+    const message = `
+SMART BUS 360
+Attendance Notification Alert:
+Registration Number: ${registrationNumber}
+Attendance has been successfully marked.
+Time: ${formattedTime}
+Date: ${formattedDate}
+    `;
+
+    io.of("/students").to(`student_${student.id}`).emit("attendance_notification", {
+      title: "SMART BUS 360",
+      message,
+      time: formattedTime,
+      date: formattedDate,
+    });
+
+    console.log(`📢 Notification emitted to student_${student.id}`);
+  }
+} catch (err) {
+  console.error("❌ Failed to emit student notification:", err);
+}
 
     console.log("✅ Attendance saved successfully");
 
