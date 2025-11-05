@@ -2,7 +2,7 @@ import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 
 const AttendanceTakerAttendanceTemp = sequelize.define(
-  "AttendanceTakerAttendanceTemp",
+  "tbl_sm360_attendance_taker_attendance_temp",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -51,10 +51,19 @@ const AttendanceTakerAttendanceTemp = sequelize.define(
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
     },
+    createdAt: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+
   },
   {
 freezeTableName: true,          
-    timestamps: false,              
+    timestamps: true,              
     tableName: "tbl_sm360_attendance_taker_attendance_temp",
   }
 );
