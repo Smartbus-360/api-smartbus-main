@@ -151,6 +151,8 @@ export const markAttendance = async (req, res, next) => {
   try {
     console.log("🟢 markAttendance called with body:", req.body);
     const { registrationNumber, token, attendance_taker_id, bus_id, latitude, longitude } = req.body;
+    console.log("🔹 Raw attendance taker ID received:", attendance_taker_id);
+    console.log("🔹 Full request body:", req.body);
 
     if (!registrationNumber || !token) {
       return res.status(400).json({ message: "Missing registration number or token" });
@@ -225,6 +227,7 @@ console.log("🚌 Derived bus number:", derivedBusNumber || "❌ Not found");
     // 6️⃣ Save to attendance taker’s temporary table
             // console.error("❌ student_id missing in AttendanceTakerAttendanceTemp model!");
     console.log("🟢 Creating temp attendance record for taker:", attendance_taker_id);
+    console.log("📦 About to insert into AttendanceTakerAttendanceTemp with taker_id =", attendance_taker_id);
     await AttendanceTakerAttendanceTemp.create({
       registrationNumber: student.registrationNumber,
       username: student.username,
@@ -236,6 +239,7 @@ console.log("🚌 Derived bus number:", derivedBusNumber || "❌ Not found");
       longitude,
       scan_time: new Date(),
     });
+    console.log("✅ Successfully inserted into temp table for taker_id =", attendance_taker_id);
 // 🧩 Send attendance notification to the student
     console.log(`✅ Attendance saved for ${registrationNumber} at ${moment().format("hh:mm:ss A")}`);
 try {
