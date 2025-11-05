@@ -6,17 +6,18 @@ import { io } from "../index.js";  // to use global Socket.IO instance
 // import DriverAttendanceTemp from "../models/driverAttendanceTemp.model.js";
 import QrCode from "../models/qrCode.model.js";
 import AttendanceTakerAttendanceTemp from "../models/attendanceTakerAttendanceTemp.model.js";  // ✅ new temp table
-import moment from "moment";
+import moment from "moment-timezone";
+moment.tz.setDefault("Asia/Kolkata"); // 👈 This makes all times Indian Standard Time
 import { Op } from "sequelize";
 
 
 console.log("✅ Temp Model Fields:", Object.keys(AttendanceTakerAttendanceTemp.rawAttributes));
 
 // Convert UTC → IST helper
-const toIST = (date) => {
-  const options = { timeZone: "Asia/Kolkata", hour12: false };
-  return new Date(date).toLocaleString("en-IN", options);
-};
+// const toIST = (date) => {
+//   const options = { timeZone: "Asia/Kolkata", hour12: false };
+//   return new Date(date).toLocaleString("en-IN", options);
+// };
 
 
 export const markAttendance = async (req, res, next) => {
@@ -93,7 +94,9 @@ console.log("🚌 Derived bus number:", derivedBusNumber || "❌ Not found");
       student_id: student.id,
       latitude,
       longitude,
-      scan_time: new Date(),
+      // scan_time: new Date(),
+      scan_time: moment().toDate(),
+
     });
 
     // 6️⃣ Save to attendance taker’s temporary table
@@ -109,7 +112,8 @@ console.log("🚌 Derived bus number:", derivedBusNumber || "❌ Not found");
       student_id: student.id,
       latitude,
       longitude,
-      scan_time: new Date(),
+      // scan_time: new Date(),
+      scan_time: moment().toDate(),
     });
     console.log("✅ Successfully inserted into temp table for taker_id =", attendance_taker_id);
 // 🧩 Send attendance notification to the student
@@ -162,8 +166,11 @@ const message =
 export const getAttendanceByDate = async (req, res, next) => {
   try {
     const { date } = req.params;
-    const startDate = new Date(`${date}T00:00:00+05:30`);
-    const endDate = new Date(`${date}T23:59:59+05:30`);
+    // const startDate = new Date(`${date}T00:00:00+05:30`);
+    // const endDate = new Date(`${date}T23:59:59+05:30`);
+
+    const startDate = moment(date).startOf("day");
+const endDate = moment(date).endOf("day");
 
     const attendanceRecords = await Attendance.findAll({
       where: {
@@ -172,10 +179,16 @@ export const getAttendanceByDate = async (req, res, next) => {
       order: [["scan_time", "ASC"]],
     });
 
+    // const formatted = attendanceRecords.map((a) => ({
+    //   ...a.dataValues,
+    //   scan_time: toIST(a.scan_time),
+    // }));
+
     const formatted = attendanceRecords.map((a) => ({
-      ...a.dataValues,
-      scan_time: toIST(a.scan_time),
-    }));
+  ...a.dataValues,
+  scan_time: moment(a.scan_time).format("YYYY-MM-DD HH:mm:ss"),
+}));
+
 
     res.status(200).json(formatted);
   } catch (error) {
@@ -205,7 +218,8 @@ export const getAttendanceByStudent = async (req, res, next) => {
 
     const formatted = attendanceRecords.map((a) => ({
       ...a.dataValues,
-      scan_time: toIST(a.scan_time),
+      // scan_time: toIST(a.scan_time),
+      scan_time: moment(a.scan_time).format("YYYY-MM-DD HH:mm:ss"),
     }));
 
     res.status(200).json(formatted);
@@ -244,14 +258,15 @@ export const getMyAttendance = async (req, res, next) => {
     });
     console.log(`🧾 Attendance records fetched: ${attendanceRecords.length}`);
 
-    const toIST = (date) => {
-      const options = { timeZone: "Asia/Kolkata", hour12: false };
-      return new Date(date).toLocaleString("en-IN", options);
-    };
+    // const toIST = (date) => {
+    //   const options = { timeZone: "Asia/Kolkata", hour12: false };
+    //   return new Date(date).toLocaleString("en-IN", options);
+    // };
 
     const formatted = attendanceRecords.map((a) => ({
       ...a.dataValues,
-      scan_time: toIST(a.scan_time),
+      // scan_time: toIST(a.scan_time),
+      scan_time: moment(a.scan_time).format("YYYY-MM-DD HH:mm:ss"),
     }));
     console.log("✅ Sending response with formatted attendance data");
 
@@ -273,10 +288,8 @@ export const getTakerTempAttendance = async (req, res, next) => {
     const { takerId } = req.params;
     if (!takerId) return res.status(400).json({ message: "Missing attendance taker ID" });
 
-    const now = new Date();
-    const istNow = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
-    const ist24HrAgo = new Date(istNow.getTime() - 24 * 60 * 60 * 1000);
-
+    const istNow = moment();
+const ist24HrAgo = moment().subtract(24, "hours");
 
     const records = await AttendanceTakerAttendanceTemp.findAll({
       where: {
