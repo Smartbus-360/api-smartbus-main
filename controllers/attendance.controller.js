@@ -155,7 +155,6 @@ if (student && student.id) {
   console.log(`📢 attendance_updated emitted for student_${student.id}`);
 }
 
-
     console.log("✅ Attendance saved successfully");
 
     res.status(200).json({
