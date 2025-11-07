@@ -40,8 +40,8 @@ router.post("/", verifyToken, addAttendanceTaker);
 router.put("/:id", verifyToken, updateAttendanceTaker);
 router.delete("/:id", verifyToken, deleteAttendanceTaker);
 router.get("/search", verifyToken, searchAttendanceTakers);
-router.post("/generate-qr", adminAuth, generateQrForTaker);
+router.post("/generate-qr", verifyToken, generateQrForTaker);
 router.post("/qr-login", qrLoginAttendanceTaker);
-router.post("/revoke-qr", adminAuth, revokeQrSession);
+router.post("/revoke-qr", verifyToken, revokeQrSession);
 
 export default router;
