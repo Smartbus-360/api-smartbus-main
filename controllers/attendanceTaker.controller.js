@@ -2,10 +2,13 @@ import AttendanceTaker from "../models/attendanceTaker.model.js";
 import bcrypt from "bcrypt";
 import { errorHandler } from "../utils/error.js";
 import { Op } from "sequelize";
+import jwt from "jsonwebtoken";
+import AttendanceTakerQrSession from "../models/attendanceTakerQrSession.model.js";
+import dotenv from "dotenv";
+dotenv.config();
+const JWT_SECRET = process.env.JWT_SECRET;
 
-/**
- * 📋 Get all attendance-takers
- */
+
 export const getAttendanceTakers = async (req, res, next) => {
   try {
     const takers = await AttendanceTaker.findAll({ order: [["createdAt", "DESC"]] });
@@ -15,9 +18,6 @@ export const getAttendanceTakers = async (req, res, next) => {
   }
 };
 
-/**
- * ➕ Add new attendance-taker
- */
 export const addAttendanceTaker = async (req, res, next) => {
   try {
     const { name, email, password, phone, instituteId } = req.body;
@@ -98,3 +98,102 @@ export const searchAttendanceTakers = async (req, res, next) => {
     next(errorHandler(500, error.message || "Error searching attendance-takers"));
   }
 };
+/**
+ * 🧾 Admin: Generate QR for an attendance taker
+ */
+export const generateQrForTaker = async (req, res, next) => {
+  try {
+    const { attendanceTakerId, expiresInHours } = req.body;
+
+    if (!attendanceTakerId)
+      return res.status(400).json({ message: "attendanceTakerId required" });
+
+    const token = crypto.randomUUID();
+    const expiresAt = expiresInHours
+      ? new Date(Date.now() + expiresInHours * 60 * 60 * 1000)
+      : null;
+
+    const newSession = await AttendanceTakerQrSession.create({
+      attendanceTakerId,
+      token,
+      expiresAt,
+    });
+
+    const qrData = `${process.env.SITE_URL}/api/attendance-taker/qr-login?token=${token}`;
+
+    res.json({
+      success: true,
+      message: "QR generated successfully",
+      data: { token, qrData, expiresAt },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * 🔑 QR-based login for Attendance Taker
+ */
+export const qrLoginAttendanceTaker = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) return res.status(400).json({ message: "QR token missing" });
+
+    const session = await AttendanceTakerQrSession.findOne({ where: { token, isActive: true } });
+    if (!session)
+      return res.status(401).json({ message: "Invalid or revoked QR" });
+
+    if (session.expiresAt && new Date(session.expiresAt) < new Date()) {
+      session.isActive = false;
+      await session.save();
+      return res.status(401).json({ message: "QR expired" });
+    }
+
+    const taker = await AttendanceTaker.findByPk(session.attendanceTakerId);
+    if (!taker) return res.status(404).json({ message: "Attendance Taker not found" });
+
+    const jwtToken = jwt.sign(
+      { id: taker.id, role: "attendance_taker" },
+      JWT_SECRET,
+      { expiresIn: "8h" }
+    );
+
+    taker.token = jwtToken;
+    taker.lastLogin = new Date();
+    await taker.save();
+
+    res.json({
+      success: true,
+      message: "QR login successful",
+      token: jwtToken,
+      attendanceTakerId: taker.id,
+      name: taker.name,
+      email: taker.email,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * 🚫 Admin: Revoke an active QR session
+ */
+export const revokeQrSession = async (req, res, next) => {
+  try {
+    const { attendanceTakerId } = req.body;
+
+    if (!attendanceTakerId)
+      return res.status(400).json({ message: "attendanceTakerId required" });
+
+    await AttendanceTakerQrSession.update(
+      { isActive: false, revokedAt: new Date() },
+      { where: { attendanceTakerId, isActive: true } }
+    );
+
+    res.json({ success: true, message: "QR session revoked successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
