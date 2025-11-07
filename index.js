@@ -14,6 +14,7 @@ import path from 'path';
 import './cronJobs.js';
 import { setupAssociations } from './models/associations.js';
 import attendanceRoutes from "./routes/attendance.route.js";
+import attendanceTakerRoutes from './routes/attendanceTaker.route.js';
 
 
 
@@ -55,6 +56,7 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use('/api/profile', profileRoutes);
 app.use('/api/admin', adminRoutes); 
 app.use('/api', apiRoutes);
+app.use('/api/attendance-taker', attendanceTakerRoutes);
 
 
 
