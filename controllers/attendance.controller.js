@@ -315,4 +315,27 @@ return res.status(200).json({
     });
   }
 };
+// ✅ Fetch unread attendance count for a logged-in student
+export const getUnreadAttendanceCount = async (req, res, next) => {
+  try {
+    const loggedInUser = req.user; // from verifyToken / httpAuth middleware
+    if (!loggedInUser || !loggedInUser.id) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    // ⚙️ If you already track read/unread, count those:
+    const count = await Attendance.count({
+      where: { student_id: loggedInUser.id, is_read: false },
+    });
+
+    return res.status(200).json({ success: true, count });
+  } catch (error) {
+    console.error("❌ Error in getUnreadAttendanceCount:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching unread attendance count",
+      error: error.message,
+    });
+  }
+};
 
