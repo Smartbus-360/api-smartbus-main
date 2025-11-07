@@ -8,6 +8,7 @@ import {
   getUnreadAttendanceCount
 } from "../controllers/attendance.controller.js";
 import { httpAuth } from "../middleware/wsAuth.middleware.js";
+import { verifyToken } from "../utils/verifyUser.js";
 
 const router = express.Router();
 
