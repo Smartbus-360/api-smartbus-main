@@ -146,6 +146,15 @@ const message =
 } catch (err) {
   console.error("❌ Failed to emit student notification:", err);
 }
+    // ✅ Notify student about attendance sheet update
+if (student && student.id) {
+  io.of("/students").to(`student_${student.id}`).emit("attendance_updated", {
+    studentId: student.id,
+    timestamp: new Date().toISOString(),
+  });
+  console.log(`📢 attendance_updated emitted for student_${student.id}`);
+}
+
 
     console.log("✅ Attendance saved successfully");
 
