@@ -25,7 +25,10 @@ import {
   addAttendanceTaker,
   updateAttendanceTaker,
   deleteAttendanceTaker,
-  searchAttendanceTakers
+  searchAttendanceTakers,
+  generateQrForTaker,
+  qrLoginAttendanceTaker,
+  revokeQrSession
 } from "../controllers/attendanceTaker.controller.js";
 import { verifyToken } from "../utils/verifyUser.js"; // ✅ use same middleware as other admin routes
 
@@ -37,5 +40,8 @@ router.post("/", verifyToken, addAttendanceTaker);
 router.put("/:id", verifyToken, updateAttendanceTaker);
 router.delete("/:id", verifyToken, deleteAttendanceTaker);
 router.get("/search", verifyToken, searchAttendanceTakers);
+router.post("/generate-qr", adminAuth, generateQrForTaker);
+router.post("/qr-login", qrLoginAttendanceTaker);
+router.post("/revoke-qr", adminAuth, revokeQrSession);
 
 export default router;
