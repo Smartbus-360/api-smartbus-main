@@ -53,6 +53,11 @@ const Attendance = sequelize.define('tbl_sm360_attendance', {
     type: DataTypes.FLOAT,
     allowNull: true,
   },
+    is_read: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
   attendance_taker_id: {
   type: DataTypes.INTEGER,
   allowNull: true,
