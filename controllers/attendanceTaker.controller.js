@@ -4,6 +4,7 @@ import { errorHandler } from "../utils/error.js";
 import { Op } from "sequelize";
 import jwt from "jsonwebtoken";
 import AttendanceTakerQrSession from "../models/attendanceTakerQrSession.model.js";
+import crypto from "crypto";
 import dotenv from "dotenv";
 dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -103,20 +104,21 @@ export const searchAttendanceTakers = async (req, res, next) => {
  */
 export const generateQrForTaker = async (req, res, next) => {
   try {
-    const { attendanceTakerId, expiresInHours } = req.body;
+    const { attendanceTakerId } = req.body;
 
     if (!attendanceTakerId)
       return res.status(400).json({ message: "attendanceTakerId required" });
 
     const token = crypto.randomUUID();
-    const expiresAt = expiresInHours
-      ? new Date(Date.now() + expiresInHours * 60 * 60 * 1000)
-      : null;
+    await AttendanceTakerQrSession.update(
+      { isActive: false, revokedAt: new Date() },
+      { where: { attendanceTakerId, isActive: true } }
+    );
 
     const newSession = await AttendanceTakerQrSession.create({
       attendanceTakerId,
       token,
-      expiresAt,
+      expiresAt: null,
     });
 
     const qrData = `${process.env.SITE_URL}/api/attendance-taker/qr-login?token=${token}`;
@@ -124,7 +126,7 @@ export const generateQrForTaker = async (req, res, next) => {
     res.json({
       success: true,
       message: "QR generated successfully",
-      data: { token, qrData, expiresAt },
+      data: { token, qrData },
     });
   } catch (error) {
     next(error);
@@ -144,19 +146,12 @@ export const qrLoginAttendanceTaker = async (req, res, next) => {
     if (!session)
       return res.status(401).json({ message: "Invalid or revoked QR" });
 
-    if (session.expiresAt && new Date(session.expiresAt) < new Date()) {
-      session.isActive = false;
-      await session.save();
-      return res.status(401).json({ message: "QR expired" });
-    }
-
     const taker = await AttendanceTaker.findByPk(session.attendanceTakerId);
     if (!taker) return res.status(404).json({ message: "Attendance Taker not found" });
 
     const jwtToken = jwt.sign(
       { id: taker.id, role: "attendance_taker" },
-      JWT_SECRET,
-      { expiresIn: "8h" }
+      JWT_SECRET
     );
 
     taker.token = jwtToken;
