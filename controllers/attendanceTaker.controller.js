@@ -121,7 +121,10 @@ export const generateQrForTaker = async (req, res, next) => {
       expiresAt: null,
     });
 
-    const qrData = `${process.env.SITE_URL}/api/attendance-taker/qr-login?token=${token}`;
+    // const qrData = `${process.env.SITE_URL}/api/attendance-taker/qr-login?token=${token}`;
+
+    const BASE_URL = process.env.SITE_URL || "https://api.smartbus360.com"; // ✅ fallback
+const qrData = `${BASE_URL}/api/attendance-taker/qr-login?token=${token}`;
 
     res.json({
       success: true,
