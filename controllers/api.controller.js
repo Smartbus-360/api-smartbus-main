@@ -1322,6 +1322,7 @@ import Stop from "../models/stop.model.js";
 import { io } from '../index.js';
 import { findActiveQrOverride } from "../utils/qrOverride.js";
 import AttendanceTaker from '../models/attendanceTaker.model.js';
+import moment from "moment-timezone";
 
 // const OSRM_URL = "http://router.project-osrm.org/route/v1/driving";
 
@@ -2638,7 +2639,15 @@ export const getReachTimesForRoute = async (req, res) => {
         type: sequelize.QueryTypes.SELECT,
       }
     );
-    
+console.error("Error fetching reach times:", error);
+    const converted = records.map((r) => ({
+      ...r.toJSON(),
+      reachDateTime: r.reachDateTime
+        ? moment(r.reachDateTime)
+            .tz("Asia/Kolkata")
+            .format("YYYY-MM-DD HH:mm:ss")
+        : null,
+    }));
 
     res.json({ success: true, data: reachTimes });
   } catch (error) {
