@@ -5,6 +5,7 @@ import Route from "../models/route.model.js";
 import Institute from "../models/institute.model.js";
 import sequelize from '../config/database.js';
 // import StopReachLogs from "../models/stopReachLogs.model.js";
+import moment from "moment-timezone";
 
 
 export const getAllStoppages = async (req, res, next) => {
@@ -614,7 +615,10 @@ export const markStopReached = async (req, res, next) => {
       return res.status(400).json({ message: "stopId, routeId, and tripType are required." });
     }
 
-    const now = new Date();
+    // const now = new Date();
+    // ✅ Use IST timezone for reach timestamp
+const now = moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss");
+
 
     // 1. Update main stops table
     await Stop.update(
