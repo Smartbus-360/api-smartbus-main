@@ -607,26 +607,84 @@ export const updateStop = async (req, res, next) => {
 // };
 
 // ✅ Mark stop as reached
+// export const markStopReached = async (req, res, next) => {
+//   try {
+//     const { stopId, routeId, tripType } = req.body;
+
+//     if (!stopId || !routeId || !tripType) {
+//       return res.status(400).json({ message: "stopId, routeId, and tripType are required." });
+//     }
+
+//     // const now = new Date();
+//     // ✅ Use IST timezone for reach timestamp
+// const now = moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss");
+
+
+//     // 1. Update main stops table
+//     await Stop.update(
+//       { reached: true, reachDateTime: now },
+//       { where: { id: stopId, routeId } }
+//     );
+
+//     // 2. Add to stop reach logs (history table)
+//     await StopReachLogs.create({
+//       stopId,
+//       routeId,
+//       tripType,
+//       reachDateTime: now,
+//     });
+
+//     res.json({ success: true, message: "Stop marked as reached", reachDateTime: now });
+//   } catch (error) {
+//     console.error("Error marking stop reached:", error);
+//     res.status(500).json({ message: "Failed to mark stop reached" });
+//   }
+// };
 export const markStopReached = async (req, res, next) => {
   try {
-    const { stopId, routeId, tripType } = req.body;
+    const { stopId, routeId, tripType, round = 1 } = req.body;
 
     if (!stopId || !routeId || !tripType) {
       return res.status(400).json({ message: "stopId, routeId, and tripType are required." });
     }
 
-    // const now = new Date();
-    // ✅ Use IST timezone for reach timestamp
-const now = moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss");
+    // ✅ Use IST timezone for accurate reach timestamp
+    const now = moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss");
 
-
-    // 1. Update main stops table
+    // 1️⃣ Update Stop basic fields
     await Stop.update(
       { reached: true, reachDateTime: now },
       { where: { id: stopId, routeId } }
     );
 
-    // 2. Add to stop reach logs (history table)
+    // 2️⃣ Fetch current stop to update rounds JSON
+    const stop = await Stop.findByPk(stopId);
+    if (stop) {
+      let rounds = {};
+      try {
+        rounds = typeof stop.rounds === "string" ? JSON.parse(stop.rounds) : stop.rounds || {};
+      } catch {
+        rounds = {};
+      }
+
+      if (!rounds[tripType]) rounds[tripType] = [];
+
+      const nowTime = moment().tz("Asia/Kolkata").format("HH:mm");
+
+      const existingRound = rounds[tripType].find(r => r.round === round);
+      if (existingRound) {
+        existingRound.arrivalTime = nowTime;
+      } else {
+        rounds[tripType].push({ round, arrivalTime: nowTime });
+      }
+
+      await Stop.update(
+        { rounds: JSON.stringify(rounds) },
+        { where: { id: stopId } }
+      );
+    }
+
+    // 3️⃣ Log the stop reach
     await StopReachLogs.create({
       stopId,
       routeId,
@@ -640,6 +698,7 @@ const now = moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss");
     res.status(500).json({ message: "Failed to mark stop reached" });
   }
 };
+
 // ✅ Get last reached stoppage
 
 
