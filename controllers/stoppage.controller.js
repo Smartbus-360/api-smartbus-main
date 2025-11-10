@@ -681,6 +681,8 @@ export const markStopReached = async (req, res, next) => {
       }
 
       // update the stop
+      console.log("🔹 stop.rounds before update:", stop.rounds);
+console.log("🔹 updated rounds object:", JSON.stringify(rounds));
       await Stop.update(
         { rounds: JSON.stringify(rounds) },
         { where: { id: stopId } }
