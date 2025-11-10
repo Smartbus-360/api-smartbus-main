@@ -2531,6 +2531,7 @@ reachDateTime: moment(formattedReachDateTime)
   .tz("Asia/Kolkata")
   .utc()
   .format("YYYY-MM-DD HH:mm:ss"),
+  },
   { where: { id: stoppageId } }
 );
     res.json({
