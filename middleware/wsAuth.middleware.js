@@ -173,7 +173,7 @@ return next();
 
         const driver = await Driver.findByPk(payload.id);
         if (!driver) return next(new Error('Driver not found'));
-
+socket.driverId = driver.id;
         socket.user = driver;
         return next();
     }
