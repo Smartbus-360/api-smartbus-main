@@ -69,7 +69,7 @@ return next();
         if (!driver) return res.status(401).json({ message: 'Driver not found' });
                 socket.driverId = driver.id;
 
-        req.user = driver;
+        socket.user = driver;
         return next();
     }
         // ✅ Attendance-Taker token lane
@@ -105,8 +105,10 @@ if (payload.role === 'attendance_taker') {
             expiresAt: activeQr.expiresAt,
         });
     }
+socket.driverId = driver.id;  // ✅ add here too
+    socket.user = driver;
 
-    req.user = driver;
+    // req.user = driver;
     return next();
 }
        
