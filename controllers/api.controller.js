@@ -2648,7 +2648,7 @@ export const getReachTimesForRoute = async (req, res) => {
         : null,
     }));
 
-    res.json({ success: true, data: reachTimes converted });
+    res.json({ success: true, data:  converted });
   } catch (error) {
     console.error("Error fetching reach times:", error);
     res.status(500).json({ success: false, message: error.message });
