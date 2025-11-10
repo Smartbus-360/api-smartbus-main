@@ -2358,10 +2358,16 @@ export const updateReachDateTime = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid stoppage" });
     }
 
-    const formattedReachDateTime = new Date(reachDateTime);
-    if (isNaN(formattedReachDateTime.getTime())) {
-      return res.status(400).json({ success: false, message: "Invalid reachDateTime format" });
-    }
+    // const formattedReachDateTime = new Date(reachDateTime);
+// ✅ Convert incoming UTC or local time to proper IST Date object
+const formattedReachDateTime = moment(reachDateTime)
+  .tz("Asia/Kolkata")
+  .toDate(); // convert to actual JS Date object
+
+if (isNaN(formattedReachDateTime.getTime())) {
+  return res.status(400).json({ success: false, message: "Invalid reachDateTime format" });
+}
+
 
     // Check if any logs exist for this round on today's date
     const checkIfFirstHit = await sequelize.query(
