@@ -2639,14 +2639,18 @@ export const getReachTimesForRoute = async (req, res) => {
         type: sequelize.QueryTypes.SELECT,
       }
     );
-    const converted = records.map((r) => ({
-      ...r.toJSON(),
-      reachDateTime: r.reachDateTime
-        ? moment(r.reachDateTime)
-            .tz("Asia/Kolkata")
-            .format("YYYY-MM-DD HH:mm:ss")
-        : null,
-    }));
+const converted = reachTimes.map((group) => ({
+  ...group,
+  stops: JSON.parse(group.stops).map((stop) => ({
+    ...stop,
+    reachDateTime: stop.reachDateTime
+      ? moment(stop.reachDateTime)
+          .tz("Asia/Kolkata")
+          .format("YYYY-MM-DD HH:mm:ss")
+      : null,
+  })),
+}));
+
 
     res.json({ success: true, data:  converted });
   } catch (error) {
