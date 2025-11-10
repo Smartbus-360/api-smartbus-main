@@ -2527,10 +2527,10 @@ if (isNaN(formattedReachDateTime.getTime())) {
 await Stop.update(
   {
     reached,
-    reachDateTime: moment(formattedReachDateTime)
-      .tz("Asia/Kolkata")
-      .format("YYYY-MM-DD HH:mm:ss"),
-  },
+reachDateTime: moment(formattedReachDateTime)
+  .tz("Asia/Kolkata")
+  .utc()
+  .format("YYYY-MM-DD HH:mm:ss"),
   { where: { id: stoppageId } }
 );
     res.json({
@@ -2538,9 +2538,10 @@ await Stop.update(
   message: "Reach time recorded successfully.",
   stopHitCount,
   round,
-  reachDateTime: moment(formattedReachDateTime)
-    .tz("Asia/Kolkata")
-    .format("YYYY-MM-DD HH:mm:ss"),
+reachDateTime: moment(formattedReachDateTime)
+  .tz("Asia/Kolkata")
+  .utc()
+  .format("YYYY-MM-DD HH:mm:ss"),
 });
   } catch (error) {
     console.error(error);
