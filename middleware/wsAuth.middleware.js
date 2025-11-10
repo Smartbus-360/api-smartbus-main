@@ -67,6 +67,7 @@ return next();
 
         const driver = await Driver.findByPk(payload.id);
         if (!driver) return res.status(401).json({ message: 'Driver not found' });
+                socket.driverId = driver.id;
 
         req.user = driver;
         return next();
