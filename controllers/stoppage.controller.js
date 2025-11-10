@@ -648,29 +648,31 @@ export const markStopReached = async (req, res, next) => {
       return res.status(400).json({ message: "stopId, routeId, and tripType are required." });
     }
 
-    // ✅ Use IST timezone for accurate reach timestamp
+    // ✅ Use IST timezone for reach timestamp
     const now = moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss");
 
-    // 1️⃣ Update Stop basic fields
+    // 1️⃣ Update basic reach info
     await Stop.update(
       { reached: true, reachDateTime: now },
       { where: { id: stopId, routeId } }
     );
 
-    // 2️⃣ Fetch current stop to update rounds JSON
+    // 2️⃣ Fetch stop and update its rounds JSON
     const stop = await Stop.findByPk(stopId);
     if (stop) {
-      let rounds = {};
+      let rounds;
       try {
         rounds = typeof stop.rounds === "string" ? JSON.parse(stop.rounds) : stop.rounds || {};
       } catch {
         rounds = {};
       }
 
+      // ensure tripType key exists
       if (!rounds[tripType]) rounds[tripType] = [];
 
       const nowTime = moment().tz("Asia/Kolkata").format("HH:mm");
 
+      // find existing round or create new
       const existingRound = rounds[tripType].find(r => r.round === round);
       if (existingRound) {
         existingRound.arrivalTime = nowTime;
@@ -678,13 +680,14 @@ export const markStopReached = async (req, res, next) => {
         rounds[tripType].push({ round, arrivalTime: nowTime });
       }
 
+      // update the stop
       await Stop.update(
         { rounds: JSON.stringify(rounds) },
         { where: { id: stopId } }
       );
     }
 
-    // 3️⃣ Log the stop reach
+    // 3️⃣ Log this reach event
     await StopReachLogs.create({
       stopId,
       routeId,
