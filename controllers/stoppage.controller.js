@@ -4,7 +4,7 @@ import User from "../models/user.model.js";
 import Route from "../models/route.model.js";
 import Institute from "../models/institute.model.js";
 import sequelize from '../config/database.js';
-// import StopReachLogs from "../models/stopReachLogs.model.js";
+import StopReachLogs from "../models/stopReachLogs.model.js";
 import moment from "moment-timezone";
 
 
