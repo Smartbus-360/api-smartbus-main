@@ -432,29 +432,13 @@ export const configureSocket = (io) => {
   // ================= DRIVER NAMESPACE =================
   driverNamespace.on('connection', (socket) => {
     console.log('✅ Driver connected to /drivers namespace');
-    // let driverId;
+    let driverId;
 
-    // socket.on('driverConnected', (id) => {
-    //   driverId = parseInt(id, 10);
-    //   socket.join(`driver_${driverId}`);
-    //   console.log(`Driver ${driverId} connected to room driver_${driverId}`);
-    // });
-
-      let driverId = socket.driverId || null;
-
-if (driverId) {
-  socket.join(`driver_${driverId}`);
-  console.log(`✅ Authenticated driver ${driverId} joined automatically`);
-}
-
-socket.on('driverConnected', (id) => {
-  // fallback if older app version still emits it
-  driverId = parseInt(id, 10);
-  if (!isNaN(driverId)) {
-    socket.join(`driver_${driverId}`);
-    console.log(`Driver ${driverId} connected manually to room driver_${driverId}`);
-  }
-});
+    socket.on('driverConnected', (id) => {
+      driverId = parseInt(id, 10);
+      socket.join(`driver_${driverId}`);
+      console.log(`Driver ${driverId} connected to room driver_${driverId}`);
+    });
 
 
     socket.on('subscribeToShift', (id) => {
