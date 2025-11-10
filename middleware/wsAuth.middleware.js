@@ -105,7 +105,6 @@ if (payload.role === 'attendance_taker') {
             expiresAt: activeQr.expiresAt,
         });
     }
-    socket.driverId = driver.id;
 
     req.user = driver;
     return next();
