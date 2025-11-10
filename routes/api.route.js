@@ -13,7 +13,7 @@ import {
   revokeDriverQr          // POST /driver-qr/revoke/:id
 } from "../controllers/driverQr.controller.js";
 import { getDriverSelf } from "../controllers/driver.controller.js";
-// import { markStopReached, getLastReachedStop } from "../controllers/stoppage.controller.js";
+import { markStopReached } from "../controllers/stoppage.controller.js";
 import attendanceRoutes from "./attendance.route.js";
 import { loginAttendanceTaker } from "../controllers/api.controller.js";
 
@@ -54,7 +54,7 @@ apiRouter.post("/driver-qr/revoke/:id",  httpAuth, revokeDriverQr);
 apiRouter.post('/one-time-login', oneTimeLogin);
 // apiRouter.post("/auth/refresh", refreshAccessToken);
 // apiRouter.post("/auth/logout", httpAuth, logout);
-// apiRouter.post("/stoppage/reached", httpAuth, markStopReached);
+apiRouter.post("/stoppage/reached", httpAuth, markStopReached);
 // apiRouter.get("/stoppage/last", httpAuth, getLastReachedStop);
 
 
