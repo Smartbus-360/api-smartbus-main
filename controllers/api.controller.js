@@ -1325,7 +1325,6 @@ import AttendanceTaker from '../models/attendanceTaker.model.js';
 import moment from "moment-timezone";
 
 // const OSRM_URL = "http://router.project-osrm.org/route/v1/driving";
-process.env.TZ = "Asia/Kolkata";
 dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET;
 
