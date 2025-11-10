@@ -1325,7 +1325,7 @@ import AttendanceTaker from '../models/attendanceTaker.model.js';
 import moment from "moment-timezone";
 
 // const OSRM_URL = "http://router.project-osrm.org/route/v1/driving";
-
+process.env.TZ = "Asia/Kolkata";
 dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -2359,14 +2359,18 @@ export const updateReachDateTime = async (req, res) => {
     }
 
     // const formattedReachDateTime = new Date(reachDateTime);
-// ✅ Convert incoming UTC or local time to proper IST Date object
+// ✅ Convert to proper IST Date object
 const formattedReachDateTime = moment(reachDateTime)
   .tz("Asia/Kolkata")
-  .toDate(); // convert to actual JS Date object
+  .toDate();
 
 if (isNaN(formattedReachDateTime.getTime())) {
-  return res.status(400).json({ success: false, message: "Invalid reachDateTime format" });
+  return res.status(400).json({
+    success: false,
+    message: "Invalid reachDateTime format",
+  });
 }
+
 
 
     // Check if any logs exist for this round on today's date
@@ -2522,11 +2526,14 @@ if (isNaN(formattedReachDateTime.getTime())) {
     await stoppageToUpdate.save();
 
     res.json({
-      success: true,
-      message: "Reach time recorded successfully.",
-      stopHitCount,
-      round,
-    });
+  success: true,
+  message: "Reach time recorded successfully.",
+  stopHitCount,
+  round,
+  reachDateTime: moment(formattedReachDateTime)
+    .tz("Asia/Kolkata")
+    .format("YYYY-MM-DD HH:mm:ss"),
+});
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: error.message });
