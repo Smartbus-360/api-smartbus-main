@@ -2520,10 +2520,19 @@ if (isNaN(formattedReachDateTime.getTime())) {
     }       
 
     // Update stop status
-    stoppageToUpdate.reached = reached;
-    stoppageToUpdate.reachDateTime = formattedReachDateTime;
-    await stoppageToUpdate.save();
-
+    // stoppageToUpdate.reached = reached;
+    // stoppageToUpdate.reachDateTime = formattedReachDateTime;
+    // await stoppageToUpdate.save();
+    // ✅ Force IST time string into stop table (avoid Sequelize UTC conversion)
+await Stop.update(
+  {
+    reached,
+    reachDateTime: moment(formattedReachDateTime)
+      .tz("Asia/Kolkata")
+      .format("YYYY-MM-DD HH:mm:ss"),
+  },
+  { where: { id: stoppageId } }
+);
     res.json({
   success: true,
   message: "Reach time recorded successfully.",
