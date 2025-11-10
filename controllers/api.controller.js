@@ -2639,7 +2639,6 @@ export const getReachTimesForRoute = async (req, res) => {
         type: sequelize.QueryTypes.SELECT,
       }
     );
-console.error("Error fetching reach times:", error);
     const converted = records.map((r) => ({
       ...r.toJSON(),
       reachDateTime: r.reachDateTime
@@ -2649,8 +2648,9 @@ console.error("Error fetching reach times:", error);
         : null,
     }));
 
-    res.json({ success: true, data: reachTimes });
+    res.json({ success: true, data: reachTimes converted });
   } catch (error) {
+    console.error("Error fetching reach times:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
