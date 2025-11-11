@@ -2363,7 +2363,8 @@ export const updateReachDateTime = async (req, res) => {
 //   .tz("Asia/Kolkata")
 //   .toDate();
         // DB and input already in IST
-const formattedReachDateTime = moment(reachDateTime, "YYYY-MM-DD HH:mm:ss").toDate();
+// const formattedReachDateTime = moment(reachDateTime, "YYYY-MM-DD HH:mm:ss").toDate();
+      const formattedReachDateTime = reachDateTime;  // Keep original IST string, no conversion
 
 
 if (isNaN(formattedReachDateTime.getTime())) {
@@ -2533,7 +2534,7 @@ await Stop.update(
     // reachDateTime: moment(formattedReachDateTime)
     //   .tz("Asia/Kolkata")
     //   .format("YYYY-MM-DD HH:mm:ss"),
-        reachDateTime: moment.tz(formattedReachDateTime,"Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss"),
+reachDateTime: formattedReachDateTime,
   },
   { where: { id: stoppageId } }
 );
@@ -2542,7 +2543,7 @@ await Stop.update(
   message: "Reach time recorded successfully.",
   stopHitCount,
   round,
-  reachDateTime: moment.tz(formattedReachDateTime, "Asia/Kolkata"),
+reachDateTime: formattedReachDateTime,
 });
   } catch (error) {
     console.error(error);
