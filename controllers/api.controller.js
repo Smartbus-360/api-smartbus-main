@@ -2533,7 +2533,7 @@ await Stop.update(
     // reachDateTime: moment(formattedReachDateTime)
     //   .tz("Asia/Kolkata")
     //   .format("YYYY-MM-DD HH:mm:ss"),
-        reachDateTime: moment(formattedReachDateTime,"Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss"),
+        reachDateTime: moment.tz(formattedReachDateTime,"Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss"),
   },
   { where: { id: stoppageId } }
 );
