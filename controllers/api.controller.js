@@ -2681,10 +2681,10 @@ export const getReachTimesForRoute = async (req, res) => {
   return {
     ...group,
     stops: stopsArray.map((stop) => ({
+      console.log("🧭 Raw DB Time:", stop.reachDateTime);
+  console.log("🕒 After moment tz():", moment(stop.reachDateTime).tz("Asia/Kolkata").format());
       ...stop,
       // ✅ No timezone shift — DB already in IST
-      console.log("🧭 Raw DB Time:", stop.reachDateTime);
-console.log("🕒 After moment tz():", moment(stop.reachDateTime).tz("Asia/Kolkata").format());
       reachDateTime: stop.reachDateTime
         ? moment(stop.reachDateTime).format("YYYY-MM-DD HH:mm:ss")
         : null,
