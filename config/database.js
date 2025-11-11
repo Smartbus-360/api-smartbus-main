@@ -11,7 +11,7 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST,
     dialect: 'mysql',
     logging: false,
-    // timezone: "+05:30", // IST
+    timezone: "+05:30", // IST
     dialectOptions: {
       useUTC: false,
       dateStrings: true,   // ✅ Force MySQL to return DATETIME as string (not UTC)
