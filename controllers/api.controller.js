@@ -2660,8 +2660,21 @@ export const getReachTimesForRoute = async (req, res) => {
         type: sequelize.QueryTypes.SELECT,
       }
     );
-const converted = reachTimes.map((group) => {
-  // ✅ Safely handle both string and object
+// const converted = reachTimes.map((group) => {
+//   // ✅ Safely handle both string and object
+//   const stopsArray =
+//     typeof group.stops === "string" ? JSON.parse(group.stops) : group.stops;
+
+//   return {
+//     ...group,
+//     stops: stopsArray.map((stop) => ({
+//       ...stop,
+//       reachDateTime: stop.reachDateTime
+//         ? moment(stop.reachDateTime)
+//             .tz("Asia/Kolkata")
+//             .format("YYYY-MM-DD HH:mm:ss")
+//         : null,
+        const converted = reachTimes.map((group) => {
   const stopsArray =
     typeof group.stops === "string" ? JSON.parse(group.stops) : group.stops;
 
@@ -2669,10 +2682,9 @@ const converted = reachTimes.map((group) => {
     ...group,
     stops: stopsArray.map((stop) => ({
       ...stop,
+      // ✅ No timezone shift — DB already in IST
       reachDateTime: stop.reachDateTime
-        ? moment(stop.reachDateTime)
-            .tz("Asia/Kolkata")
-            .format("YYYY-MM-DD HH:mm:ss")
+        ? moment(stop.reachDateTime).format("YYYY-MM-DD HH:mm:ss")
         : null,
     })),
   };
