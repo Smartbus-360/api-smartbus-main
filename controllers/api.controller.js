@@ -2680,15 +2680,17 @@ export const getReachTimesForRoute = async (req, res) => {
 
   return {
     ...group,
-    stops: stopsArray.map((stop) => ({
+    stops: stopsArray.map((stop) => {
       console.log("🧭 Raw DB Time:", stop.reachDateTime);
-  console.log("🕒 After moment tz():", moment(stop.reachDateTime).tz("Asia/Kolkata").format());
-      ...stop,
+      console.log("🕒 After moment tz():", moment(stop.reachDateTime).tz("Asia/Kolkata").format());
+            return {
+          ...stop,
       // ✅ No timezone shift — DB already in IST
       reachDateTime: stop.reachDateTime
         ? moment(stop.reachDateTime).format("YYYY-MM-DD HH:mm:ss")
         : null,
-    })),
+            };
+    }),
   };
 });
 
