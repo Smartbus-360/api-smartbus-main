@@ -2359,9 +2359,12 @@ export const updateReachDateTime = async (req, res) => {
 
     // const formattedReachDateTime = new Date(reachDateTime);
 // ✅ Convert to proper IST Date object
-const formattedReachDateTime = moment(reachDateTime)
-  .tz("Asia/Kolkata")
-  .toDate();
+// const formattedReachDateTime = moment(reachDateTime)
+//   .tz("Asia/Kolkata")
+//   .toDate();
+        // DB and input already in IST
+const formattedReachDateTime = moment(reachDateTime, "YYYY-MM-DD HH:mm:ss").toDate();
+
 
 if (isNaN(formattedReachDateTime.getTime())) {
   return res.status(400).json({
@@ -2527,9 +2530,10 @@ if (isNaN(formattedReachDateTime.getTime())) {
 await Stop.update(
   {
     reached,
-    reachDateTime: moment(formattedReachDateTime)
-      .tz("Asia/Kolkata")
-      .format("YYYY-MM-DD HH:mm:ss"),
+    // reachDateTime: moment(formattedReachDateTime)
+    //   .tz("Asia/Kolkata")
+    //   .format("YYYY-MM-DD HH:mm:ss"),
+        reachDateTime: moment(formattedReachDateTime).format("YYYY-MM-DD HH:mm:ss"),
   },
   { where: { id: stoppageId } }
 );
