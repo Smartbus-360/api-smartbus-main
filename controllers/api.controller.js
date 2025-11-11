@@ -2533,7 +2533,7 @@ await Stop.update(
     // reachDateTime: moment(formattedReachDateTime)
     //   .tz("Asia/Kolkata")
     //   .format("YYYY-MM-DD HH:mm:ss"),
-        reachDateTime: moment(formattedReachDateTime).format("YYYY-MM-DD HH:mm:ss"),
+        reachDateTime: moment(formattedReachDateTime,"Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss"),
   },
   { where: { id: stoppageId } }
 );
@@ -2542,9 +2542,7 @@ await Stop.update(
   message: "Reach time recorded successfully.",
   stopHitCount,
   round,
-  reachDateTime: moment(formattedReachDateTime)
-    .tz("Asia/Kolkata")
-    .format("YYYY-MM-DD HH:mm:ss"),
+  reachDateTime: moment.tz(formattedReachDateTime, "Asia/Kolkata"),
 });
   } catch (error) {
     console.error(error);
@@ -2686,12 +2684,12 @@ export const getReachTimesForRoute = async (req, res) => {
     ...group,
     stops: stopsArray.map((stop) => {
       console.log("🧭 Raw DB Time:", stop.reachDateTime);
-console.log("🕒 DB time (already IST):", moment(stop.reachDateTime).format("YYYY-MM-DD HH:mm:ss"));
+console.log("🕒 DB time (already IST):", moment.tz(stop.reachDateTime,"Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss"));
             return {
           ...stop,
       // ✅ No timezone shift — DB already in IST
       reachDateTime: stop.reachDateTime
-        ? moment(stop.reachDateTime).format("YYYY-MM-DD HH:mm:ss")
+        ? moment.tz(stop.reachDateTime,"Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss")
         : null,
             };
     }),
