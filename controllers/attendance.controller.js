@@ -82,26 +82,21 @@ console.log("🚌 Derived bus number:", derivedBusNumber || "❌ Not found");
 
 
     console.log("3️⃣ Proceeding to create attendance record...");
-
-    const recent = await Attendance.findOne({
+const recent = await Attendance.findOne({
   where: {
     student_id: student.id,
-    scan_time: {
-      [Op.gt]: moment().subtract(10, "seconds").toDate(),
-    },
+    scan_time: { [Op.gt]: moment().subtract(10, "seconds").toDate() },
   },
 });
 
+let record;
 if (recent) {
   console.log("⚠️ Duplicate attendance prevented for " + registrationNumber);
-  return res.status(200).json({
-    success: true,
-    message: "Already marked recently",
-  });
-}
-
+  record = recent; // don't create new, reuse last
+} else {
     // 5️⃣ Save permanent attendance record
-    const record = await Attendance.create({
+    // const 
+      record = await Attendance.create({
       registrationNumber: student.registrationNumber,
       username: student.username,
       instituteName,
@@ -116,6 +111,7 @@ if (recent) {
       scan_time: moment.tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss"),
 
     });
+}
 
     // 6️⃣ Save to attendance taker’s temporary table
             // console.error("❌ student_id missing in AttendanceTakerAttendanceTemp model!");
