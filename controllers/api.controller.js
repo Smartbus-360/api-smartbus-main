@@ -2691,7 +2691,7 @@ console.log("🕒 DB time (already IST):", moment(stop.reachDateTime).format("YY
           ...stop,
       // ✅ No timezone shift — DB already in IST
       reachDateTime: stop.reachDateTime
-        ? moment(stop.reachDateTime).format("YYYY-MM-DD HH:mm:ss")
+        ? moment.tz(stop.reachDateTime,"Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss")
         : null,
             };
     }),
