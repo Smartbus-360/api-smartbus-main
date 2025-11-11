@@ -110,7 +110,7 @@ console.log("🚌 Derived bus number:", derivedBusNumber || "❌ Not found");
       scan_time: moment.tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss"),
 
     });
-}
+
 
     // 6️⃣ Save to attendance taker’s temporary table
             // console.error("❌ student_id missing in AttendanceTakerAttendanceTemp model!");
