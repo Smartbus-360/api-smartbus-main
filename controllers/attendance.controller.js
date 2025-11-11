@@ -95,7 +95,8 @@ console.log("🚌 Derived bus number:", derivedBusNumber || "❌ Not found");
       latitude,
       longitude,
       // scan_time: new Date(),
-      scan_time: moment().toDate(),
+      // scan_time: moment().toDate(),
+      scan_time: moment.tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss"),
 
     });
 
@@ -113,7 +114,7 @@ console.log("🚌 Derived bus number:", derivedBusNumber || "❌ Not found");
       latitude,
       longitude,
       // scan_time: new Date(),
-      scan_time: moment().toDate(),
+scan_time: moment.tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss"),
     });
     console.log("✅ Successfully inserted into temp table for taker_id =", attendance_taker_id);
 // 🧩 Send attendance notification to the student
