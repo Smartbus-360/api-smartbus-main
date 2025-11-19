@@ -1835,147 +1835,182 @@ export const markMissedStop = async (req, res) => {
   }
 };
 
+// export const markFinalStopReached = async (req, res) => {
+//   let { routeId, driverId } = req.body;
+//   if (!routeId) return res.status(400).json({ success: false, message: "Route ID is required." });
+
+//         const rId = Number(routeId);
+
+//   // const rId = Number(routeId);
+//       if (req.user && req.user.id) {
+//     driverId = driverId || req.user.id; // prefer token driverId
+//   }
+//        if (!req.user && !driverId) {
+//     return res.status(400).json({ success: false, message: "Driver ID is required when no token." });
+//   }
+//   try {
+//     const [currentPhaseResult] = await sequelize.query(
+//       `SELECT currentJourneyPhase, currentRound FROM tbl_sm360_routes WHERE id = :rId`,
+//       { replacements: { rId }, type: sequelize.QueryTypes.SELECT }
+//     );
+
+//     if (!currentPhaseResult) {
+//       return res.status(404).json({ success: false, message: "Route not found." });
+//     }
+
+//     let { currentJourneyPhase, currentRound } = currentPhaseResult;
+//     let nextPhase = currentJourneyPhase;
+//     let nextRound = currentRound;
+
+//     const getAvailablePhases = async () => {
+//       const stops = await sequelize.query(
+//         `SELECT DISTINCT stopType FROM tbl_sm360_stops WHERE routeId = :rId`,
+//         { replacements: { rId }, type: sequelize.QueryTypes.SELECT }
+//       );
+//       return stops.map(stop => stop.stopType).filter(Boolean);
+//     };
+
+//     const getAvailableRounds = async (phase) => {
+//       const stops = await sequelize.query(
+//         `SELECT rounds FROM tbl_sm360_stops WHERE routeId = :rId AND stopType = :phase`,
+//         { replacements: { rId, phase }, type: sequelize.QueryTypes.SELECT }
+//       );
+    
+//       return [...new Set(
+//         stops.flatMap(stop => {
+//           try {
+//             const roundsObj = typeof stop.rounds === 'string'
+//               ? JSON.parse(stop.rounds || '{}')
+//               : stop.rounds || {};
+    
+//             return (roundsObj?.[phase] || []).map(r => r.round);
+//           } catch (e) {
+//             console.error("Rounds parse error:", stop.rounds);
+//             return [];
+//           }
+//         })
+//       )].sort((a, b) => a - b);
+//     };
+//     const getNextAvailableShift = (currentPhase, availablePhases) => {
+//       const phaseOrder = ["morning", "afternoon", "evening"];
+//       const validPhases = phaseOrder.filter(p => availablePhases.includes(p));
+//       const currentIndex = validPhases.indexOf(currentPhase);
+//       return validPhases[(currentIndex + 1) % validPhases.length];
+//     };
+
+//     // const resetStopHitCount = async (rId, phase, round) => {
+//     //   await sequelize.query(
+//     //     `UPDATE tbl_sm360_stops 
+//     //      SET reached = 0, reachDateTime = NULL 
+//     //      WHERE routeId = :rId 
+//     //      AND stopType = :phase 
+//     //      AND JSON_EXTRACT(rounds, '$."${phase}"') LIKE CONCAT('%', :round, '%')`,
+//     //     { replacements: { rId, phase, round }, type: sequelize.QueryTypes.UPDATE }
+//     //   );
+//     // };
+
+//     const availablePhases = await getAvailablePhases();
+//     if (!availablePhases.includes(nextPhase)) {
+//       nextPhase = availablePhases[0];
+//     }
+
+//     let availableRounds = await getAvailableRounds(nextPhase);
+
+//     const currentIndex = availableRounds.indexOf(nextRound);
+//     let prevRound = nextRound;
+    
+//     if (currentIndex === -1 || currentIndex + 1 >= availableRounds.length) {
+//       // Mark all pending stops as reached before proceeding
+//       await markPendingStopsAsReached(rId, nextPhase, nextRound);
+    
+//       console.log(`No more rounds in ${nextPhase}. Switching shift.`);
+//       await resetStopHitCount(rId, currentJourneyPhase, currentRound); // 🔧 fix here
+    
+//       nextPhase = getNextAvailableShift(nextPhase, availablePhases);
+//       availableRounds = await getAvailableRounds(nextPhase);
+    
+//       if (availableRounds.length === 0) {
+//         console.log(`Next shift (${nextPhase}) also has no rounds. Resetting to ${availablePhases[0]}.`);
+//         nextPhase = availablePhases[0];
+//         availableRounds = await getAvailableRounds(nextPhase);
+//         await resetStops(rId);
+//         await resetStopHitCount(rId, currentJourneyPhase, currentRound); // 🔧 fix here
+//       }
+    
+//       nextRound = availableRounds[0] || 1;
+//     } else {
+//       nextRound = availableRounds[currentIndex + 1];
+//       console.log(`Moving to next round: ${nextRound} in ${nextPhase}`);
+//       await resetStopHitCount(rId, currentJourneyPhase, currentRound); // 🔧 fix here
+//     }
+    
+//     // Avoid updating to same phase/round
+//     if (nextPhase === currentJourneyPhase && nextRound === currentRound) {
+//       return res.json({
+//         success: true,
+//         message: `No further rounds to progress. Journey remains at ${currentJourneyPhase} (Round ${currentRound}).`,
+//       });
+//     }
+
+//     await sequelize.query(
+//       `UPDATE tbl_sm360_routes 
+//        SET currentJourneyPhase = :nextPhase, currentRound = :nextRound 
+//        WHERE id = :rId`,
+//       { replacements: { rId: Number(routeId), nextPhase, nextRound }, type: sequelize.QueryTypes.UPDATE }
+//     );
+
+//     await sequelize.query(
+//       `UPDATE tbl_sm360_stops 
+//        SET reached = 0, reachDateTime = NULL 
+//        WHERE routeId = :rId 
+//        AND stopType = :nextPhase 
+//        AND JSON_EXTRACT(rounds, '$."${nextPhase}"') LIKE CONCAT('%', :nextRound, '%')`,
+//       { replacements: { rId, nextPhase, nextRound }, type: sequelize.QueryTypes.UPDATE }
+//     );
+
+//     console.log(`✅ Journey updated to ${nextPhase} (Round ${nextRound})`);
+//     res.json({ success: true, message: `Journey phase updated to ${nextPhase} (Round ${nextRound}).` });
+
+//   } catch (error) {
+//     console.error("Error:", error);
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
 export const markFinalStopReached = async (req, res) => {
-  let { routeId, driverId } = req.body;
-  if (!routeId) return res.status(400).json({ success: false, message: "Route ID is required." });
-
-        const rId = Number(routeId);
-
-  // const rId = Number(routeId);
-      if (req.user && req.user.id) {
-    driverId = driverId || req.user.id; // prefer token driverId
-  }
-       if (!req.user && !driverId) {
-    return res.status(400).json({ success: false, message: "Driver ID is required when no token." });
-  }
   try {
-    const [currentPhaseResult] = await sequelize.query(
-      `SELECT currentJourneyPhase, currentRound FROM tbl_sm360_routes WHERE id = :rId`,
-      { replacements: { rId }, type: sequelize.QueryTypes.SELECT }
-    );
+    const { routeId, shift, round } = req.body;
 
-    if (!currentPhaseResult) {
-      return res.status(404).json({ success: false, message: "Route not found." });
-    }
-
-    let { currentJourneyPhase, currentRound } = currentPhaseResult;
-    let nextPhase = currentJourneyPhase;
-    let nextRound = currentRound;
-
-    const getAvailablePhases = async () => {
-      const stops = await sequelize.query(
-        `SELECT DISTINCT stopType FROM tbl_sm360_stops WHERE routeId = :rId`,
-        { replacements: { rId }, type: sequelize.QueryTypes.SELECT }
-      );
-      return stops.map(stop => stop.stopType).filter(Boolean);
-    };
-
-    const getAvailableRounds = async (phase) => {
-      const stops = await sequelize.query(
-        `SELECT rounds FROM tbl_sm360_stops WHERE routeId = :rId AND stopType = :phase`,
-        { replacements: { rId, phase }, type: sequelize.QueryTypes.SELECT }
-      );
-    
-      return [...new Set(
-        stops.flatMap(stop => {
-          try {
-            const roundsObj = typeof stop.rounds === 'string'
-              ? JSON.parse(stop.rounds || '{}')
-              : stop.rounds || {};
-    
-            return (roundsObj?.[phase] || []).map(r => r.round);
-          } catch (e) {
-            console.error("Rounds parse error:", stop.rounds);
-            return [];
-          }
-        })
-      )].sort((a, b) => a - b);
-    };
-    const getNextAvailableShift = (currentPhase, availablePhases) => {
-      const phaseOrder = ["morning", "afternoon", "evening"];
-      const validPhases = phaseOrder.filter(p => availablePhases.includes(p));
-      const currentIndex = validPhases.indexOf(currentPhase);
-      return validPhases[(currentIndex + 1) % validPhases.length];
-    };
-
-    // const resetStopHitCount = async (rId, phase, round) => {
-    //   await sequelize.query(
-    //     `UPDATE tbl_sm360_stops 
-    //      SET reached = 0, reachDateTime = NULL 
-    //      WHERE routeId = :rId 
-    //      AND stopType = :phase 
-    //      AND JSON_EXTRACT(rounds, '$."${phase}"') LIKE CONCAT('%', :round, '%')`,
-    //     { replacements: { rId, phase, round }, type: sequelize.QueryTypes.UPDATE }
-    //   );
-    // };
-
-    const availablePhases = await getAvailablePhases();
-    if (!availablePhases.includes(nextPhase)) {
-      nextPhase = availablePhases[0];
-    }
-
-    let availableRounds = await getAvailableRounds(nextPhase);
-
-    const currentIndex = availableRounds.indexOf(nextRound);
-    let prevRound = nextRound;
-    
-    if (currentIndex === -1 || currentIndex + 1 >= availableRounds.length) {
-      // Mark all pending stops as reached before proceeding
-      await markPendingStopsAsReached(rId, nextPhase, nextRound);
-    
-      console.log(`No more rounds in ${nextPhase}. Switching shift.`);
-      await resetStopHitCount(rId, currentJourneyPhase, currentRound); // 🔧 fix here
-    
-      nextPhase = getNextAvailableShift(nextPhase, availablePhases);
-      availableRounds = await getAvailableRounds(nextPhase);
-    
-      if (availableRounds.length === 0) {
-        console.log(`Next shift (${nextPhase}) also has no rounds. Resetting to ${availablePhases[0]}.`);
-        nextPhase = availablePhases[0];
-        availableRounds = await getAvailableRounds(nextPhase);
-        await resetStops(rId);
-        await resetStopHitCount(rId, currentJourneyPhase, currentRound); // 🔧 fix here
-      }
-    
-      nextRound = availableRounds[0] || 1;
-    } else {
-      nextRound = availableRounds[currentIndex + 1];
-      console.log(`Moving to next round: ${nextRound} in ${nextPhase}`);
-      await resetStopHitCount(rId, currentJourneyPhase, currentRound); // 🔧 fix here
-    }
-    
-    // Avoid updating to same phase/round
-    if (nextPhase === currentJourneyPhase && nextRound === currentRound) {
-      return res.json({
-        success: true,
-        message: `No further rounds to progress. Journey remains at ${currentJourneyPhase} (Round ${currentRound}).`,
+    if (!routeId || !shift || !round) {
+      return res.status(400).json({
+        success: false,
+        message: "routeId, shift, and round are required",
       });
     }
 
     await sequelize.query(
       `UPDATE tbl_sm360_routes 
-       SET currentJourneyPhase = :nextPhase, currentRound = :nextRound 
+       SET currentJourneyPhase = :shift,
+           currentRound = :round,
+           finalStopReached = 1
        WHERE id = :rId`,
-      { replacements: { rId: Number(routeId), nextPhase, nextRound }, type: sequelize.QueryTypes.UPDATE }
+      {
+        replacements: { rId: Number(routeId), shift, round },
+        type: sequelize.QueryTypes.UPDATE,
+      }
     );
 
-    await sequelize.query(
-      `UPDATE tbl_sm360_stops 
-       SET reached = 0, reachDateTime = NULL 
-       WHERE routeId = :rId 
-       AND stopType = :nextPhase 
-       AND JSON_EXTRACT(rounds, '$."${nextPhase}"') LIKE CONCAT('%', :nextRound, '%')`,
-      { replacements: { rId, nextPhase, nextRound }, type: sequelize.QueryTypes.UPDATE }
-    );
-
-    console.log(`✅ Journey updated to ${nextPhase} (Round ${nextRound})`);
-    res.json({ success: true, message: `Journey phase updated to ${nextPhase} (Round ${nextRound}).` });
+    return res.json({
+      success: true,
+      message: `Shift updated to ${shift} (Round ${round})`,
+    });
 
   } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error("markFinalStopReached error:", error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 const markPendingStopsAsReached = async (rId, phase, round) => {
   try {
