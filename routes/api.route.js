@@ -1,5 +1,5 @@
 import express from "express";
-import { loginUser, loginDriver, signupUser, signupDriver, getUserDetails, getDriverDetails, updateReachDateTime, notifyIfSpeedExceeded, markMissedStop,  getReachTimesForRoute ,logoutUser} from "../controllers/api.controller.js";
+import { loginUser, loginDriver, signupUser, signupDriver, getUserDetails, getDriverDetails, updateReachDateTime, notifyIfSpeedExceeded, markMissedStop,markFinalStopReached  getReachTimesForRoute ,logoutUser} from "../controllers/api.controller.js";
 import { updateShift } from "../controllers/api.controller.js";
 import { generateAdBanner } from "../controllers/advertisement.controller.js";
 import { httpAuth } from "../middleware/wsAuth.middleware.js";
@@ -46,7 +46,7 @@ apiRouter.post("/notify/speed", httpAuth, notifyIfSpeedExceeded);
 apiRouter.get("/advertisement/banner", generateAdBanner);
 apiRouter.get("/bus/replacement/:busId", httpAuth, checkBusReplacement);
 apiRouter.post("/missed-stoppage", httpAuth, markMissedStop);
-// apiRouter.post("/mark-final-stop",httpAuth, markFinalStopReached);
+apiRouter.post("/mark-final-stop",httpAuth, markFinalStopReached);
 // apiRouter.post("/mark-final-stop-noauth", markFinalStopNoAuth);
 apiRouter.get("/reach-times/:route", httpAuth ,getReachTimesForRoute);
 apiRouter.get("/notifications", httpAuth,getNotifications);
