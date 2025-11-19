@@ -466,38 +466,6 @@ export const configureSocket = (io) => {
         if (err) return console.error('Driver info error:', err);
         const effectiveShift = shiftType || driverInfo.shiftType;
 
-        if (shiftType) {
-  try {
-    await Driver.update(
-      { shiftType },
-      { where: { id: numericDriverId } }
-    );
-
-    console.log(`🔄 Auto Shift Updated → Driver ${numericDriverId}: ${shiftType}`);
-
-    // Send to students
-    studentNamespace.to(`student_${numericDriverId}`).emit("shiftUpdated", {
-      driverId: numericDriverId,
-      shiftType,
-    });
-
-    // Send to users
-    userNamespace.to(`driver_${numericDriverId}`).emit("shiftUpdated", {
-      driverId: numericDriverId,
-      shiftType,
-    });
-
-    // Send to admin
-    adminNotificationNamespace.to(`driver_${numericDriverId}`).emit("shiftUpdated", {
-      driverId: numericDriverId,
-      shiftType,
-    });
-
-  } catch (err) {
-    console.error("❌ Failed to update shift:", err);
-  }
-}
-
 
         userNamespace.to(`driver_${numericDriverId}`).emit('locationUpdate', {
           driverInfo: {
