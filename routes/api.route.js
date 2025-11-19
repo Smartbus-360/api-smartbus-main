@@ -1,5 +1,5 @@
 import express from "express";
-import { loginUser, loginDriver, signupUser, signupDriver, getUserDetails, getDriverDetails, updateReachDateTime, notifyIfSpeedExceeded, markMissedStop,markFinalStopReached  getReachTimesForRoute ,logoutUser} from "../controllers/api.controller.js";
+import { loginUser, loginDriver, signupUser, signupDriver, getUserDetails, getDriverDetails, updateReachDateTime, notifyIfSpeedExceeded, markMissedStop,markFinalStopReached  ,getReachTimesForRoute ,logoutUser} from "../controllers/api.controller.js";
 import { updateShift } from "../controllers/api.controller.js";
 import { generateAdBanner } from "../controllers/advertisement.controller.js";
 import { httpAuth } from "../middleware/wsAuth.middleware.js";
