@@ -1,5 +1,6 @@
 import express from "express";
 import { loginUser, loginDriver, signupUser, signupDriver, getUserDetails, getDriverDetails, updateReachDateTime, notifyIfSpeedExceeded, markMissedStop, markFinalStopReached, getReachTimesForRoute ,logoutUser} from "../controllers/api.controller.js";
+import * as apiController from "../controllers/api.controller.js";
 import { generateAdBanner } from "../controllers/advertisement.controller.js";
 import { httpAuth } from "../middleware/wsAuth.middleware.js";
 import { canViewMap } from "../middleware/wsAuth.middleware.js";
@@ -31,6 +32,8 @@ apiRouter.get("/driver/details/:id", httpAuth, getDriverDetails);
 apiRouter.get("/driver/self", httpAuth, getDriverSelf);
 apiRouter.post("/logout/user", httpAuth, logoutUser);
 apiRouter.use("/attendance", attendanceRoutes);
+apiRouter.post("/update-shift", apiController.updateShift);
+
 
 
 
