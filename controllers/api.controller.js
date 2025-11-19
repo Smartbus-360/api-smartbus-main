@@ -1839,7 +1839,8 @@ export const markMissedStop = async (req, res) => {
 };
 
 export const markFinalStopReached = async (req, res) => {
-  let { routeId, driverId } = req.body;
+  // let { routeId, driverId } = req.body;
+      let { routeId, driverId, newShift, newRound } = req.body;
   if (!routeId) return res.status(400).json({ success: false, message: "Route ID is required." });
 
         const rId = Number(routeId);
@@ -1852,6 +1853,24 @@ export const markFinalStopReached = async (req, res) => {
     return res.status(400).json({ success: false, message: "Driver ID is required when no token." });
   }
   try {
+        // 1️⃣ If manual override is sent from app → skip backend logic
+if (newShift && newRound) {
+  await sequelize.query(
+    `UPDATE tbl_sm360_routes 
+     SET currentJourneyPhase = :newShift, currentRound = :newRound 
+     WHERE id = :rId`,
+    {
+      replacements: { rId: Number(routeId), newShift, newRound },
+      type: sequelize.QueryTypes.UPDATE
+    }
+  );
+
+  return res.json({
+    success: true,
+    message: `Journey manually set to ${newShift} Round ${newRound}.`
+  });
+}
+
     const [currentPhaseResult] = await sequelize.query(
       `SELECT currentJourneyPhase, currentRound FROM tbl_sm360_routes WHERE id = :rId`,
       { replacements: { rId }, type: sequelize.QueryTypes.SELECT }
