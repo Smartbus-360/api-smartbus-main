@@ -1323,6 +1323,9 @@ import { io } from '../index.js';
 import { findActiveQrOverride } from "../utils/qrOverride.js";
 import AttendanceTaker from '../models/attendanceTaker.model.js';
 import moment from "moment-timezone";
+import DriverRoute from "../models/driverRoute.model.js";
+import Route from "../models/route.model.js";
+
 
 // const OSRM_URL = "http://router.project-osrm.org/route/v1/driving";
 dotenv.config();
@@ -2771,7 +2774,14 @@ export const updateShift = async (req, res) => {
     try {
         const { driverId, shift, round } = req.body;
 
-        // 1. Find driver's assigned route
+        if (!driverId || !shift || !round) {
+            return res.status(400).json({
+                success: false,
+                message: "driverId, shift and round are required"
+            });
+        }
+
+        // 1. Find the driver's assigned route
         const driverRoute = await DriverRoute.findOne({
             where: { driverId }
         });
@@ -2785,7 +2795,7 @@ export const updateShift = async (req, res) => {
 
         const routeId = driverRoute.routeId;
 
-        // 2. Update real shift fields in routes table
+        // 2. Update the real fields in tbl_sm360_routes
         await Route.update(
             {
                 currentJourneyPhase: shift,
@@ -2796,14 +2806,22 @@ export const updateShift = async (req, res) => {
             }
         );
 
-        return res.json({ success: true, message: "Shift updated successfully" });
+        return res.json({
+            success: true,
+            message: "Shift updated successfully",
+            routeId,
+            shift,
+            round
+        });
 
     } catch (err) {
         console.error("UPDATE_SHIFT_ERROR:", err);
-        return res.status(500).json({ success: false, message: "Server error" });
+        return res.status(500).json({
+            success: false,
+            message: "Server error"
+        });
     }
 };
-
 
 
 // export const markFinalStopNoAuth = async (req, res) => {
