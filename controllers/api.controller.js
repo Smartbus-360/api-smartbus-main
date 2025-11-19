@@ -2748,7 +2748,7 @@ export const loginAttendanceTaker = async (req, res) => {
       .json({ success: false, message: "Server error during login" });
   }
 };
-exports.updateShift = async (req, res) => {
+export const updateShift = async (req, res) => {
     try {
         const { driverId, shift, round } = req.body;
 
