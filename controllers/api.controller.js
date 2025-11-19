@@ -2748,6 +2748,25 @@ export const loginAttendanceTaker = async (req, res) => {
       .json({ success: false, message: "Server error during login" });
   }
 };
+exports.updateShift = async (req, res) => {
+    try {
+        const { driverId, shift, round } = req.body;
+
+        await Route.update(
+            {
+                routeCurrentJourneyPhase: shift,
+                routeCurrentRound: round
+            },
+            { where: { driverId } }
+        );
+
+        return res.json({ success: true, message: "Shift updated" });
+    } catch (err) {
+        console.error("UPDATE_SHIFT_ERROR:", err);
+        return res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
 
 // export const markFinalStopNoAuth = async (req, res) => {
 //         console.log("markFinalStopNoAuth body:", req.body);
