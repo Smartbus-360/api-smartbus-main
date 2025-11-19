@@ -2748,24 +2748,62 @@ export const loginAttendanceTaker = async (req, res) => {
       .json({ success: false, message: "Server error during login" });
   }
 };
+// export const updateShift = async (req, res) => {
+//     try {
+//         const { driverId, shift, round } = req.body;
+
+//         await Route.update(
+//             {
+//                 routeCurrentJourneyPhase: shift,
+//                 routeCurrentRound: round
+//             },
+//             { where: { driverId } }
+//         );
+
+//         return res.json({ success: true, message: "Shift updated" });
+//     } catch (err) {
+//         console.error("UPDATE_SHIFT_ERROR:", err);
+//         return res.status(500).json({ success: false, message: "Server error" });
+//     }
+// };
+
 export const updateShift = async (req, res) => {
     try {
         const { driverId, shift, round } = req.body;
 
+        // 1. Find driver's assigned route
+        const driverRoute = await DriverRoute.findOne({
+            where: { driverId }
+        });
+
+        if (!driverRoute) {
+            return res.status(404).json({
+                success: false,
+                message: "No route assigned to this driver"
+            });
+        }
+
+        const routeId = driverRoute.routeId;
+
+        // 2. Update real shift fields in routes table
         await Route.update(
             {
-                routeCurrentJourneyPhase: shift,
-                routeCurrentRound: round
+                currentJourneyPhase: shift,
+                currentRound: round
             },
-            { where: { driverId } }
+            {
+                where: { id: routeId }
+            }
         );
 
-        return res.json({ success: true, message: "Shift updated" });
+        return res.json({ success: true, message: "Shift updated successfully" });
+
     } catch (err) {
         console.error("UPDATE_SHIFT_ERROR:", err);
         return res.status(500).json({ success: false, message: "Server error" });
     }
 };
+
 
 
 // export const markFinalStopNoAuth = async (req, res) => {
