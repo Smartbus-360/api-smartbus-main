@@ -173,6 +173,7 @@ if (student && student.id) {
     res.status(200).json({
       success: true,
       message: "Attendance marked successfully",
+      attendance_id: record.id,
       record,
     });
 
@@ -357,6 +358,34 @@ export const getUnreadAttendanceCount = async (req, res, next) => {
       message: "Error fetching unread attendance count",
       error: error.message,
     });
+  }
+};
+export const addAttendanceNote = async (req, res, next) => {
+  try {
+    const { attendance_id, note, note_type, added_by } = req.body;
+
+    if (!attendance_id)
+      return res.status(400).json({ success: false, message: "Missing attendance ID" });
+
+    const record = await Attendance.findByPk(attendance_id);
+    if (!record)
+      return res.status(404).json({ success: false, message: "Attendance record not found" });
+
+    await record.update({
+      note: note || null,
+      note_type: note_type || null,
+      note_added_by: added_by || null,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Note added successfully",
+      updated: record,
+    });
+
+  } catch (error) {
+    console.error("❌ addAttendanceNote Error:", error);
+    next(errorHandler(500, error.message));
   }
 };
 
