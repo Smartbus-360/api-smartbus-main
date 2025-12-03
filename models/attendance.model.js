@@ -65,6 +65,19 @@ const Attendance = sequelize.define('tbl_sm360_attendance', {
   onUpdate: 'CASCADE',
   onDelete: 'SET NULL',
 },
+    note: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  note_type: {
+    type: DataTypes.ENUM("HALF_DAY", "FULL_DAY", "CUSTOM"),
+    allowNull: true,
+  },
+  note_added_by: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+
 }, {
   timestamps: true,
   tableName: 'tbl_sm360_attendance'
