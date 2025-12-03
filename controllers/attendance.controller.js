@@ -277,6 +277,20 @@ export const getMyAttendance = async (req, res, next) => {
     const attendanceRecords = await Attendance.findAll({
       where: { student_id: loggedInUser.id },
       order: [["scan_time", "DESC"]],
+            attributes: [
+        "id",
+        "scan_time",
+        "latitude",
+        "longitude",
+        "note",
+        "note_type",
+        "note_added_by",
+        "attendance_taker_id",
+        "registrationNumber",
+        "driver_id",
+        "bus_id"
+      ],
+
     });
     console.log(`🧾 Attendance records fetched: ${attendanceRecords.length}`);
 
@@ -289,6 +303,15 @@ export const getMyAttendance = async (req, res, next) => {
       ...a.dataValues,
       // scan_time: toIST(a.scan_time),
       scan_time: moment(a.scan_time).format("YYYY-MM-DD HH:mm:ss"),
+      latitude: record.latitude,
+      longitude: record.longitude,
+      note: record.note,                // ⭐ ADDED
+      note_type: record.note_type,      // ⭐ ADDED
+      note_added_by: record.note_added_by, // optional info
+      attendance_taker_id: record.attendance_taker_id,
+      registrationNumber: record.registrationNumber,
+      driver_id: record.driver_id,
+      bus_id: record.bus_id,
     }));
     console.log("✅ Sending response with formatted attendance data");
 
