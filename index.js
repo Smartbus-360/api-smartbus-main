@@ -57,6 +57,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/admin', adminRoutes); 
 app.use('/api', apiRoutes);
 app.use('/api/attendance-taker', attendanceTakerRoutes);
+app.use('/api/attendance', attendanceRoutes);
 
 
 
