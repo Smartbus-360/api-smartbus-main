@@ -385,8 +385,7 @@ export const getUnreadAttendanceCount = async (req, res, next) => {
 };
 export const addAttendanceNote = async (req, res, next) => {
   try {
-    // const { attendance_id, note, note_type, added_by } = req.body;
-const addedBy = added_by || req.user?.id || null;
+    const { attendance_id, note, note_type, added_by } = req.body;
 
     if (!attendance_id)
       return res.status(400).json({ success: false, message: "Missing attendance ID" });
