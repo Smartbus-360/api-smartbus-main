@@ -10,6 +10,7 @@ import {
 } from "../controllers/attendance.controller.js";
 import { httpAuth } from "../middleware/wsAuth.middleware.js";
 import { verifyToken } from "../utils/verifyUser.js";
+console.log("🔥 attendance.route.js LOADED");
 
 const router = express.Router();
 
