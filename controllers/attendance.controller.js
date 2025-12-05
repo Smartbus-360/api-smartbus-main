@@ -236,6 +236,19 @@ export const getAttendanceByStudent = async (req, res, next) => {
     const attendanceRecords = await Attendance.findAll({
       where: { registrationNumber },
       order: [["scan_time", "DESC"]],
+      attributes: [
+        "id",
+        "scan_time",
+        "latitude",
+        "longitude",
+        "note",
+        "note_type",
+        "note_added_by",
+        "attendance_taker_id",
+        "registrationNumber",
+        "driver_id",
+        "bus_id"
+      ],
     });
 
     const formatted = attendanceRecords.map((a) => ({
