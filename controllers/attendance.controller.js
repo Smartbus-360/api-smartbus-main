@@ -385,6 +385,7 @@ export const getUnreadAttendanceCount = async (req, res, next) => {
 };
 export const addAttendanceNote = async (req, res, next) => {
   try {
+        console.log("📥 Note API Body Received:", req.body);
     const { attendance_id, note, note_type, added_by } = req.body;
 
     if (!attendance_id)
@@ -393,6 +394,13 @@ export const addAttendanceNote = async (req, res, next) => {
     const record = await Attendance.findByPk(attendance_id);
     if (!record)
       return res.status(404).json({ success: false, message: "Attendance record not found" });
+
+    console.log("📝 Updating Attendance:", {
+      attendance_id,
+      note,
+      note_type,
+      added_by
+    });
 
     await record.update({
       note: note || null,
