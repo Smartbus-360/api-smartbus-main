@@ -21,7 +21,7 @@ router.get("/date/:date", httpAuth, getAttendanceByDate);
 router.post("/mark", markAttendance);
 router.get("/taker-sheet/:takerId", getTakerTempAttendance);
 router.get("/unread-count", verifyToken, getUnreadAttendanceCount);
-router.post("/add-note", addAttendanceNote);
+router.post("/add-note",VerifyToken, addAttendanceNote);
 
 
 export default router;
