@@ -21,7 +21,7 @@ export const getAttendanceTakers = async (req, res, next) => {
 
 export const addAttendanceTaker = async (req, res, next) => {
   try {
-    const { name, email, password, phone, instituteId } = req.body;
+    const { name, email, password, phone, instituteId,role } = req.body;
 
     if (!name || !email || !password)
       return res.status(400).json({ message: "Name, email, and password are required" });
@@ -37,6 +37,7 @@ export const addAttendanceTaker = async (req, res, next) => {
       password: hashed,
       phone,
       instituteId,
+      role: role || "taker",
     });
 
     res.status(201).json({ success: true, message: "Attendance-Taker added successfully", data: newTaker });
@@ -153,7 +154,7 @@ export const qrLoginAttendanceTaker = async (req, res, next) => {
     if (!taker) return res.status(404).json({ message: "Attendance Taker not found" });
 
     const jwtToken = jwt.sign(
-      { id: taker.id, role: "attendance_taker" },
+      { id: taker.id, role: taker.role },
       JWT_SECRET
     );
 
