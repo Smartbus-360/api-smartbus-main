@@ -22,7 +22,13 @@ router.get("/date/:date", httpAuth, getAttendanceByDate);
 router.post("/mark", markAttendance);
 router.get("/taker-sheet/:takerId", getTakerTempAttendance);
 router.get("/unread-count", verifyToken, getUnreadAttendanceCount);
-router.post("/add-note",verifyToken, addAttendanceNote);
+// router.post("/add-note",verifyToken, addAttendanceNote);
+router.post("/add-note", verifyToken, (req, res, next) => {
+  if (req.user.role !== "teacher") {
+    return res.status(403).json({ message: "Only teachers can add notes" });
+  }
+  next();
+}, addAttendanceNote);
 
 
 export default router;
