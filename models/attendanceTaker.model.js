@@ -20,6 +20,11 @@ const AttendanceTaker = sequelize.define('tbl_sm360_attendance_takers', {
     allowNull: false,
     defaultValue: 'Available',
   },
+  role: {
+    type: DataTypes.ENUM("taker", "teacher"),  // 👈 ADDED
+    defaultValue: "taker",
+  },
+
   token: { type: DataTypes.STRING, allowNull: true },
   lastLogin: { type: DataTypes.DATE, allowNull: true },
 }, { timestamps: true });
