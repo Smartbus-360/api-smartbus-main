@@ -52,12 +52,12 @@ export const addAttendanceTaker = async (req, res, next) => {
 export const updateAttendanceTaker = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, email, phone, availabilityStatus } = req.body;
+    const { name, email, phone, availabilityStatus,role } = req.body;
 
     const taker = await AttendanceTaker.findByPk(id);
     if (!taker) return res.status(404).json({ message: "Attendance-Taker not found" });
 
-    await taker.update({ name, email, phone, availabilityStatus });
+    await taker.update({ name, email, phone, availabilityStatus,role });
     res.status(200).json({ success: true, message: "Attendance-Taker updated", data: taker });
   } catch (error) {
     next(errorHandler(500, error.message || "Error updating attendance-taker"));
