@@ -462,7 +462,9 @@ export const addAttendanceNote = async (req, res, next) => {
     await record.update({
       note: note || null,
       note_type: note_type || null,
-      note_added_by: added_by || req.user?.id || null,
+      // note_added_by: added_by || req.user?.id || null,
+        note_added_by: req.user.id
+
     });
 
     return res.status(200).json({
