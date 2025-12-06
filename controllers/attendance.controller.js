@@ -438,6 +438,12 @@ export const addAttendanceNote = async (req, res, next) => {
             console.log("📥 Note API Body Received:", req.body);
     const { attendance_id, note, note_type, added_by } = req.body;
 
+    if (req.user?.role !== "teacher") {
+      return res.status(403).json({
+        success: false,
+        message: "Only teachers can add notes"
+      });
+    }
     if (!attendance_id) {
       return res.status(400).json({
         success: false,
