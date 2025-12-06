@@ -2750,7 +2750,7 @@ export const loginAttendanceTaker = async (req, res) => {
         .json({ success: false, message: "Invalid password" });
 
     const token = jwt.sign(
-      { id: taker.id, role: "attendance_taker" },
+      { id: taker.id, role: taker.role },
       process.env.JWT_SECRET,
       { expiresIn: "8h" }
     );
