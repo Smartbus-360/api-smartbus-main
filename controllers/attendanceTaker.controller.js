@@ -12,7 +12,19 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 export const getAttendanceTakers = async (req, res, next) => {
   try {
-    const takers = await AttendanceTaker.findAll({ order: [["createdAt", "DESC"]] });
+    const takers = await AttendanceTaker.findAll({ 
+      attributes: [
+        "id",
+        "name",
+        "email",
+        "phone",
+        "availabilityStatus",
+        "instituteId",
+        "role",   // ✅ FIX: Include role
+        "createdAt",
+        "updatedAt"
+      ],
+      order: [["createdAt", "DESC"]] });
     res.status(200).json(takers);
   } catch (error) {
     next(errorHandler(500, error.message || "Error fetching attendance-takers"));
