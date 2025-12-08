@@ -35,9 +35,9 @@ apiRouter.get("/driver/self", httpAuth, getDriverSelf);
 apiRouter.post("/logout/user", httpAuth, logoutUser);
 apiRouter.use("/attendance", attendanceRoutes);
 apiRouter.post("/update-shift", updateShift);
-apiRouter.get("/admin/driver-stop-report", httpAuth, getDriverStopReport);
-apiRouter.get("/admin/driver-stop-report/excel", httpAuth, exportDriverStopReportExcel);
-apiRouter.get("/admin/driver-stop-report/pdf", httpAuth, exportDriverStopReportPDF);
+apiRouter.get("/driver-stop-report", httpAuth, getDriverStopReport);
+apiRouter.get("/driver-stop-report/excel", httpAuth, exportDriverStopReportExcel);
+apiRouter.get("/driver-stop-report/pdf", httpAuth, exportDriverStopReportPDF);
 
 
 
