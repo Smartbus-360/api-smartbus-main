@@ -270,7 +270,10 @@ for (const record of attendanceRecords) {
         type: sequelize.QueryTypes.SELECT,
       }
     );
-    if (taker && taker.role) role = taker.role;
+    // if (taker && taker.role) role = taker.role;
+    if (taker && taker.role) {
+  role = taker.role === "taker" ? "attendance_taker" : taker.role;
+}
   }
 
   record.dataValues.marked_by_role = role || "unknown";
