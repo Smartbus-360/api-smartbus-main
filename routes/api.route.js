@@ -17,8 +17,8 @@ import { getDriverSelf } from "../controllers/driver.controller.js";
 import { markStopReached } from "../controllers/stoppage.controller.js";
 import attendanceRoutes from "./attendance.route.js";
 import { loginAttendanceTaker } from "../controllers/api.controller.js";
-import { getDriverStopReport, exportDriverStopReportExcel, exportDriverStopReportPDF } 
-from "../controllers/report.controller.js";
+// import { getDriverStopReport, exportDriverStopReportExcel, exportDriverStopReportPDF } 
+// from "../controllers/report.controller.js";
 
 
 
@@ -35,9 +35,9 @@ apiRouter.get("/driver/self", httpAuth, getDriverSelf);
 apiRouter.post("/logout/user", httpAuth, logoutUser);
 apiRouter.use("/attendance", attendanceRoutes);
 apiRouter.post("/update-shift", updateShift);
-apiRouter.get("/driver-stop-report", httpAuth, getDriverStopReport);
-apiRouter.get("/driver-stop-report/excel", httpAuth, exportDriverStopReportExcel);
-apiRouter.get("/driver-stop-report/pdf", httpAuth, exportDriverStopReportPDF);
+// apiRouter.get("/driver-stop-report", httpAuth, getDriverStopReport);
+// apiRouter.get("/driver-stop-report/excel", httpAuth, exportDriverStopReportExcel);
+// apiRouter.get("/driver-stop-report/pdf", httpAuth, exportDriverStopReportPDF);
 
 
 
