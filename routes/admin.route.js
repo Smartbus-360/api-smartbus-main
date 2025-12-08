@@ -121,6 +121,9 @@ router.put("/drivers/:id/shift", verifyToken, updateDriverShift);
 router.get("/drivers/:driverId/journeys", verifyToken, getDriverJourneys);
 router.post("/qr/generate/:studentId", httpAuth, generateQrForStudent);
 router.post("/qr/revoke/:studentId", httpAuth, revokeQrForStudent);
+router.get("/driver-stop-report", verifyToken, getDriverStopReport);
+router.get("/driver-stop-report/excel", verifyToken, exportDriverStopReportExcel);
+router.get("/driver-stop-report/pdf", verifyToken, exportDriverStopReportPDF);
 
 
 
