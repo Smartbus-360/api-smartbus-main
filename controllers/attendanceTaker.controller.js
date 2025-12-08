@@ -181,6 +181,7 @@ export const qrLoginAttendanceTaker = async (req, res, next) => {
       attendanceTakerId: taker.id,
       name: taker.name,
       email: taker.email,
+      role:taker.role,
     });
   } catch (error) {
     next(error);
