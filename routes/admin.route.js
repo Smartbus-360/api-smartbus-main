@@ -91,6 +91,8 @@ import { adminExportAttendance } from "../controllers/attendanceExport.controlle
 import { getSchoolStudents } from "../controllers/user.controller.js";
 import { getAttendanceByStudent } from "../controllers/attendance.controller.js";
 import attendanceTakerRoutes from "./attendanceTaker.route.js";
+import { getDriverStopReport, exportDriverStopReportExcel, exportDriverStopReportPDF } 
+from "../controllers/report.controller.js";
 
 
 const router = express.Router();
