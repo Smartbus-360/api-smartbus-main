@@ -48,7 +48,7 @@ export const markAttendance = async (req, res, next) => {
 
     // 3️⃣ Validate attendance taker exists
     const [taker] = await sequelize.query(
-      "SELECT id, name FROM tbl_sm360_attendance_takers WHERE id = :id",
+      "SELECT id, name,role FROM tbl_sm360_attendance_takers WHERE id = :id",
       { replacements: { id: attendance_taker_id }, type: sequelize.QueryTypes.SELECT }
     );
     if (!taker) {
@@ -251,10 +251,37 @@ export const getAttendanceByStudent = async (req, res, next) => {
       ],
     });
 
+    // 🔍 Determine marked_by_role for each attendance record
+for (const record of attendanceRecords) {
+  let role = null;
+
+  // If teacher added a note → teacher marked it
+  if (record.note_added_by) {
+    const teacher = await User.findByPk(record.note_added_by);
+    if (teacher) role = teacher.role;
+  }
+
+  // Otherwise attendance taker marked it
+  if (!role && record.attendance_taker_id) {
+    const [taker] = await sequelize.query(
+      "SELECT role FROM tbl_sm360_attendance_takers WHERE id = :id",
+      {
+        replacements: { id: record.attendance_taker_id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+    if (taker && taker.role) role = taker.role;
+  }
+
+  record.dataValues.marked_by_role = role || "unknown";
+}
+
+
     const formatted = attendanceRecords.map((a) => ({
       ...a.dataValues,
       // scan_time: toIST(a.scan_time),
       scan_time: moment(a.scan_time).format("YYYY-MM-DD HH:mm:ss"),
+        marked_by_role: a.dataValues.marked_by_role
     }));
 
     res.status(200).json(formatted);
@@ -312,10 +339,36 @@ export const getMyAttendance = async (req, res, next) => {
     //   return new Date(date).toLocaleString("en-IN", options);
     // };
 
+    // 🔍 Determine marked_by_role for each attendance record
+for (const record of attendanceRecords) {
+  let role = null;
+
+  // If teacher added a note → teacher marked it
+  if (record.note_added_by) {
+    const teacher = await User.findByPk(record.note_added_by);
+    if (teacher) role = teacher.role;
+  }
+
+  // Otherwise attendance taker marked it
+  if (!role && record.attendance_taker_id) {
+    const [taker] = await sequelize.query(
+      "SELECT role FROM tbl_sm360_attendance_takers WHERE id = :id",
+      {
+        replacements: { id: record.attendance_taker_id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+    if (taker && taker.role) role = taker.role;
+  }
+
+  record.dataValues.marked_by_role = role || "unknown";
+}
+
     const formatted = attendanceRecords.map((a) => ({
       ...a.dataValues,
       // scan_time: toIST(a.scan_time),
       scan_time: moment(a.scan_time).format("YYYY-MM-DD HH:mm:ss"),
+        marked_by_role: a.dataValues.marked_by_role,
       latitude: a.latitude,
       longitude: a.longitude,
       note: a.note,                // ⭐ ADDED
