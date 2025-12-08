@@ -2762,6 +2762,7 @@ export const loginAttendanceTaker = async (req, res) => {
       attendanceTakerId: taker.id,
       name: taker.name,
       email: taker.email,
+      role: taker.role
     });
   } catch (error) {
     console.error("Error logging in attendance taker:", error);
