@@ -29,6 +29,13 @@ export const httpAuth = async (req, res, next) => {
         // Verify the token and extract the payload
         const payload = jwt.verify(token, JWT_SECRET);
 
+        // ✅ Allow ADMIN tokens
+if (payload.isAdmin && payload.isAdmin >= 1) {
+    req.user = { id: payload.id, role: "admin" };
+    return next();
+}
+
+
         // Fetch user or driver from the database
         
         if (payload.role === 'user') {
