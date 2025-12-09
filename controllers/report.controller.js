@@ -308,6 +308,7 @@ if (!fs.existsSync(downloadDir)) {
     const filePath = path.join(downloadDir, fileName);
 
     // const filePath = path.join("downloads", fileName);
+console.log("PDF WILL BE SAVED AT:", filePath);
 
     const doc = new PDFDocument();
     doc.pipe(fs.createWriteStream(filePath));
@@ -335,9 +336,24 @@ if (!fs.existsSync(downloadDir)) {
       if (s.reachTime) doc.text(`    Time: ${s.reachTime}`);
     });
 
+    // doc.end();
+
+    // return res.download(filePath, fileName);
     doc.end();
 
+doc.on("finish", () => {
+  console.log("PDF SAVED SUCCESSFULLY:", filePath);
+
+  setTimeout(() => {
     return res.download(filePath, fileName);
+  }, 150); // 150 ms delay
+});
+
+
+doc.on("error", (err) => {
+  console.error("PDF WRITE ERROR:", err);
+});
+
   } catch (error) {
     console.error("PDF Export Error:", error);
     return res.status(500).json({ success: false, message: error.message });
