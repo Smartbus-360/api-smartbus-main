@@ -8,6 +8,11 @@ import ExcelJS from "exceljs";
 import PDFDocument from "pdfkit";
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ===================================================================
 // 1️⃣ GET DRIVER STOP MERGED REPORT
