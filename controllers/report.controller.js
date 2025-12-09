@@ -298,7 +298,9 @@ if (!fs.existsSync(downloadDir)) {
     fs.mkdirSync(downloadDir);
 }
 
-    const filePath = path.join("downloads", fileName);
+    const filePath = path.join(downloadDir, fileName);
+
+    // const filePath = path.join("downloads", fileName);
 
     const doc = new PDFDocument();
     doc.pipe(fs.createWriteStream(filePath));
