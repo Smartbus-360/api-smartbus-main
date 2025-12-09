@@ -109,21 +109,73 @@ export const getDriverStopReport = async (req, res) => {
 // ===================================================================
 // 2️⃣ EXPORT: EXCEL MERGED REPORT
 // ===================================================================
+// export const exportDriverStopReportExcel = async (req, res) => {
+//   try {
+//     const { driverId, date } = req.query;
+
+//     // Fetch JSON report using the same logic above
+//     const result = await (await fetch(
+//       `${process.env.BASE_URL}/admin/driver-stop-report?driverId=${driverId}&date=${date}`
+//     )).json();
+
+//     if (!result.success) {
+//       return res.status(400).json(result);
+//     }
+
+//     const workbook = new ExcelJS.Workbook();
+//     const sheet = workbook.addWorksheet("Driver Stop Report");
+
+//     sheet.columns = [
+//       { header: "Stop Order", key: "stopOrder", width: 15 },
+//       { header: "Stop Name", key: "stopName", width: 30 },
+//       { header: "Phase", key: "phase", width: 15 },
+//       { header: "Reached", key: "reached", width: 10 },
+//       { header: "Reach Time", key: "reachTime", width: 20 },
+//     ];
+
+//     result.stops.forEach(s => {
+//       sheet.addRow({
+//         stopOrder: s.stopOrder,
+//         stopName: s.stopName,
+//         phase: s.phase,
+//         reached: s.reached ? "YES" : "NO",
+//         reachTime: s.reachTime || "-",
+//       });
+//     });
+
+//     const fileName = `driver-stop-report-${driverId}-${Date.now()}.xlsx`;
+//     const filePath = path.join("downloads", fileName);
+
+//     await workbook.xlsx.writeFile(filePath);
+
+//     res.download(filePath, fileName);
+
+//   } catch (error) {
+//     console.error("Excel Export Error:", error);
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
 export const exportDriverStopReportExcel = async (req, res) => {
   try {
-    const { driverId, date } = req.query;
+    const internalReq = { query: req.query };
+    let jsonResult;
 
-    // Fetch JSON report using the same logic above
-    const result = await (await fetch(
-      `${process.env.BASE_URL}/admin/driver-stop-report?driverId=${driverId}&date=${date}`
-    )).json();
+    await getDriverStopReport(
+      internalReq,
+      {
+        json: (data) => (jsonResult = data),
+      }
+    );
+
+    const result = jsonResult;
 
     if (!result.success) {
       return res.status(400).json(result);
     }
 
     const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet("Driver Stop Report");
+    const sheet = workbook.addWorksheet("Driver Report");
 
     sheet.columns = [
       { header: "Stop Order", key: "stopOrder", width: 15 },
@@ -133,7 +185,7 @@ export const exportDriverStopReportExcel = async (req, res) => {
       { header: "Reach Time", key: "reachTime", width: 20 },
     ];
 
-    result.stops.forEach(s => {
+    result.stops.forEach((s) => {
       sheet.addRow({
         stopOrder: s.stopOrder,
         stopName: s.stopName,
@@ -143,13 +195,12 @@ export const exportDriverStopReportExcel = async (req, res) => {
       });
     });
 
-    const fileName = `driver-stop-report-${driverId}-${Date.now()}.xlsx`;
+    const fileName = `driver-stop-report-${result.driver.id}-${Date.now()}.xlsx`;
     const filePath = path.join("downloads", fileName);
 
     await workbook.xlsx.writeFile(filePath);
 
-    res.download(filePath, fileName);
-
+    return res.download(filePath, fileName);
   } catch (error) {
     console.error("Excel Export Error:", error);
     res.status(500).json({ success: false, message: error.message });
@@ -157,28 +208,91 @@ export const exportDriverStopReportExcel = async (req, res) => {
 };
 
 
-
 // ===================================================================
 // 3️⃣ EXPORT: PDF MERGED REPORT
 // ===================================================================
+// export const exportDriverStopReportPDF = async (req, res) => {
+//   try {
+//     const { driverId, date } = req.query;
+
+//     const result = await (await fetch(
+//       `${process.env.BASE_URL}/admin/driver-stop-report?driverId=${driverId}&date=${date}`
+//     )).json();
+
+//     if (!result.success) {
+//       return res.status(400).json(result);
+//     }
+
+//     const fileName = `driver-stop-report-${driverId}-${Date.now()}.pdf`;
+//     const filePath = path.join("downloads", fileName);
+
+//     const doc = new PDFDocument();
+//     doc.pipe(fs.createWriteStream(filePath));
+
+//     doc.fontSize(18).text("Driver Stop Completion Report", { align: "center" });
+//     doc.moveDown();
+
+//     doc.fontSize(12).text(`Driver: ${result.driver.name}`);
+//     doc.text(`Bus: ${result.driver.busNumber}`);
+//     doc.text(`Route: ${result.route.name}`);
+//     doc.text(`Date: ${result.date}`);
+//     doc.moveDown();
+
+//     doc.fontSize(14).text("Stops Summary");
+//     doc.text(`Total Stops: ${result.totals.totalStops}`);
+//     doc.text(`Reached: ${result.totals.reachedStops}`);
+//     doc.text(`Pending: ${result.totals.pendingStops}`);
+//     doc.text(`Progress: ${result.totals.progressPercentage}%`);
+//     doc.moveDown();
+
+//     doc.fontSize(14).text("Stops Details (Merged) ↓");
+//     doc.moveDown();
+
+//     result.stops.forEach((s, i) => {
+//       doc.fontSize(11).text(
+//         `${i + 1}. [${s.phase}] ${s.stopName} - ${s.reached ? "✓ Reached" : "✗ Not Reached"} ${s.reachTime ? " at " + s.reachTime : ""
+//         }`
+//       );
+//     });
+
+//     doc.end();
+
+//     res.download(filePath, fileName);
+
+//   } catch (error) {
+//     console.error("PDF Export Error:", error);
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
+import { getDriverStopReport } from "./report.controller.js";  // if needed
+
 export const exportDriverStopReportPDF = async (req, res) => {
   try {
-    const { driverId, date } = req.query;
+    // 🔥 Get report JSON directly (no token required)
+    const internalReq = { query: req.query };
+    
+    let jsonResult;
+    await getDriverStopReport(
+      internalReq,
+      {
+        json: (data) => (jsonResult = data), // capture JSON instead of sending response
+      }
+    );
 
-    const result = await (await fetch(
-      `${process.env.BASE_URL}/admin/driver-stop-report?driverId=${driverId}&date=${date}`
-    )).json();
+    const result = jsonResult;
 
     if (!result.success) {
       return res.status(400).json(result);
     }
 
-    const fileName = `driver-stop-report-${driverId}-${Date.now()}.pdf`;
+    const fileName = `driver-stop-report-${result.driver.id}-${Date.now()}.pdf`;
     const filePath = path.join("downloads", fileName);
 
     const doc = new PDFDocument();
     doc.pipe(fs.createWriteStream(filePath));
 
+    // Writing PDF content...
     doc.fontSize(18).text("Driver Stop Completion Report", { align: "center" });
     doc.moveDown();
 
@@ -188,29 +302,24 @@ export const exportDriverStopReportPDF = async (req, res) => {
     doc.text(`Date: ${result.date}`);
     doc.moveDown();
 
-    doc.fontSize(14).text("Stops Summary");
     doc.text(`Total Stops: ${result.totals.totalStops}`);
     doc.text(`Reached: ${result.totals.reachedStops}`);
     doc.text(`Pending: ${result.totals.pendingStops}`);
     doc.text(`Progress: ${result.totals.progressPercentage}%`);
     doc.moveDown();
 
-    doc.fontSize(14).text("Stops Details (Merged) ↓");
-    doc.moveDown();
-
     result.stops.forEach((s, i) => {
-      doc.fontSize(11).text(
-        `${i + 1}. [${s.phase}] ${s.stopName} - ${s.reached ? "✓ Reached" : "✗ Not Reached"} ${s.reachTime ? " at " + s.reachTime : ""
-        }`
+      doc.text(
+        `${i + 1}. [${s.phase}] ${s.stopName} - ${s.reached ? "✓ Reached" : "✗ Not Reached"}`
       );
+      if (s.reachTime) doc.text(`    Time: ${s.reachTime}`);
     });
 
     doc.end();
 
-    res.download(filePath, fileName);
-
+    return res.download(filePath, fileName);
   } catch (error) {
     console.error("PDF Export Error:", error);
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
