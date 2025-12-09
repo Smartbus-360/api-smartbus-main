@@ -196,6 +196,12 @@ export const exportDriverStopReportExcel = async (req, res) => {
     });
 
     const fileName = `driver-stop-report-${result.driver.id}-${Date.now()}.xlsx`;
+
+    const downloadDir = path.join(process.cwd(), "downloads");
+if (!fs.existsSync(downloadDir)) {
+    fs.mkdirSync(downloadDir);
+}
+
     const filePath = path.join("downloads", fileName);
 
     await workbook.xlsx.writeFile(filePath);
@@ -287,6 +293,11 @@ export const exportDriverStopReportPDF = async (req, res) => {
     }
 
     const fileName = `driver-stop-report-${result.driver.id}-${Date.now()}.pdf`;
+    const downloadDir = path.join(process.cwd(), "downloads");
+if (!fs.existsSync(downloadDir)) {
+    fs.mkdirSync(downloadDir);
+}
+
     const filePath = path.join("downloads", fileName);
 
     const doc = new PDFDocument();
