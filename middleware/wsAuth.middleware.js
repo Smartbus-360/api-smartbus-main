@@ -315,24 +315,48 @@ export const logout = async (req, res) => {
         res.status(500).json({ success: false, message: 'Error logging out' });
     }
 };
+// export const canViewMap = async (req, res, next) => {
+//   try {
+//     const actor = req.user;                 // set by httpAuth
+//     const instituteId = actor?.instituteId; // present on your tokens/rows
+
+//     if (!instituteId) {
+//       return res.status(403).json({ message: "Map access not configured." });
+//     }
+
+//     const inst = await Institute.findByPk(instituteId);
+//     if (!inst) return res.status(404).json({ message: "Institute not found." });
+
+//     if (inst.mapAccess !== true) {
+//       return res.status(403).json({ message: "Map access disabled by superadmin." });
+//     }
+
+//     next();
+//   } catch (e) {
+//     return res.status(500).json({ message: "Map access check failed." });
+//   }
+// };
+
 export const canViewMap = async (req, res, next) => {
   try {
-    const actor = req.user;                 // set by httpAuth
-    const instituteId = actor?.instituteId; // present on your tokens/rows
+    const user = req.user;
 
-    if (!instituteId) {
-      return res.status(403).json({ message: "Map access not configured." });
+    // Institute-level hard block only
+    if (user.instituteId) {
+      const institute = await Institute.findByPk(user.instituteId);
+      if (institute && institute.mapAccess === false) {
+        return res.status(403).json({
+          message: "Institute map access disabled"
+        });
+      }
     }
 
-    const inst = await Institute.findByPk(instituteId);
-    if (!inst) return res.status(404).json({ message: "Institute not found." });
+    // Let controller decide (checkMapAccess)
+    console.log("httpAuth PASSING");
+    return next();
 
-    if (inst.mapAccess !== true) {
-      return res.status(403).json({ message: "Map access disabled by superadmin." });
-    }
-
-    next();
-  } catch (e) {
+  } catch (err) {
+    console.error("canViewMap error:", err);
     return res.status(500).json({ message: "Map access check failed." });
   }
 };
