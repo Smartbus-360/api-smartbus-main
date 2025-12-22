@@ -2,6 +2,7 @@ import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
 import Institute from './institute.model.js';
 import Stop from './stop.model.js';
+import StudentMapSubscription from "./studentMapSubscription.model.js";
 
 const User = sequelize.define('tbl_sm360_users', {
   id: {
@@ -135,6 +136,13 @@ const User = sequelize.define('tbl_sm360_users', {
   },
 }, {
   timestamps: true,
+});
+User.hasMany(StudentMapSubscription, {
+  foreignKey: "student_id",
+});
+
+StudentMapSubscription.belongsTo(User, {
+  foreignKey: "student_id",
 });
 
 export default User;
