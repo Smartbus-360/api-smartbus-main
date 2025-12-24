@@ -14,7 +14,17 @@ const MapSubscriptionPlan = sequelize.define("map_subscription_plans", {
   status: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
-  }
+  },
+  razorpay_plan_id: {
+  type: DataTypes.STRING,
+  allowNull: true,
+},
+
+billing_cycle: {
+  type: DataTypes.ENUM("monthly", "yearly"),
+  defaultValue: "monthly",
+},
+
 }, { timestamps: true });
 
 export default MapSubscriptionPlan;
