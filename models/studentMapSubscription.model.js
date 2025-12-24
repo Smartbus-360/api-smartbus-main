@@ -38,7 +38,22 @@ const StudentMapSubscription = sequelize.define("student_map_subscriptions", {
   status: {
     type: DataTypes.ENUM("active", "expired","revoked"),
     defaultValue: "active",
-  }
+  },
+  razorpay_subscription_id: {
+  type: DataTypes.STRING,
+  allowNull: true,
+},
+
+razorpay_customer_id: {
+  type: DataTypes.STRING,
+  allowNull: true,
+},
+
+autopay_enabled: {
+  type: DataTypes.BOOLEAN,
+  defaultValue: false,
+}
+
 }, { timestamps: true });
 
 export default StudentMapSubscription;
