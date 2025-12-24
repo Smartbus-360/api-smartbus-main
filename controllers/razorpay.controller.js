@@ -35,7 +35,6 @@ const razorpay = new Razorpay({
 
 // 1️⃣ Create Order
 export const createOrder = async (req, res) => 
-  
   try {
     const userId = req.user.id;
     const { planType, months } = req.body;
