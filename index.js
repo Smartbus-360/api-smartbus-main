@@ -15,6 +15,9 @@ import './cronJobs.js';
 import { setupAssociations } from './models/associations.js';
 import attendanceRoutes from "./routes/attendance.route.js";
 import attendanceTakerRoutes from './routes/attendanceTaker.route.js';
+import mapSubscriptionRoutes from "./routes/mapSubscription.route.js";
+import razorpayRoutes from "./routes/razorpay.route.js";
+import razorpayWebhookRoutes from "./routes/razorpayWebhook.route.js";
 
 
 
@@ -58,6 +61,9 @@ app.use('/api/admin', adminRoutes);
 app.use('/api', apiRoutes);
 app.use('/api/attendance-taker', attendanceTakerRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use("/api", razorpayRoutes);
+app.use("/webhook", razorpayWebhookRoutes);
+app.use("/api", mapSubscriptionRoutes);
 
 
 
