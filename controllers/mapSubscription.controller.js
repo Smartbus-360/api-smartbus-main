@@ -24,78 +24,78 @@ export const getMapSubscriptionPlans = async (req, res, next) => {
  * POST /map/subscription/activate
  * Body: { planType, months, txnId }
  */
-export const activateStudentMapSubscription = async (req, res, next) => {
-  try {
-    const studentId = req.user.id;
-    const { planType, months, txnId } = req.body;
+// export const activateStudentMapSubscription = async (req, res, next) => {
+//   try {
+//     const studentId = req.user.id;
+//     const { planType, months, txnId } = req.body;
 
-    if (!planType || !months || !txnId) {
-      return res.status(400).json({ message: "Invalid request" });
-    }
+//     if (!planType || !months || !txnId) {
+//       return res.status(400).json({ message: "Invalid request" });
+//     }
 
-    const plan = await MapSubscriptionPlan.findOne({
-      where: { plan_type: planType, status: true },
-    });
+//     const plan = await MapSubscriptionPlan.findOne({
+//       where: { plan_type: planType, status: true },
+//     });
 
-    if (!plan) {
-      return res.status(400).json({ message: "Plan not available" });
-    }
+//     if (!plan) {
+//       return res.status(400).json({ message: "Plan not available" });
+//     }
 
-    const amount = plan.price_per_month * months;
+//     const amount = plan.price_per_month * months;
 
-    const startDate = new Date();
-    const endDate = new Date();
-    endDate.setMonth(endDate.getMonth() + Number(months));
+//     const startDate = new Date();
+//     const endDate = new Date();
+//     endDate.setMonth(endDate.getMonth() + Number(months));
 
-    // Expire old subscriptions
-    await StudentMapSubscription.update(
-      { status: "expired" },
-      {
-        where: {
-          student_id: studentId,
-          end_date: { [Op.lt]: new Date() },
-        },
-      }
-    );
+//     // Expire old subscriptions
+//     await StudentMapSubscription.update(
+//       { status: "expired" },
+//       {
+//         where: {
+//           student_id: studentId,
+//           end_date: { [Op.lt]: new Date() },
+//         },
+//       }
+//     );
 
-    // ❌ Reject reused transaction ID
-const existingTxn = await StudentMapSubscription.findOne({
-  where: { txn_id: txnId }
-});
+//     // ❌ Reject reused transaction ID
+// const existingTxn = await StudentMapSubscription.findOne({
+//   where: { txn_id: txnId }
+// });
 
-if (existingTxn) {
-  return res.status(400).json({
-    success: false,
-    message: "This transaction ID is already used"
-  });
-}
-if (txnId.length < 6) {
-  return res.status(400).json({
-    success: false,
-    message: "Invalid transaction ID"
-  });
-}
+// if (existingTxn) {
+//   return res.status(400).json({
+//     success: false,
+//     message: "This transaction ID is already used"
+//   });
+// }
+// if (txnId.length < 6) {
+//   return res.status(400).json({
+//     success: false,
+//     message: "Invalid transaction ID"
+//   });
+// }
 
-    await StudentMapSubscription.create({
-      student_id: studentId,
-      plan_type: planType,
-      months,
-      amount,
-      txn_id: txnId,
-      start_date: startDate,
-      end_date: endDate,
-      status: "active",
-    });
+//     await StudentMapSubscription.create({
+//       student_id: studentId,
+//       plan_type: planType,
+//       months,
+//       amount,
+//       txn_id: txnId,
+//       start_date: startDate,
+//       end_date: endDate,
+//       status: "active",
+//     });
 
-    res.json({
-      success: true,
-      message: "Map access activated",
-      validTill: endDate,
-    });
-  } catch (err) {
-    next(err);
-  }
-};
+//     res.json({
+//       success: true,
+//       message: "Map access activated",
+//       validTill: endDate,
+//     });
+//   } catch (err) {
+//     next(err);
+//   }
+// };
 /**
  * GET /map/access-check
  * Final authority for map access
@@ -319,4 +319,67 @@ export const revokeStudentMapSubscription = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+export const getAllStudentSubscriptionHistory = async (req, res, next) => {
+  try {
+    // Optional safety check
+    if (req.user.isAdmin !== 1) {
+      return res.status(403).json({ message: "Admin access only" });
+    }
+
+    const subs = await StudentMapSubscription.findAll({
+      include: [
+        {
+          model: User,
+          attributes: ["id", "full_name", "email", "instituteId"],
+          include: [{ model: Institute, attributes: ["id", "name"] }]
+        }
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    res.json({
+      success: true,
+      subscriptions: subs,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+export const activateStudentMapSubscriptionInternal = async ({
+  studentId,
+  planType,
+  months,
+  amount,
+  txnId
+}) => {
+
+  const startDate = new Date();
+  const endDate = new Date();
+  endDate.setMonth(endDate.getMonth() + Number(months));
+
+  // Expire old subscriptions
+  await StudentMapSubscription.update(
+    { status: "expired" },
+    {
+      where: {
+        student_id: studentId,
+        end_date: { [Op.lt]: new Date() },
+      },
+    }
+  );
+
+  // Create new subscription
+  await StudentMapSubscription.create({
+    student_id: studentId,
+    plan_type: planType,
+    months,
+    amount,
+    txn_id: txnId,
+    start_date: startDate,
+    end_date: endDate,
+    status: "active",
+  });
+
+  return endDate;
 };
