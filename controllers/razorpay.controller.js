@@ -28,10 +28,26 @@ import MapSubscriptionPlan from "../models/mapSubscriptionPlan.model.js";
 import { activateStudentMapSubscriptionInternal } from "./mapSubscription.controller.js";
 console.log("Razorpay Key:", process.env.RAZORPAY_KEY_ID);
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
-});
+// const razorpay = new Razorpay({
+//   key_id: process.env.RAZORPAY_KEY_ID,
+//   key_secret: process.env.RAZORPAY_KEY_SECRET
+// 
+let razorpayInstance = null;
+
+function getRazorpayInstance() {
+  if (!razorpayInstance) {
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      throw new Error("Razorpay keys not loaded in environment");
+    }
+
+    razorpayInstance = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET
+    });
+  }
+  return razorpayInstance;
+}
+
 
 // 1️⃣ Create Order
 export const createOrder = async (req, res) => 
@@ -49,7 +65,7 @@ export const createOrder = async (req, res) =>
 
     const amount = plan.price_per_month * months;
 
-    const order = await razorpay.orders.create({
+    const order = await getRazorpayInstance().orders.create({
       amount: amount * 100,
       currency: "INR",
       receipt: `map_${userId}_${Date.now()}`
@@ -169,7 +185,7 @@ if (planType === "yearly") {
 
   // monthly autopay → no total_count (runs until cancelled)
 
-  const subscription = await razorpay.subscriptions.create(payload);
+  const subscription = await getRazorpayInstance().subscriptions.create(payload);
 
   res.json({
     subscriptionId: subscription.id,
