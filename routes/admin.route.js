@@ -95,7 +95,6 @@ import { getDriverStopReport, exportDriverStopReportExcel, exportDriverStopRepor
 from "../controllers/report.controller.js";
 import {
   getMapSubscriptionPlans,
-  activateStudentMapSubscription,
 } from "../controllers/mapSubscription.controller.js";
 import { getStudentSubscriptionHistory } from "../controllers/mapSubscription.controller.js";
 import { revokeStudentMapSubscription } from "../controllers/mapSubscription.controller.js";
@@ -131,7 +130,7 @@ router.get("/driver-stop-report", verifyToken, getDriverStopReport);
 router.get("/driver-stop-report/excel", verifyToken, exportDriverStopReportExcel);
 router.get("/driver-stop-report/pdf", verifyToken, exportDriverStopReportPDF);
 router.get("/map/subscription/plans", verifyToken, getMapSubscriptionPlans);
-router.post("/map/subscription/activate", verifyToken, activateStudentMapSubscription);
+// router.post("/map/subscription/activate", verifyToken, activateStudentMapSubscription);
 router.get(
   "/map/subscription/history",
   verifyToken,
