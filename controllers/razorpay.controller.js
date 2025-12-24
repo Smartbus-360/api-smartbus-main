@@ -26,6 +26,7 @@ import crypto from "crypto";
 import PaymentTransaction from "../models/paymentTransaction.model.js";
 import MapSubscriptionPlan from "../models/mapSubscriptionPlan.model.js";
 import { activateStudentMapSubscriptionInternal } from "./mapSubscription.controller.js";
+console.log("Razorpay Key:", process.env.RAZORPAY_KEY_ID);
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -33,7 +34,8 @@ const razorpay = new Razorpay({
 });
 
 // 1️⃣ Create Order
-export const createOrder = async (req, res) => {
+export const createOrder = async (req, res) => 
+  
   try {
     const userId = req.user.id;
     const { planType, months } = req.body;
