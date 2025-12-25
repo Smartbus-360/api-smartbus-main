@@ -258,7 +258,7 @@ export const verifyAutoPay = async (req, res) => {
       studentId: userId,
       planType: "yearly",
       months: 12,
-      amount: 0,
+      amount: plan.price_per_month * 12,
       txnId: razorpay_payment_id,
       autopay: true,
       razorpay_subscription_id
