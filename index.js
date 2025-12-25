@@ -20,10 +20,12 @@ import razorpayRoutes from "./routes/razorpay.route.js";
 import razorpayWebhookRoutes from "./routes/razorpayWebhook.route.js";
 
 
+    setupAssociations();
 
 // Sync models and setup associations
 sequelize.sync().then(() => { //{ alter: true }
-    setupAssociations();
+    // setupAssociations();
+        console.log("DB synced with associations");
     //console.log('Database & tables created!');
 }).catch(err => {
     console.error('Error syncing database:', err);
