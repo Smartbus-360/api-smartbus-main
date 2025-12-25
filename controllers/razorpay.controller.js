@@ -208,15 +208,23 @@ export const createAutoPaySubscription = async (req, res, next) => {
       });
     }
 
-    const subscription = await razorpay.subscriptions.create({
+    const payload = {
       plan_id: plan.razorpay_plan_id,
-      total_count: planType === "yearly" ? 1 : 12, // 🔥 REQUIRED
-      customer_notify: 1
-    });
+      customer_notify: 1,
+      total_count: planType === "yearly" ? 1 : 12
+    };
+    // const subscription = await razorpay.subscriptions.create({
+    //   plan_id: plan.razorpay_plan_id,
+    //   total_count: planType === "yearly" ? 1 : 12, // 🔥 REQUIRED
+    //   customer_notify: 1
+    // });
+    const subscription =
+      await getRazorpayInstance().subscriptions.create(payload);
 
     res.json({
       success: true,
-      subscriptionId: subscription.id
+      subscriptionId: subscription.id,
+            key: process.env.RAZORPAY_KEY_ID
     });
 
   } catch (err) {
