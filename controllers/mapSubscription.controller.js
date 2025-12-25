@@ -165,116 +165,139 @@ export const getMapSubscriptionPlans = async (req, res, next) => {
 //     next(err);
 //   }
 // };
-export const checkMapAccess = async (req, res, next) => {
-console.log("🔥 CHECK MAP ACCESS HIT FROM:", req.originalUrl);
-  try {
-    // const userId = req.user.id;
-    const userId = req.user.id || req.user.userId;
+// export const checkMapAccess = async (req, res, next) => {
+// console.log("🔥 CHECK MAP ACCESS HIT FROM:", req.originalUrl);
+//   try {
+//     // const userId = req.user.id;
+//     const studentId = req.user.id || req.user.userId;
 
-if (!userId) {
-  return res.status(401).json({
-    allowed: false,
-    message: "Invalid user session"
+// if (!userId) {
+//   return res.status(401).json({
+//     allowed: false,
+//     message: "Invalid user session"
+//   });
+// }
+
+//     const now = new Date();
+
+//     const user = await User.findByPk(userId, {
+//       include: [{ model: Institute }],
+//     });
+
+//     if (!user) {
+//       return res.status(401).json({ allowed: false });
+//     }
+
+//     // 1️⃣ Institute-level access
+//     if (user.Institute?.mapAccess === true) {
+//       return res.json({ allowed: true, source: "institute" });
+//     }
+
+//     // 2️⃣ Student-level subscription (manual expiry handling)
+//     const activeSub = await StudentMapSubscription.findOne({
+//       where: {
+//         student_id: userId,
+//         status: "active",
+//       },
+//       order: [["end_date", "DESC"]],
+//     });
+
+//     // if (activeSub) {
+//     //   const endDate = new Date(activeSub.end_date);
+
+//     //   // 🔴 expired → auto mark expired
+//     //   if (endDate < now) {
+//     //     activeSub.status = "expired";
+//     //     await activeSub.save();
+//     //   } else {
+//     //     // 🟢 still active
+//     //     const daysLeft = Math.ceil(
+//     //       (endDate - now) / (1000 * 60 * 60 * 24)
+//     //     );
+
+//     //     return res.json({
+//     //       allowed: true,
+//     //       source: "student",
+//     //       expiresOn: activeSub.end_date,
+//     //       daysLeft,
+//     //     });
+//     //   }
+//     // }
+
+//     if (activeSub) {
+
+//   // 🔴 ADMIN REVOKED
+//   if (activeSub.status === "revoked") {
+//     return res.status(403).json({
+//       allowed: false,
+//       revoked: true,
+//       message: "Map access revoked by admin",
+//     });
+//   }
+
+//   const endDate = new Date(activeSub.end_date);
+// endDate.setHours(23, 59, 59, 999); // ✅ allow full day
+
+//   // 🔴 EXPIRED
+//   if (endDate < now) {
+//     activeSub.status = "expired";
+//     await activeSub.save();
+// return res.status(403).json({
+//     allowed: false,
+//     expired: true,
+//     message: "Subscription expired"
+//   });
+// }
+
+//     else {
+//     // 🟢 ACTIVE
+//     const daysLeft = Math.ceil(
+//       (endDate - now) / (1000 * 60 * 60 * 24)
+//     );
+
+//     return res.json({
+//       allowed: true,
+//       source: "student",
+//       expiresOn: activeSub.end_date,
+//       daysLeft,
+//     });
+//   }
+// }
+
+//     // 3️⃣ No access → blocked
+//     return res.status(403).json({
+//       allowed: false,
+//       expired: true,
+//       message: "Subscription expired or not found",
+//     });
+
+//   } catch (err) {
+//     next(err);
+//   }
+// };
+export const checkMapAccess = async (req, res) => {
+  console.log("🔥 CHECK MAP ACCESS HIT FROM:", req.originalUrl);
+  const studentId = req.user.id;
+
+  const activeSub = await StudentMapSubscription.findOne({
+    where: {
+      student_id: studentId,
+      status: "active",
+      end_date: { [Op.gt]: new Date() }
+    },
+    order: [["createdAt", "DESC"]]
   });
-}
 
-    const now = new Date();
-
-    const user = await User.findByPk(userId, {
-      include: [{ model: Institute }],
-    });
-
-    if (!user) {
-      return res.status(401).json({ allowed: false });
-    }
-
-    // 1️⃣ Institute-level access
-    if (user.Institute?.mapAccess === true) {
-      return res.json({ allowed: true, source: "institute" });
-    }
-
-    // 2️⃣ Student-level subscription (manual expiry handling)
-    const activeSub = await StudentMapSubscription.findOne({
-      where: {
-        student_id: userId,
-        status: "active",
-      },
-      order: [["end_date", "DESC"]],
-    });
-
-    // if (activeSub) {
-    //   const endDate = new Date(activeSub.end_date);
-
-    //   // 🔴 expired → auto mark expired
-    //   if (endDate < now) {
-    //     activeSub.status = "expired";
-    //     await activeSub.save();
-    //   } else {
-    //     // 🟢 still active
-    //     const daysLeft = Math.ceil(
-    //       (endDate - now) / (1000 * 60 * 60 * 24)
-    //     );
-
-    //     return res.json({
-    //       allowed: true,
-    //       source: "student",
-    //       expiresOn: activeSub.end_date,
-    //       daysLeft,
-    //     });
-    //   }
-    // }
-
-    if (activeSub) {
-
-  // 🔴 ADMIN REVOKED
-  if (activeSub.status === "revoked") {
-    return res.status(403).json({
-      allowed: false,
-      revoked: true,
-      message: "Map access revoked by admin",
-    });
+  if (!activeSub) {
+    return res.json({ allowed: false });
   }
 
-  const endDate = new Date(activeSub.end_date);
-endDate.setHours(23, 59, 59, 999); // ✅ allow full day
-
-  // 🔴 EXPIRED
-  if (endDate < now) {
-    activeSub.status = "expired";
-    await activeSub.save();
-return res.status(403).json({
-    allowed: false,
-    expired: true,
-    message: "Subscription expired"
+  return res.json({
+    allowed: true,
+    expiresOn: activeSub.end_date
   });
-}
-
-    else {
-    // 🟢 ACTIVE
-    const daysLeft = Math.ceil(
-      (endDate - now) / (1000 * 60 * 60 * 24)
-    );
-
-    return res.json({
-      allowed: true,
-      source: "student",
-      expiresOn: activeSub.end_date,
-      daysLeft,
-    });
-  }
-}
-
-    // 3️⃣ No access → blocked
-    return res.status(403).json({
-      allowed: false,
-      expired: true,
-      message: "Subscription expired or not found",
-    });
-
-  } catch (err) {
-    next(err);
-  }
 };
+
 /**
  * GET /map/subscription/history
  * Student subscription history
