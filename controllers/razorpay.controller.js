@@ -28,6 +28,7 @@ import MapSubscriptionPlan from "../models/mapSubscriptionPlan.model.js";
 import { activateStudentMapSubscriptionInternal } from "./mapSubscription.controller.js";
 console.log("Razorpay Key:", process.env.RAZORPAY_KEY_ID);
 
+
 // const razorpay = new Razorpay({
 //   key_id: process.env.RAZORPAY_KEY_ID,
 //   key_secret: process.env.RAZORPAY_KEY_SECRET
@@ -151,47 +152,78 @@ export const createOrder = async (req, res) => {
 //   }
 // };
 
-export const createAutoPaySubscription = async (req, res) => {
-  const { planType } = req.body;
+// export const createAutoPaySubscription = async (req, res) => {
+//   const { planType } = req.body;
 
-  const plan = await MapSubscriptionPlan.findOne({
-    where: { plan_type: planType, status: true }
-  });
+//   const plan = await MapSubscriptionPlan.findOne({
+//     where: { plan_type: planType, status: true }
+//   });
 
-  if (!plan || !plan.razorpay_plan_id) {
-    return res.status(400).json({ message: "Razorpay plan not configured" });
+//   if (!plan || !plan.razorpay_plan_id) {
+//     return res.status(400).json({ message: "Razorpay plan not configured" });
+//   }
+
+//   // const subscriptionPayload = {
+//   //   plan_id: plan.razorpay_plan_id,
+//   //   customer_notify: 1
+//   // };
+
+//   // // 🔥 KEY DIFFERENCE
+//   // if (planType === "yearly") {
+//   //   subscriptionPayload.total_count = 12; // stop after 12 months
+//   // }
+//   const payload = {
+//   plan_id: plan.razorpay_plan_id,
+//   customer_notify: 1,
+// };
+
+// // 🔥 Razorpay REQUIRES total_count
+// if (planType === "yearly") {
+//   payload.total_count = 12;     // 12 months only
+// } else {
+//   payload.total_count = 120;    // monthly autopay (~10 years)
+// }
+
+//   // monthly autopay → no total_count (runs until cancelled)
+
+//   const subscription = await getRazorpayInstance().subscriptions.create(payload);
+
+//   res.json({
+//     subscriptionId: subscription.id,
+//     key: process.env.RAZORPAY_KEY_ID
+//   });
+// };
+
+export const createAutoPaySubscription = async (req, res, next) => {
+  try {
+    const { planType } = req.body;
+
+    const plan = await MapSubscriptionPlan.findOne({
+      where: { plan_type: planType, status: true }
+    });
+
+    if (!plan || !plan.razorpay_plan_id) {
+      return res.status(400).json({
+        message: "Razorpay plan not configured"
+      });
+    }
+
+    const subscription = await razorpay.subscriptions.create({
+      plan_id: plan.razorpay_plan_id,
+      total_count: planType === "yearly" ? 1 : 12, // 🔥 REQUIRED
+      customer_notify: 1
+    });
+
+    res.json({
+      success: true,
+      subscriptionId: subscription.id
+    });
+
+  } catch (err) {
+    next(err);
   }
-
-  // const subscriptionPayload = {
-  //   plan_id: plan.razorpay_plan_id,
-  //   customer_notify: 1
-  // };
-
-  // // 🔥 KEY DIFFERENCE
-  // if (planType === "yearly") {
-  //   subscriptionPayload.total_count = 12; // stop after 12 months
-  // }
-  const payload = {
-  plan_id: plan.razorpay_plan_id,
-  customer_notify: 1,
 };
 
-// 🔥 Razorpay REQUIRES total_count
-if (planType === "yearly") {
-  payload.total_count = 12;     // 12 months only
-} else {
-  payload.total_count = 120;    // monthly autopay (~10 years)
-}
-
-  // monthly autopay → no total_count (runs until cancelled)
-
-  const subscription = await getRazorpayInstance().subscriptions.create(payload);
-
-  res.json({
-    subscriptionId: subscription.id,
-    key: process.env.RAZORPAY_KEY_ID
-  });
-};
 
 export const verifyAutoPay = async (req, res) => {
   try {
@@ -234,9 +266,69 @@ export const verifyAutoPay = async (req, res) => {
   }
 };
 
-export const verifyAndActivateMapSubscription = async (req, res) => {
+// export const verifyAndActivateMapSubscription = async (req, res) => {
+//   try {
+//     const userId = req.user.id;
+//     const {
+//       razorpay_order_id,
+//       razorpay_payment_id,
+//       razorpay_signature,
+//       planType,
+//       months
+//     } = req.body;
+
+//     // const sign = razorpay_order_id + "|" + razorpay_payment_id;
+//     const body = razorpay_order_id + "|" + razorpay_payment_id;
+//     const expectedSignature = crypto
+//       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+//       .update(body)
+//       .digest("hex");
+
+
+//     // const expectedSign = crypto
+//     //   .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+//     //   .update(sign)
+//     //   .digest("hex");
+
+//     if (expectedSign !== razorpay_signature) {
+//       return res.status(400).json({ message: "Invalid payment signature" });
+//     }
+
+//     const txn = await PaymentTransaction.findOne({
+//       where: { razorpay_order_id, status: "created" }
+//     });
+
+//     if (!txn) {
+//       return res.status(400).json({ message: "Transaction not found" });
+//     }
+
+//     txn.razorpay_payment_id = razorpay_payment_id;
+//     txn.razorpay_signature = razorpay_signature;
+//     txn.status = "paid";
+//     await txn.save();
+
+//     // 🔥 Activate map subscription using EXISTING logic
+//     await activateStudentMapSubscriptionInternal({
+//       studentId: userId,
+//       planType,
+//       months,
+//       amount: txn.amount,
+//       txnId: razorpay_payment_id
+//     });
+
+//     res.json({
+//       success: true,
+//       message: "Payment verified & map access activated"
+//     });
+
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// };
+export const verifyAndActivateMapSubscription = async (req, res, next) => {
   try {
     const userId = req.user.id;
+
     const {
       razorpay_order_id,
       razorpay_payment_id,
@@ -245,48 +337,58 @@ export const verifyAndActivateMapSubscription = async (req, res) => {
       months
     } = req.body;
 
-    const sign = razorpay_order_id + "|" + razorpay_payment_id;
-
-    const expectedSign = crypto
+    // 1️⃣ VERIFY SIGNATURE
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(sign)
+      .update(body)
       .digest("hex");
 
-    if (expectedSign !== razorpay_signature) {
+    if (expectedSignature !== razorpay_signature) {
       return res.status(400).json({ message: "Invalid payment signature" });
     }
 
-    const txn = await PaymentTransaction.findOne({
-      where: { razorpay_order_id, status: "created" }
+    // 2️⃣ UPDATE PAYMENT STATUS
+    await PaymentTransaction.update(
+      {
+        razorpay_payment_id,
+        razorpay_signature,
+        status: "paid"
+      },
+      { where: { razorpay_order_id } }
+    );
+
+    // 3️⃣ FETCH PLAN
+    const plan = await MapSubscriptionPlan.findOne({
+      where: { plan_type: planType, status: true }
     });
 
-    if (!txn) {
-      return res.status(400).json({ message: "Transaction not found" });
+    if (!plan) {
+      return res.status(400).json({ message: "Invalid plan" });
     }
 
-    txn.razorpay_payment_id = razorpay_payment_id;
-    txn.razorpay_signature = razorpay_signature;
-    txn.status = "paid";
-    await txn.save();
+    const amount = plan.price_per_month * months;
 
-    // 🔥 Activate map subscription using EXISTING logic
-    await activateStudentMapSubscriptionInternal({
+    // 4️⃣ ACTIVATE MAP 🔥 (THIS WAS MISSING)
+    const endDate = await activateStudentMapSubscriptionInternal({
       studentId: userId,
       planType,
       months,
-      amount: txn.amount,
+      amount,
       txnId: razorpay_payment_id
     });
 
     res.json({
       success: true,
-      message: "Payment verified & map access activated"
+      message: "Payment verified & map activated",
+      expiresOn: endDate
     });
 
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(err);
   }
 };
+
 export const getPaymentReceipt = async (req, res) => {
   try {
     const userId = req.user.id;
