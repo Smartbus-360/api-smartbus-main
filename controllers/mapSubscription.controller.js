@@ -8,6 +8,15 @@ import { Op } from "sequelize";
  * GET /map/subscription/plans
  * Returns current pricing (admin editable)
  */
+const disableCache = (res) => {
+  res.set({
+    "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0",
+    "Surrogate-Control": "no-store",
+  });
+};
+
 export const getMapSubscriptionPlans = async (req, res, next) => {
   try {
     const plans = await MapSubscriptionPlan.findAll({
@@ -278,17 +287,26 @@ export const getMapSubscriptionPlans = async (req, res, next) => {
 export const checkMapAccess = async (req, res) => {
   console.log("🔥 CHECK MAP ACCESS HIT FROM:", req.originalUrl);
   const studentId = req.user.id;
+  const now = new Date();
 
   const activeSub = await StudentMapSubscription.findOne({
     where: {
       student_id: studentId,
-      status: "active",
-      end_date: { [Op.gt]: new Date() }
+      status: "active"
+      // end_date: { [Op.gt]: new Date() }
     },
     order: [["createdAt", "DESC"]]
   });
 
   if (!activeSub) {
+    return res.json({ allowed: false });
+  }
+  const endDate = new Date(activeSub.end_date);
+  endDate.setHours(23, 59, 59, 999); 
+
+  if (endDate < now) {
+    activeSub.status = "expired";
+    await activeSub.save();
     return res.json({ allowed: false });
   }
 
@@ -302,23 +320,36 @@ export const checkMapAccess = async (req, res) => {
  * GET /map/subscription/history
  * Student subscription history
  */
+// export const getStudentSubscriptionHistory = async (req, res, next) => {
+//   try {
+//     const studentId = req.user.id;
+
+//     const subs = await StudentMapSubscription.findAll({
+//       where: { student_id: studentId },
+//       order: [["createdAt", "DESC"]],
+//     });
+
+//     res.json({
+//       success: true,
+//       subscriptions: subs,
+//     });
+//   }
 export const getStudentSubscriptionHistory = async (req, res, next) => {
-  try {
-    const studentId = req.user.id;
+  disableCache(res); // ✅ ADD
 
-    const subs = await StudentMapSubscription.findAll({
-      where: { student_id: studentId },
-      order: [["createdAt", "DESC"]],
-    });
+  const studentId = req.user.id;
 
-    res.json({
-      success: true,
-      subscriptions: subs,
-    });
-  } catch (err) {
-    next(err);
-  }
+  const subs = await StudentMapSubscription.findAll({
+    where: { student_id: studentId },
+    order: [["createdAt", "DESC"]],
+  });
+
+  res.json({ success: true, subscriptions: subs });
 };
+// catch (err) {
+//     next(err);
+//   }
+// };
 /**
  * ADMIN: Revoke a student map subscription
  */
@@ -343,32 +374,44 @@ export const revokeStudentMapSubscription = async (req, res, next) => {
     next(err);
   }
 };
+// export const getAllStudentSubscriptionHistory = async (req, res, next) => {
+//   try {
+//     // Optional safety check
+//     if (req.user.isAdmin !== 1) {
+//       return res.status(403).json({ message: "Admin access only" });
+//     }
+
+//     const subs = await StudentMapSubscription.findAll({
+//       include: [
+//         {
+//           model: User,
+//           attributes: ["id", "full_name", "email", "instituteId"],
+//           include: [{ model: Institute, attributes: ["id", "name"] }]
+//         }
+//       ],
+//       order: [["createdAt", "DESC"]],
+//     });
+
+//     res.json({
+//       success: true,
+//       subscriptions: subs,
+//     });
+//   } catch (err) {
+//     next(err);
+//   }
+// };
 export const getAllStudentSubscriptionHistory = async (req, res, next) => {
-  try {
-    // Optional safety check
-    if (req.user.isAdmin !== 1) {
-      return res.status(403).json({ message: "Admin access only" });
-    }
+  disableCache(res); // ✅ ADD
 
-    const subs = await StudentMapSubscription.findAll({
-      include: [
-        {
-          model: User,
-          attributes: ["id", "full_name", "email", "instituteId"],
-          include: [{ model: Institute, attributes: ["id", "name"] }]
-        }
-      ],
-      order: [["createdAt", "DESC"]],
-    });
-
-    res.json({
-      success: true,
-      subscriptions: subs,
-    });
-  } catch (err) {
-    next(err);
+  if (req.user.isAdmin !== 1) {
+    return res.status(403).json({ message: "Admin access only" });
   }
+
+  const subs = await StudentMapSubscription.findAll({ ... });
+
+  res.json({ success: true, subscriptions: subs });
 };
+
 export const activateStudentMapSubscriptionInternal = async ({
   studentId,
   planType,
