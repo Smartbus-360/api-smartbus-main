@@ -31,7 +31,7 @@ export const httpAuth = async (req, res, next) => {
 
         // ✅ Allow ADMIN tokens
 if (payload.isAdmin && payload.isAdmin >= 1) {
-    req.user = { id: payload.id, role: "admin" };
+    req.user = { id: payload.id, role: "admin",isAdmin: 1 };
     return next();
 }
 
