@@ -379,6 +379,8 @@ export const activateStudentMapSubscriptionInternal = async ({
     start_date: startDate,
     end_date: endDate,
     status: "active",
+    autopay_enabled: 0
+
   });
 
   return endDate;
