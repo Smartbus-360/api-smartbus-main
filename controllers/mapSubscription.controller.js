@@ -407,7 +407,22 @@ export const getAllStudentSubscriptionHistory = async (req, res, next) => {
     return res.status(403).json({ message: "Admin access only" });
   }
 
-  const subs = await StudentMapSubscription.findAll({ ... });
+  // const subs = await StudentMapSubscription.findAll({ ... });
+  const subs = await StudentMapSubscription.findAll({
+  include: [
+    {
+      model: User,
+      attributes: ["id", "full_name", "email", "instituteId"],
+      include: [
+        {
+          model: Institute,
+          attributes: ["id", "name"],
+        },
+      ],
+    },
+  ],
+  order: [["createdAt", "DESC"]],
+});
 
   res.json({ success: true, subscriptions: subs });
 };
