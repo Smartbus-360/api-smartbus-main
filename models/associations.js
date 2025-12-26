@@ -89,6 +89,7 @@ import BusNotification from './bus_notification.model.js';
 import QrCode from "./qrCode.model.js";
 import AttendanceTaker from "./attendanceTaker.model.js";
 import AttendanceTakerAttendanceTemp from "./attendanceTakerAttendanceTemp.model.js";
+import StudentMapSubscription from "./studentMapSubscription.model.js";
 
 // ------------------- MAIN FUNCTION -------------------
 const setupAssociations = () => {
