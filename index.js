@@ -18,6 +18,7 @@ import attendanceTakerRoutes from './routes/attendanceTaker.route.js';
 import mapSubscriptionRoutes from "./routes/mapSubscription.route.js";
 import razorpayRoutes from "./routes/razorpay.route.js";
 import razorpayWebhookRoutes from "./routes/razorpayWebhook.route.js";
+console.log("✅ ESM MODE CONFIRMED", import.meta.url);
 
 
     setupAssociations();
