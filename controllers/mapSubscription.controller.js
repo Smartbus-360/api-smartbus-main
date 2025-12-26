@@ -316,47 +316,47 @@ export const getMapSubscriptionPlans = async (req, res, next) => {
 //   });
 // };
 
-// export const checkMapAccess = async (req, res) => {
-//   const studentId = req.user.id;
-//   const now = new Date();
+export const checkMapAccess = async (req, res) => {
+  const studentId = req.user.id;
+  const now = new Date();
 
-//   const user = await User.findByPk(studentId, {
-//     include: [{ model: Institute }]
-//   });
+  const user = await User.findByPk(studentId, {
+    include: [{ model: Institute }]
+  });
 
-//   // 1️⃣ Institute access first
-//   if (user?.Institute?.mapAccess === true) {
-//     return res.json({ allowed: true, source: "institute" });
-//   }
+  // 1️⃣ Institute access first
+  if (user?.Institute?.mapAccess === true) {
+    return res.json({ allowed: true, source: "institute" });
+  }
 
-//   // 2️⃣ Student subscription override
-//   const activeSub = await StudentMapSubscription.findOne({
-//     where: {
-//       student_id: studentId,
-//       status: "active"
-//     },
-//     order: [["createdAt", "DESC"]]
-//   });
+  // 2️⃣ Student subscription override
+  const activeSub = await StudentMapSubscription.findOne({
+    where: {
+      student_id: studentId,
+      status: "active"
+    },
+    order: [["createdAt", "DESC"]]
+  });
 
-//   if (!activeSub) {
-//     return res.json({ allowed: false });
-//   }
+  if (!activeSub) {
+    return res.json({ allowed: false });
+  }
 
-//   const endDate = new Date(activeSub.end_date);
-//   endDate.setHours(23, 59, 59, 999);
+  const endDate = new Date(activeSub.end_date);
+  endDate.setHours(23, 59, 59, 999);
 
-//   if (endDate < now) {
-//     activeSub.status = "expired";
-//     await activeSub.save();
-//     return res.json({ allowed: false, expired: true });
-//   }
+  if (endDate < now) {
+    activeSub.status = "expired";
+    await activeSub.save();
+    return res.json({ allowed: false, expired: true });
+  }
 
-//   return res.json({
-//     allowed: true,
-//     source: "student",
-//     expiresOn: activeSub.end_date
-//   });
-// };
+  return res.json({
+    allowed: true,
+    source: "student",
+    expiresOn: activeSub.end_date
+  });
+};
 
 
 /**
