@@ -137,6 +137,10 @@ const User = sequelize.define('tbl_sm360_users', {
 }, {
   timestamps: true,
 });
+User.belongsTo(Institute, {
+  foreignKey: "instituteId",
+  as: "Institute",
+});
 User.hasMany(StudentMapSubscription, {
   foreignKey: "student_id",
 });
