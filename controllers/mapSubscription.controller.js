@@ -359,6 +359,7 @@ export const getMapSubscriptionPlans = async (req, res, next) => {
 // };
 
 export const checkMapAccess = async (req, res) => {
+    console.log("🔥🔥 checkMapAccess HIT 🔥🔥");
   try {
     const studentId = req.user?.id;
 
