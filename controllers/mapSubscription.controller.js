@@ -360,22 +360,39 @@ export const getMapSubscriptionPlans = async (req, res, next) => {
 
 export const checkMapAccess = async (req, res) => {
   try {
-    const studentId = req.user.id;
+    console.log("🔥 /map/access-check HIT");
+
+    const studentId = req.user?.id;
+    if (!studentId) {
+      return res.status(401).json({
+        allowed: false,
+        message: "Invalid user session",
+      });
+    }
+
     const now = new Date();
 
+    // 🔁 Always load user WITH institute
     const user = await User.findByPk(studentId, {
       include: [{ model: Institute }],
     });
 
+    if (!user) {
+      return res.status(401).json({
+        allowed: false,
+        message: "User not found",
+      });
+    }
+
     // 1️⃣ Institute-level access
-    if (user?.Institute?.mapAccess === true) {
+    if (user.Institute?.mapAccess === true) {
       return res.status(200).json({
         allowed: true,
         source: "institute",
       });
     }
 
-    // 2️⃣ Student-level subscription override
+    // 2️⃣ Student subscription override
     const activeSub = await StudentMapSubscription.findOne({
       where: {
         student_id: studentId,
@@ -384,7 +401,6 @@ export const checkMapAccess = async (req, res) => {
       order: [["createdAt", "DESC"]],
     });
 
-    // ❌ No subscription → BLOCK
     if (!activeSub) {
       return res.status(403).json({
         allowed: false,
@@ -395,7 +411,6 @@ export const checkMapAccess = async (req, res) => {
     const endDate = new Date(activeSub.end_date);
     endDate.setHours(23, 59, 59, 999);
 
-    // ❌ Expired → BLOCK
     if (endDate < now) {
       activeSub.status = "expired";
       await activeSub.save();
@@ -407,7 +422,7 @@ export const checkMapAccess = async (req, res) => {
       });
     }
 
-    // ✅ Paid student → ALLOW
+    // ✅ Paid student
     return res.status(200).json({
       allowed: true,
       source: "student",
@@ -415,7 +430,7 @@ export const checkMapAccess = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("checkMapAccess error:", err);
+    console.error("❌ checkMapAccess error:", err);
     return res.status(500).json({
       allowed: false,
       message: "Map access check failed",
