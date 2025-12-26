@@ -144,7 +144,7 @@ const setupAssociations = () => {
   StudentMapSubscription.belongsTo(User, {
     foreignKey: "student_id",
   });
-};
+// };
 
   // ------------------- NEW AttendanceTaker Relationships -------------------
   Institute.hasMany(AttendanceTaker, { foreignKey: 'instituteId', onDelete: 'CASCADE' });
