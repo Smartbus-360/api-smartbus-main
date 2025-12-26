@@ -95,6 +95,7 @@ import { getDriverStopReport, exportDriverStopReportExcel, exportDriverStopRepor
 from "../controllers/report.controller.js";
 import {
   getMapSubscriptionPlans,
+    getAllStudentSubscriptionHistory
 } from "../controllers/mapSubscription.controller.js";
 import { getStudentSubscriptionHistory } from "../controllers/mapSubscription.controller.js";
 import { revokeStudentMapSubscription } from "../controllers/mapSubscription.controller.js";
