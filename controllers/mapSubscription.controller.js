@@ -360,19 +360,16 @@ export const getMapSubscriptionPlans = async (req, res, next) => {
 
 export const checkMapAccess = async (req, res) => {
   try {
-    console.log("🔥 /map/access-check HIT");
-
     const studentId = req.user?.id;
+
+    // 🔒 Safety check
     if (!studentId) {
       return res.status(401).json({
         allowed: false,
-        message: "Invalid user session",
+        message: "Unauthorized",
       });
     }
 
-    const now = new Date();
-
-    // 🔁 Always load user WITH institute
     const user = await User.findByPk(studentId, {
       include: [{ model: Institute }],
     });
@@ -384,7 +381,7 @@ export const checkMapAccess = async (req, res) => {
       });
     }
 
-    // 1️⃣ Institute-level access
+    // 1️⃣ Institute map enabled → allow all
     if (user.Institute?.mapAccess === true) {
       return res.status(200).json({
         allowed: true,
@@ -392,7 +389,7 @@ export const checkMapAccess = async (req, res) => {
       });
     }
 
-    // 2️⃣ Student subscription override
+    // 2️⃣ Institute blocked → check student subscription
     const activeSub = await StudentMapSubscription.findOne({
       where: {
         student_id: studentId,
@@ -401,6 +398,7 @@ export const checkMapAccess = async (req, res) => {
       order: [["createdAt", "DESC"]],
     });
 
+    // ❌ No subscription → BLOCK
     if (!activeSub) {
       return res.status(403).json({
         allowed: false,
@@ -408,6 +406,8 @@ export const checkMapAccess = async (req, res) => {
       });
     }
 
+    // ❌ Expired → BLOCK
+    const now = new Date();
     const endDate = new Date(activeSub.end_date);
     endDate.setHours(23, 59, 59, 999);
 
@@ -417,12 +417,11 @@ export const checkMapAccess = async (req, res) => {
 
       return res.status(403).json({
         allowed: false,
-        expired: true,
         message: "Subscription expired",
       });
     }
 
-    // ✅ Paid student
+    // ✅ Paid student → allow
     return res.status(200).json({
       allowed: true,
       source: "student",
@@ -430,14 +429,13 @@ export const checkMapAccess = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("❌ checkMapAccess error:", err);
+    console.error("Map access error:", err);
     return res.status(500).json({
       allowed: false,
-      message: "Map access check failed",
+      message: "Internal server error",
     });
   }
 };
-
 
 
 /**
