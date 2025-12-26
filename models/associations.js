@@ -93,6 +93,7 @@ import StudentMapSubscription from "./studentMapSubscription.model.js";
 
 // ------------------- MAIN FUNCTION -------------------
 const setupAssociations = () => {
+      console.log("🔥 setupAssociations executed");
   // Institute-Route relationship
   Institute.hasMany(Route, { foreignKey: 'instituteId', onDelete: 'CASCADE' });
   Route.belongsTo(Institute, { foreignKey: 'instituteId' });
