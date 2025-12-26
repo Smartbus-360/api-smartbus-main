@@ -337,26 +337,45 @@ export const logout = async (req, res) => {
 //   }
 // };
 
+// export const canViewMap = async (req, res, next) => {
+//   try {
+//     const user = req.user;
+
+//     // Institute-level hard block only
+//     if (user.instituteId) {
+//       const institute = await Institute.findByPk(user.instituteId);
+//       if (institute && institute.mapAccess === false) {
+//         return res.status(403).json({
+//           message: "Institute map access disabled"
+//         });
+//       }
+//     }
+
+//     // Let controller decide (checkMapAccess)
+//     console.log("httpAuth PASSING");
+//     return next();
+
+//   } catch (err) {
+//     console.error("canViewMap error:", err);
+//     return res.status(500).json({ message: "Map access check failed." });
+//   }
+// };
+
 export const canViewMap = async (req, res, next) => {
   try {
     const user = req.user;
 
-    // Institute-level hard block only
     if (user.instituteId) {
       const institute = await Institute.findByPk(user.instituteId);
+
+      // Institute disabled → allow controller to decide
       if (institute && institute.mapAccess === false) {
-        return res.status(403).json({
-          message: "Institute map access disabled"
-        });
+        return next(); // ✅ DO NOT BLOCK HERE
       }
     }
 
-    // Let controller decide (checkMapAccess)
-    console.log("httpAuth PASSING");
     return next();
-
   } catch (err) {
-    console.error("canViewMap error:", err);
     return res.status(500).json({ message: "Map access check failed." });
   }
 };
