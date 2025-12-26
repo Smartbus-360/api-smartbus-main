@@ -371,9 +371,25 @@ export const checkMapAccess = async (req, res) => {
       });
     }
 
+    // const user = await User.findByPk(studentId, {
+    //   include: [{ model: Institute }],
+    // });
+
     const user = await User.findByPk(studentId, {
-      include: [{ model: Institute }],
-    });
+  include: [
+    {
+      model: Institute,
+      as: "Institute",
+      attributes: ["id", "mapAccess"],
+    },
+  ],
+});
+    console.log("USER INSTITUTE CHECK:", {
+  userId: user.id,
+  instituteId: user.instituteId,
+  institute: user.Institute
+});
+
 
     if (!user) {
       return res.status(401).json({
@@ -403,6 +419,7 @@ export const checkMapAccess = async (req, res) => {
     if (!activeSub) {
       return res.status(403).json({
         allowed: false,
+        reason: "SUBSCRIPTION_REQUIRED",
         message: "Institute map access disabled",
       });
     }
