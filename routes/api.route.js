@@ -44,9 +44,9 @@ apiRouter.post("/update-shift", updateShift);
 
 
 // ⬇️ put this near your other routes
-apiRouter.get("/map/access-check", httpAuth, canViewMap, (req, res) => {
-  return res.status(204).end(); // 204 when map is allowed
-});
+// apiRouter.get("/map/access-check", httpAuth, canViewMap, (req, res) => {
+//   return res.status(204).end(); // 204 when map is allowed
+// });
 apiRouter.post("/stoppage/reached", httpAuth, updateReachDateTime); 
 apiRouter.post("/notify/speed", httpAuth, notifyIfSpeedExceeded);
 apiRouter.get("/advertisement/banner", generateAdBanner);
