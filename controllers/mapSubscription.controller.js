@@ -284,16 +284,56 @@ export const getMapSubscriptionPlans = async (req, res, next) => {
 //     next(err);
 //   }
 // };
+// export const checkMapAccess = async (req, res) => {
+//   console.log("🔥 CHECK MAP ACCESS HIT FROM:", req.originalUrl);
+//   const studentId = req.user.id;
+//   const now = new Date();
+
+//   const activeSub = await StudentMapSubscription.findOne({
+//     where: {
+//       student_id: studentId,
+//       status: "active"
+//       // end_date: { [Op.gt]: new Date() }
+//     },
+//     order: [["createdAt", "DESC"]]
+//   });
+
+//   if (!activeSub) {
+//     return res.json({ allowed: false });
+//   }
+//   const endDate = new Date(activeSub.end_date);
+//   endDate.setHours(23, 59, 59, 999); 
+
+//   if (endDate < now) {
+//     activeSub.status = "expired";
+//     await activeSub.save();
+//     return res.json({ allowed: false });
+//   }
+
+//   return res.json({
+//     allowed: true,
+//     expiresOn: activeSub.end_date
+//   });
+// };
+
 export const checkMapAccess = async (req, res) => {
-  console.log("🔥 CHECK MAP ACCESS HIT FROM:", req.originalUrl);
   const studentId = req.user.id;
   const now = new Date();
 
+  const user = await User.findByPk(studentId, {
+    include: [{ model: Institute }]
+  });
+
+  // 1️⃣ Institute access first
+  if (user?.Institute?.mapAccess === true) {
+    return res.json({ allowed: true, source: "institute" });
+  }
+
+  // 2️⃣ Student subscription override
   const activeSub = await StudentMapSubscription.findOne({
     where: {
       student_id: studentId,
       status: "active"
-      // end_date: { [Op.gt]: new Date() }
     },
     order: [["createdAt", "DESC"]]
   });
@@ -301,20 +341,23 @@ export const checkMapAccess = async (req, res) => {
   if (!activeSub) {
     return res.json({ allowed: false });
   }
+
   const endDate = new Date(activeSub.end_date);
-  endDate.setHours(23, 59, 59, 999); 
+  endDate.setHours(23, 59, 59, 999);
 
   if (endDate < now) {
     activeSub.status = "expired";
     await activeSub.save();
-    return res.json({ allowed: false });
+    return res.json({ allowed: false, expired: true });
   }
 
   return res.json({
     allowed: true,
+    source: "student",
     expiresOn: activeSub.end_date
   });
 };
+
 
 /**
  * GET /map/subscription/history
