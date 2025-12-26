@@ -135,7 +135,7 @@ router.get("/map/subscription/plans", verifyToken, getMapSubscriptionPlans);
 router.get(
   "/map/subscription/history",
   verifyToken,
-  getStudentSubscriptionHistory
+  getAllStudentSubscriptionHistory
 );
 router.put(
   "/admin/map-subscription/revoke/:id",
