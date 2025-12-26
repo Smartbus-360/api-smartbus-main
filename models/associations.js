@@ -134,8 +134,8 @@ const setupAssociations = () => {
   Driver.hasOne(Bus, { foreignKey: 'driverId', onDelete: 'SET NULL' });
   Bus.belongsTo(Driver, { foreignKey: 'driverId' });
 
-    export const setupAssociations = () => {
-  console.log("🔥 setupAssociations executed");
+  //   export const setupAssociations = () => {
+  // console.log("🔥 setupAssociations executed");
 
   User.hasMany(StudentMapSubscription, {
     foreignKey: "student_id",
