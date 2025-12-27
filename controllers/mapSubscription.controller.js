@@ -370,7 +370,7 @@ if (
   if (!req.user.instituteId) {
     return res.status(403).json({
       allowed: false,
-      message: "Driver institute not assigned",
+      message: "Driver not assigned to any institute",
     });
   }
 
@@ -379,14 +379,23 @@ if (
   });
 
   if (!institute) {
-    return res.status(404).json({
+    return res.status(403).json({
       allowed: false,
       message: "Institute not found",
     });
   }
 
+  // 🚫 Institute map access disabled → BLOCK DRIVER
+  if (institute.mapAccess !== true) {
+    return res.status(403).json({
+      allowed: false,
+      message: "Map access disabled for this institute",
+    });
+  }
+
+  // ✅ Institute allowed → DRIVER ALLOWED
   return res.status(200).json({
-    allowed: institute.mapAccess === true,
+    allowed: true,
     source: "institute",
   });
 }
