@@ -361,6 +361,36 @@ export const getMapSubscriptionPlans = async (req, res, next) => {
 export const checkMapAccess = async (req, res) => {
     console.log("🔥🔥 checkMapAccess HIT 🔥🔥");
   try {
+    // ================= DRIVER MAP ACCESS =================
+if (
+  req.user &&
+  req.user.constructor &&
+  req.user.constructor.name === "tbl_sm360_drivers"
+) {
+  if (!req.user.instituteId) {
+    return res.status(403).json({
+      allowed: false,
+      message: "Driver institute not assigned",
+    });
+  }
+
+  const institute = await Institute.findByPk(req.user.instituteId, {
+    attributes: ["id", "mapAccess"],
+  });
+
+  if (!institute) {
+    return res.status(404).json({
+      allowed: false,
+      message: "Institute not found",
+    });
+  }
+
+  return res.status(200).json({
+    allowed: institute.mapAccess === true,
+    source: "institute",
+  });
+}
+
     const studentId = req.user?.id;
 
     // 🔒 Safety check
