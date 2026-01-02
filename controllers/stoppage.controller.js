@@ -649,7 +649,8 @@ export const markStopReached = async (req, res, next) => {
     }
 
     // ✅ Use IST timezone for reach timestamp
-    const now = moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss");
+    // const now = moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss");
+const now = moment().format("YYYY-MM-DD HH:mm:ss");
 
     // 1️⃣ Update basic reach info
     await Stop.update(
@@ -670,7 +671,8 @@ export const markStopReached = async (req, res, next) => {
       // ensure tripType key exists
       if (!rounds[tripType]) rounds[tripType] = [];
 
-      const nowTime = moment().tz("Asia/Kolkata").format("HH:mm");
+      // const nowTime = moment().tz("Asia/Kolkata").format("HH:mm");
+const nowTime = moment().format("HH:mm");
 
       // find existing round or create new
       const existingRound = rounds[tripType].find(r => r.round === round);
