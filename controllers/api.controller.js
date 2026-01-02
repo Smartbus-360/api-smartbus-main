@@ -2006,7 +2006,7 @@ const markPendingStopsAsReached = async (rId, phase, round) => {
 
     await sequelize.query(
       `UPDATE tbl_sm360_stops 
-       SET reached = 1, reachDateTime = :reachDateTime 
+       SET reached = 1, reachDateTime = NOW() 
        WHERE routeId = :rId 
        AND stopType = :phase 
        AND JSON_EXTRACT(rounds, '$."${phase}"') LIKE CONCAT('%', :round, '%') 
@@ -2398,19 +2398,16 @@ console.log("RAW reachDateTime from frontend:", reachDateTime);
 //   "YYYY-MM-DD HH:mm:ss"
 // ).format("YYYY-MM-DD HH:mm:ss");
 
-        const istMoment = moment.tz(
-  reachDateTime,
-  "YYYY-MM-DD HH:mm:ss",
-  "Asia/Kolkata"
-);
-        if (!istMoment.isValid()) {
+       
+// frontend already sends IST → store as-is
+        console.log("RAW reachDateTime from frontend:", reachDateTime);
+const formattedReachDateTime = reachDateTime;
+if (!formattedReachDateTime) {
   return res.status(400).json({
     success: false,
     message: "Invalid reachDateTime format",
   });
 }
-// frontend already sends IST → store as-is
-const formattedReachDateTime = istMoment.format("YYYY-MM-DD HH:mm:ss");
 
 
 // if (!istMoment.isValid()) {
@@ -2752,9 +2749,6 @@ console.log("🕒 DB time (already IST):", moment(stop.reachDateTime).format("YY
             return {
           ...stop,
       // ✅ No timezone shift — DB already in IST
-      // reachDateTime: stop.reachDateTime
-      //   ? moment(stop.reachDateTime).format("YYYY-MM-DD HH:mm:ss")
-      //   : null,
                   reachDateTime: stop.reachDateTime,
 
             };
