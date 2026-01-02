@@ -6,8 +6,8 @@ import { io } from "../index.js";  // to use global Socket.IO instance
 // import DriverAttendanceTemp from "../models/driverAttendanceTemp.model.js";
 import QrCode from "../models/qrCode.model.js";
 import AttendanceTakerAttendanceTemp from "../models/attendanceTakerAttendanceTemp.model.js";  // ✅ new temp table
-import moment from "moment-timezone";
-moment.tz.setDefault("Asia/Kolkata"); // 👈 This makes all times Indian Standard Time
+// import moment from "moment-timezone";
+// moment.tz.setDefault("Asia/Kolkata"); // 👈 This makes all times Indian Standard Time
 import { Op } from "sequelize";
 
 
@@ -105,9 +105,9 @@ console.log("🚌 Derived bus number:", derivedBusNumber || "❌ Not found");
       student_id: student.id,
       latitude,
       longitude,
-      // scan_time: new Date(),
+      scan_time: new Date(),
       // scan_time: moment().toDate(),
-      scan_time: moment.tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss"),
+      // scan_time: moment.tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss"),
 
     });
 
