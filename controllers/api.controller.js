@@ -2395,11 +2395,16 @@ console.log("RAW reachDateTime from frontend:", reachDateTime);
 //   "YYYY-MM-DD HH:mm:ss"
 // ).format("YYYY-MM-DD HH:mm:ss");
 
-        const istMoment = moment.tz(
+//         const istMoment = moment.tz(
+//   reachDateTime,
+//   "YYYY-MM-DD HH:mm:ss",
+//   "Asia/Kolkata"
+// );
+// frontend already sends IST → store as-is
+const formattedReachDateTime = moment(
   reachDateTime,
-  "YYYY-MM-DD HH:mm:ss",
-  "Asia/Kolkata"
-);
+  "YYYY-MM-DD HH:mm:ss"
+).format("YYYY-MM-DD HH:mm:ss");
 
 if (!istMoment.isValid()) {
   return res.status(400).json({
