@@ -2360,6 +2360,7 @@ export const signupUser = async (req, res) => {
 };
 
 export const updateReachDateTime = async (req, res) => {
+      console.log("🟢 STOP REACHED – reachDateTime CREATED:", now);
   const { stoppageId, routeId, reached, reachDateTime, tripType, round } = req.body;
 
   if (!stoppageId || !routeId || reached === undefined || !reachDateTime || !tripType || !round) {
