@@ -1321,7 +1321,7 @@ import Stop from "../models/stop.model.js";
 import { io } from '../index.js';
 import { findActiveQrOverride } from "../utils/qrOverride.js";
 import AttendanceTaker from '../models/attendanceTaker.model.js';
-import moment from "moment-timezone";
+// import moment from "moment-timezone";
 import DriverRoute from "../models/driverRoute.model.js";
 import Route from "../models/route.model.js";
 
@@ -2000,13 +2000,20 @@ export const markFinalStopReached = async (req, res) => {
 
 const markPendingStopsAsReached = async (rId, phase, round) => {
   try {
-      const istNow = moment()
-  .tz("Asia/Kolkata")
-  .format("YYYY-MM-DD HH:mm:ss");
+const istNow = new Date()
+  .toLocaleString("sv-SE", { timeZone: "Asia/Kolkata" })
+  .replace("T", " ");
+
+const dbNow = await sequelize.query("SELECT NOW() as now", {
+  type: sequelize.QueryTypes.SELECT,
+});
+
+console.log("🚨 ABOUT TO WRITE reachDateTime using NOW():", dbNow[0].now);
+
 
     await sequelize.query(
       `UPDATE tbl_sm360_stops 
-       SET reached = 1, reachDateTime = NOW() 
+       SET reached = 1, reachDateTime = istNow 
        WHERE routeId = :rId 
        AND stopType = :phase 
        AND JSON_EXTRACT(rounds, '$."${phase}"') LIKE CONCAT('%', :round, '%') 
