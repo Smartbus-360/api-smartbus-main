@@ -2381,11 +2381,21 @@ export const updateReachDateTime = async (req, res) => {
 
    
         // DB and input already in IST
-        console.log("RAW reachDateTime from frontend:", reachDateTime);
-const formattedReachDateTime = moment(reachDateTime, "YYYY-MM-DD HH:mm:ss").toDate();
-console.log("JS Date object:", formattedReachDateTime);
-console.log("JS ISO:", formattedReachDateTime.toISOString());
-console.log("JS locale:", formattedReachDateTime.toString());
+//         console.log("RAW reachDateTime from frontend:", reachDateTime);
+// const formattedReachDateTime = moment(reachDateTime, "YYYY-MM-DD HH:mm:ss").toDate();
+// console.log("JS Date object:", formattedReachDateTime);
+// console.log("JS ISO:", formattedReachDateTime.toISOString());
+// console.log("JS locale:", formattedReachDateTime.toString());
+
+        // DB and input already in IST
+console.log("RAW reachDateTime from frontend:", reachDateTime);
+
+const formattedReachDateTime = moment(
+  reachDateTime,
+  "YYYY-MM-DD HH:mm:ss"
+).format("YYYY-MM-DD HH:mm:ss");
+
+console.log("FINAL IST reachDateTime (STRING):", formattedReachDateTime);
 
 
 if (isNaN(formattedReachDateTime.getTime())) {
