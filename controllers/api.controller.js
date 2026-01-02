@@ -2405,10 +2405,8 @@ console.log("RAW reachDateTime from frontend:", reachDateTime);
 //   "Asia/Kolkata"
 // );
 // frontend already sends IST → store as-is
-const formattedReachDateTime = moment(
-  reachDateTime,
-  "YYYY-MM-DD HH:mm:ss"
-).format("YYYY-MM-DD HH:mm:ss");
+const formattedReachDateTime = reachDateTime;
+
 
 // if (!istMoment.isValid()) {
 //   return res.status(400).json({
@@ -2749,9 +2747,11 @@ console.log("🕒 DB time (already IST):", moment(stop.reachDateTime).format("YY
             return {
           ...stop,
       // ✅ No timezone shift — DB already in IST
-      reachDateTime: stop.reachDateTime
-        ? moment(stop.reachDateTime).format("YYYY-MM-DD HH:mm:ss")
-        : null,
+      // reachDateTime: stop.reachDateTime
+      //   ? moment(stop.reachDateTime).format("YYYY-MM-DD HH:mm:ss")
+      //   : null,
+                  reachDateTime: stop.reachDateTime,
+
             };
     }),
   };
