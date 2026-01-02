@@ -2001,9 +2001,13 @@ export const markFinalStopReached = async (req, res) => {
 
 const markPendingStopsAsReached = async (rId, phase, round) => {
   try {
+      const istNow = moment()
+  .tz("Asia/Kolkata")
+  .format("YYYY-MM-DD HH:mm:ss");
+
     await sequelize.query(
       `UPDATE tbl_sm360_stops 
-       SET reached = 1, reachDateTime = NOW() 
+       SET reached = 1, reachDateTime = :reachDateTime 
        WHERE routeId = :rId 
        AND stopType = :phase 
        AND JSON_EXTRACT(rounds, '$."${phase}"') LIKE CONCAT('%', :round, '%') 
