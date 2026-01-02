@@ -2629,8 +2629,8 @@ export const notifyIfSpeedExceeded = async (req, res) => {
 
     return res.status(200).json({ success: true, message: "Speed check complete." });
 };
-console.log("🔥 HIT getReachTimesForRoute", new Date().toISOString());
 export const getReachTimesForRoute = async (req, res) => {
+      console.log("🔥 HIT getReachTimesForRoute", new Date().toISOString());
   const routeId = Number(req.params.route);
 
   if (!routeId) {
