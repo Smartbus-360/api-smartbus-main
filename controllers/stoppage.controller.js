@@ -651,6 +651,8 @@ export const markStopReached = async (req, res, next) => {
     // ✅ Use IST timezone for reach timestamp
     // const now = moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss");
 const now = moment().format("YYYY-MM-DD HH:mm:ss");
+    console.log("🟢 STOP REACHED – reachDateTime CREATED:", now);
+
 
     // 1️⃣ Update basic reach info
     await Stop.update(
