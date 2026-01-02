@@ -2752,7 +2752,7 @@ export const getReachTimesForRoute = async (req, res) => {
     ...group,
     stops: stopsArray.map((stop) => {
       console.log("🧭 Raw DB Time:", stop.reachDateTime);
-console.log("🕒 DB time (already IST):", moment(stop.reachDateTime).format("YYYY-MM-DD HH:mm:ss"));
+console.log("🕒 DB time (already IST):", stop.reachDateTime);
             return {
           ...stop,
       // ✅ No timezone shift — DB already in IST
