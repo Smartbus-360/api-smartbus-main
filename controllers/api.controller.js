@@ -2581,7 +2581,8 @@ await Stop.update(
     // reachDateTime: moment(formattedReachDateTime)
     //   .tz("Asia/Kolkata")
     //   .format("YYYY-MM-DD HH:mm:ss"),
-        reachDateTime: moment(formattedReachDateTime).format("YYYY-MM-DD HH:mm:ss"),
+        // reachDateTime: moment(formattedReachDateTime).format("YYYY-MM-DD HH:mm:ss"),
+        reachDateTime: formattedReachDateTime,
   },
   { where: { id: stoppageId } }
 );
@@ -2590,9 +2591,10 @@ await Stop.update(
   message: "Reach time recorded successfully.",
   stopHitCount,
   round,
-  reachDateTime: moment(formattedReachDateTime)
-    .tz("Asia/Kolkata")
-    .format("YYYY-MM-DD HH:mm:ss"),
+  // reachDateTime: moment(formattedReachDateTime)
+  //   .tz("Asia/Kolkata")
+  //   .format("YYYY-MM-DD HH:mm:ss"),
+          reachDateTime: formattedReachDateTime,
 });
   } catch (error) {
     console.error(error);
