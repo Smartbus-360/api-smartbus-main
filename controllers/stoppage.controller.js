@@ -652,6 +652,13 @@ export const markStopReached = async (req, res, next) => {
     // const now = moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss");
 const now = moment().format("YYYY-MM-DD HH:mm:ss");
     console.log("🟢 STOP REACHED – reachDateTime CREATED:", now);
+const dbNow = await sequelize.query(
+  "SELECT NOW() as now",
+  { type: sequelize.QueryTypes.SELECT }
+);
+
+console.log("🕒 Moment-generated IST time:", now);
+console.log("🟢 DB NOW() at insert time:", dbNow[0].now);
 
 
     // 1️⃣ Update basic reach info
