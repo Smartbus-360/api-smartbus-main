@@ -2406,15 +2406,15 @@ const formattedReachDateTime = moment(
   "YYYY-MM-DD HH:mm:ss"
 ).format("YYYY-MM-DD HH:mm:ss");
 
-if (!istMoment.isValid()) {
-  return res.status(400).json({
-    success: false,
-    message: "Invalid reachDateTime format",
-  });
-}
+// if (!istMoment.isValid()) {
+//   return res.status(400).json({
+//     success: false,
+//     message: "Invalid reachDateTime format",
+//   });
+// }
 
-const formattedReachDateTime = istMoment.format("YYYY-MM-DD HH:mm:ss");
 
+console.log("RAW reachDateTime from frontend:", reachDateTime);
 
 console.log("FINAL IST reachDateTime (STRING):", formattedReachDateTime);
 
