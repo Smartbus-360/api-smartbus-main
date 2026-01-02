@@ -2379,13 +2379,13 @@ export const updateReachDateTime = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid stoppage" });
     }
 
-    // const formattedReachDateTime = new Date(reachDateTime);
-// ✅ Convert to proper IST Date object
-// const formattedReachDateTime = moment(reachDateTime)
-//   .tz("Asia/Kolkata")
-//   .toDate();
+   
         // DB and input already in IST
+        console.log("RAW reachDateTime from frontend:", reachDateTime);
 const formattedReachDateTime = moment(reachDateTime, "YYYY-MM-DD HH:mm:ss").toDate();
+console.log("JS Date object:", formattedReachDateTime);
+console.log("JS ISO:", formattedReachDateTime.toISOString());
+console.log("JS locale:", formattedReachDateTime.toString());
 
 
 if (isNaN(formattedReachDateTime.getTime())) {
