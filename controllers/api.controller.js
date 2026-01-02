@@ -1006,7 +1006,6 @@
 //       return res.status(400).json({ success: false, message: "Invalid stoppage" });
 //     }
 
-//     const formattedReachDateTime = new Date(reachDateTime);
 //     if (isNaN(formattedReachDateTime.getTime())) {
 //       return res.status(400).json({ success: false, message: "Invalid reachDateTime format" });
 //     }
@@ -2399,13 +2398,19 @@ console.log("RAW reachDateTime from frontend:", reachDateTime);
 //   "YYYY-MM-DD HH:mm:ss"
 // ).format("YYYY-MM-DD HH:mm:ss");
 
-//         const istMoment = moment.tz(
-//   reachDateTime,
-//   "YYYY-MM-DD HH:mm:ss",
-//   "Asia/Kolkata"
-// );
+        const istMoment = moment.tz(
+  reachDateTime,
+  "YYYY-MM-DD HH:mm:ss",
+  "Asia/Kolkata"
+);
+        if (!istMoment.isValid()) {
+  return res.status(400).json({
+    success: false,
+    message: "Invalid reachDateTime format",
+  });
+}
 // frontend already sends IST → store as-is
-const formattedReachDateTime = reachDateTime;
+const formattedReachDateTime = istMoment.format("YYYY-MM-DD HH:mm:ss");
 
 
 // if (!istMoment.isValid()) {
