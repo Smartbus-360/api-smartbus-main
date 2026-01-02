@@ -2390,15 +2390,31 @@ export const updateReachDateTime = async (req, res) => {
         // DB and input already in IST
 console.log("RAW reachDateTime from frontend:", reachDateTime);
 
-const formattedReachDateTime = moment(
+// const formattedReachDateTime = moment(
+//   reachDateTime,
+//   "YYYY-MM-DD HH:mm:ss"
+// ).format("YYYY-MM-DD HH:mm:ss");
+
+        const istMoment = moment.tz(
   reachDateTime,
-  "YYYY-MM-DD HH:mm:ss"
-).format("YYYY-MM-DD HH:mm:ss");
+  "YYYY-MM-DD HH:mm:ss",
+  "Asia/Kolkata"
+);
+
+if (!istMoment.isValid()) {
+  return res.status(400).json({
+    success: false,
+    message: "Invalid reachDateTime format",
+  });
+}
+
+const formattedReachDateTime = istMoment.format("YYYY-MM-DD HH:mm:ss");
+
 
 console.log("FINAL IST reachDateTime (STRING):", formattedReachDateTime);
 
 
-if (isNaN(formattedReachDateTime.getTime())) {
+if (isNaN(formattedReachDateTime)) {
   return res.status(400).json({
     success: false,
     message: "Invalid reachDateTime format",
