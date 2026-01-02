@@ -13,7 +13,7 @@ const sequelize = new Sequelize(
     logging: false,
     timezone: "+05:30", // IST
     dialectOptions: {
-      // useUTC: false,
+      useUTC: false,
       dateStrings: true,   // ✅ Force MySQL to return DATETIME as string (not UTC)
       typeCast: true,      // ✅ So Sequelize doesn't convert timestamps to JS UTC Dates
     },
