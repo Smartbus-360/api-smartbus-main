@@ -1501,6 +1501,20 @@ export const getUserDetails = async (req, res) => {
       }
     });
 
+        // 🔴 FIX TIME FORMAT (USER STOP)
+if (userDetails.stoppageReachDateTime) {
+  userDetails.stoppageReachDateTime =
+    istMinus530ToString(userDetails.stoppageReachDateTime);
+}
+
+// 🔴 FIX TIME FORMAT (ROUTE STOPS)
+routeStoppages.forEach((stop) => {
+  if (stop.reachDateTime) {
+    stop.reachDateTime = istMinus530ToString(stop.reachDateTime);
+  }
+});
+
+
     res.json({
       success: true,
       user: userDetails,
@@ -1752,6 +1766,13 @@ export const getDriverDetails = async (req, res) => {
       driverDetails.routeCurrentRound = routeCurrentRound;
       driverDetails.routeFinalStopReached = routeFinalStopReached;
     }
+// 🔴 FIX TIME FORMAT (DRIVER ROUTES)
+driverRoutes.forEach((route) => {
+  if (route.stoppageReachDateTime) {
+    route.stoppageReachDateTime =
+      istMinus530ToString(route.stoppageReachDateTime);
+  }
+});
 
     res.json({
       success: true,
@@ -2618,17 +2639,34 @@ console.log("FINAL IST reachDateTime (STRING):", formattedReachDateTime);
     // stoppageToUpdate.reachDateTime = formattedReachDateTime;
     // await stoppageToUpdate.save();
     // ✅ Force IST time string into stop table (avoid Sequelize UTC conversion)
-await Stop.update(
+// await Stop.update(
+//   {
+//     reached,
+//     // reachDateTime: moment(formattedReachDateTime)
+//     //   .tz("Asia/Kolkata")
+//     //   .format("YYYY-MM-DD HH:mm:ss"),
+//         // reachDateTime: moment(formattedReachDateTime).format("YYYY-MM-DD HH:mm:ss"),
+//         reachDateTime: formattedReachDateTime,
+//   },
+//   { where: { id: stoppageId } }
+// );
+        await sequelize.query(
+  `
+  UPDATE tbl_sm360_stops
+  SET reached = :reached,
+      reachDateTime = :reachDateTime
+  WHERE id = :stoppageId
+  `,
   {
-    reached,
-    // reachDateTime: moment(formattedReachDateTime)
-    //   .tz("Asia/Kolkata")
-    //   .format("YYYY-MM-DD HH:mm:ss"),
-        // reachDateTime: moment(formattedReachDateTime).format("YYYY-MM-DD HH:mm:ss"),
-        reachDateTime: formattedReachDateTime,
-  },
-  { where: { id: stoppageId } }
+    replacements: {
+      reached,
+      reachDateTime: formattedReachDateTime, // STRING
+      stoppageId,
+    },
+    type: sequelize.QueryTypes.UPDATE,
+  }
 );
+
     res.json({
   success: true,
   message: "Reach time recorded successfully.",
