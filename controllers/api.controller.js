@@ -1331,29 +1331,71 @@ dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // 🔧 IST → minus 5:30 → plain string
+// function istMinus530ToString(datetime) {
+//   if (!datetime) return null;
+
+//   // Expecting "YYYY-MM-DD HH:mm:ss"
+//   const [datePart, timePart] = datetime.split(" ");
+//   const [y, m, d] = datePart.split("-").map(Number);
+//   const [hh, mm, ss] = timePart.split(":").map(Number);
+
+//   // Treat DB value as IST, create UTC date
+//   const utcDate = new Date(Date.UTC(y, m - 1, d, hh, mm, ss));
+
+//   // Subtract 5h 30m
+//   utcDate.setMinutes(utcDate.getMinutes() - 330);
+
+//   const pad = (n) => String(n).padStart(2, "0");
+
+//   return (
+//     `${utcDate.getUTCFullYear()}-` +
+//     `${pad(utcDate.getUTCMonth() + 1)}-` +
+//     `${pad(utcDate.getUTCDate())} ` +
+//     `${pad(utcDate.getUTCHours())}:` +
+//     `${pad(utcDate.getUTCMinutes())}:` +
+//     `${pad(utcDate.getUTCSeconds())}`
+//   );
+// }
+
 function istMinus530ToString(datetime) {
   if (!datetime) return null;
 
-  // Expecting "YYYY-MM-DD HH:mm:ss"
-  const [datePart, timePart] = datetime.split(" ");
-  const [y, m, d] = datePart.split("-").map(Number);
-  const [hh, mm, ss] = timePart.split(":").map(Number);
+  let dateObj;
 
-  // Treat DB value as IST, create UTC date
-  const utcDate = new Date(Date.UTC(y, m - 1, d, hh, mm, ss));
+  // ✅ CASE 1: DB returned JS Date (Sequelize / MySQL)
+  if (datetime instanceof Date) {
+    dateObj = new Date(datetime);
+  }
 
-  // Subtract 5h 30m
-  utcDate.setMinutes(utcDate.getMinutes() - 330);
+  // ✅ CASE 2: DB returned string "YYYY-MM-DD HH:mm:ss"
+  else if (typeof datetime === "string") {
+    const [datePart, timePart] = datetime.split(" ");
+    if (!datePart || !timePart) return null;
+
+    const [y, m, d] = datePart.split("-").map(Number);
+    const [hh, mm, ss] = timePart.split(":").map(Number);
+
+    // Treat as IST → convert to UTC
+    dateObj = new Date(Date.UTC(y, m - 1, d, hh, mm, ss));
+  }
+
+  // ❌ Unknown type
+  else {
+    return null;
+  }
+
+  // 🔻 Subtract 5 hours 30 minutes
+  dateObj.setMinutes(dateObj.getMinutes() - 330);
 
   const pad = (n) => String(n).padStart(2, "0");
 
   return (
-    `${utcDate.getUTCFullYear()}-` +
-    `${pad(utcDate.getUTCMonth() + 1)}-` +
-    `${pad(utcDate.getUTCDate())} ` +
-    `${pad(utcDate.getUTCHours())}:` +
-    `${pad(utcDate.getUTCMinutes())}:` +
-    `${pad(utcDate.getUTCSeconds())}`
+    `${dateObj.getUTCFullYear()}-` +
+    `${pad(dateObj.getUTCMonth() + 1)}-` +
+    `${pad(dateObj.getUTCDate())} ` +
+    `${pad(dateObj.getUTCHours())}:` +
+    `${pad(dateObj.getUTCMinutes())}:` +
+    `${pad(dateObj.getUTCSeconds())}`
   );
 }
 
