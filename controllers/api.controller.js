@@ -1357,45 +1357,75 @@ const JWT_SECRET = process.env.JWT_SECRET;
 //   );
 // }
 
+// function istMinus530ToString(datetime) {
+//   if (!datetime) return null;
+
+//   let dateObj;
+
+//   // ✅ CASE 1: DB returned JS Date (Sequelize / MySQL)
+//   if (datetime instanceof Date) {
+//     dateObj = new Date(datetime);
+//   }
+
+//   // ✅ CASE 2: DB returned string "YYYY-MM-DD HH:mm:ss"
+//   else if (typeof datetime === "string") {
+//     const [datePart, timePart] = datetime.split(" ");
+//     if (!datePart || !timePart) return null;
+
+//     const [y, m, d] = datePart.split("-").map(Number);
+//     const [hh, mm, ss] = timePart.split(":").map(Number);
+
+//     // Treat as IST → convert to UTC
+//     dateObj = new Date(Date.UTC(y, m - 1, d, hh, mm, ss));
+//   }
+
+//   // ❌ Unknown type
+//   else {
+//     return null;
+//   }
+
+//   // 🔻 Subtract 5 hours 30 minutes
+//   dateObj.setMinutes(dateObj.getMinutes() - 330);
+
+//   const pad = (n) => String(n).padStart(2, "0");
+
+//   return (
+//     `${dateObj.getUTCFullYear()}-` +
+//     `${pad(dateObj.getUTCMonth() + 1)}-` +
+//     `${pad(dateObj.getUTCDate())} ` +
+//     `${pad(dateObj.getUTCHours())}:` +
+//     `${pad(dateObj.getUTCMinutes())}:` +
+//     `${pad(dateObj.getUTCSeconds())}`
+//   );
+// }
 function istMinus530ToString(datetime) {
   if (!datetime) return null;
 
   let dateObj;
 
-  // ✅ CASE 1: DB returned JS Date (Sequelize / MySQL)
+  // ✅ CASE 1: MySQL / Sequelize Date object
   if (datetime instanceof Date) {
-    dateObj = new Date(datetime);
+    dateObj = datetime;
   }
 
-  // ✅ CASE 2: DB returned string "YYYY-MM-DD HH:mm:ss"
+  // ✅ CASE 2: "YYYY-MM-DD HH:mm:ss" string
   else if (typeof datetime === "string") {
-    const [datePart, timePart] = datetime.split(" ");
-    if (!datePart || !timePart) return null;
-
-    const [y, m, d] = datePart.split("-").map(Number);
-    const [hh, mm, ss] = timePart.split(":").map(Number);
-
-    // Treat as IST → convert to UTC
-    dateObj = new Date(Date.UTC(y, m - 1, d, hh, mm, ss));
+    return datetime; // already correct IST
   }
 
-  // ❌ Unknown type
   else {
     return null;
   }
 
-  // 🔻 Subtract 5 hours 30 minutes
-  dateObj.setMinutes(dateObj.getMinutes() - 330);
-
   const pad = (n) => String(n).padStart(2, "0");
 
   return (
-    `${dateObj.getUTCFullYear()}-` +
-    `${pad(dateObj.getUTCMonth() + 1)}-` +
-    `${pad(dateObj.getUTCDate())} ` +
-    `${pad(dateObj.getUTCHours())}:` +
-    `${pad(dateObj.getUTCMinutes())}:` +
-    `${pad(dateObj.getUTCSeconds())}`
+    `${dateObj.getFullYear()}-` +
+    `${pad(dateObj.getMonth() + 1)}-` +
+    `${pad(dateObj.getDate())} ` +
+    `${pad(dateObj.getHours())}:` +
+    `${pad(dateObj.getMinutes())}:` +
+    `${pad(dateObj.getSeconds())}`
   );
 }
 
