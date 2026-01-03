@@ -650,15 +650,16 @@ export const markStopReached = async (req, res, next) => {
 
     // ✅ Use IST timezone for reach timestamp
     // const now = moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss");
-const now = moment().format("YYYY-MM-DD HH:mm:ss");
+// const now = moment().format("YYYY-MM-DD HH:mm:ss");
+    const now = new Date();
     console.log("🟢 STOP REACHED – reachDateTime CREATED:", now);
-const dbNow = await sequelize.query(
-  "SELECT NOW() as now",
-  { type: sequelize.QueryTypes.SELECT }
-);
+// const dbNow = await sequelize.query(
+//   "SELECT NOW() as now",
+//   { type: sequelize.QueryTypes.SELECT }
+// );
 
-console.log("🕒 Moment-generated IST time:", now);
-console.log("🟢 DB NOW() at insert time:", dbNow[0].now);
+// console.log("🕒 Moment-generated IST time:", now);
+// console.log("🟢 DB NOW() at insert time:", dbNow[0].now);
 
 
     // 1️⃣ Update basic reach info
@@ -681,7 +682,8 @@ console.log("🟢 DB NOW() at insert time:", dbNow[0].now);
       if (!rounds[tripType]) rounds[tripType] = [];
 
       // const nowTime = moment().tz("Asia/Kolkata").format("HH:mm");
-const nowTime = moment().format("HH:mm");
+// const nowTime = moment().format("HH:mm");
+      const nowTime = newDate().toISOString().substring(11,16);
 
       // find existing round or create new
       const existingRound = rounds[tripType].find(r => r.round === round);
@@ -708,7 +710,7 @@ console.log("🔹 updated rounds object:", JSON.stringify(rounds));
       reachDateTime: now,
     });
 
-    res.json({ success: true, message: "Stop marked as reached", reachDateTime: now });
+    res.json({ success: true, message: "Stop marked as reached", reachDateTime: now.toISOString() });
   } catch (error) {
     console.error("Error marking stop reached:", error);
     res.status(500).json({ message: "Failed to mark stop reached" });
