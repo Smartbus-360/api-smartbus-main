@@ -11,10 +11,9 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST,
     dialect: 'mysql',
     logging: false,
-    timezone:'+00:00',
     dialectOptions: {
       useUTC: true,
-      // typeCast: true,      // ✅ So Sequelize doesn't convert timestamps to JS UTC Dates
+      typeCast: true,      // ✅ So Sequelize doesn't convert timestamps to JS UTC Dates
     },
   }
 );
