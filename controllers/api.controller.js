@@ -1330,6 +1330,33 @@ import Route from "../models/route.model.js";
 dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET;
 
+// 🔧 IST → minus 5:30 → plain string
+function istMinus530ToString(datetime) {
+  if (!datetime) return null;
+
+  // Expecting "YYYY-MM-DD HH:mm:ss"
+  const [datePart, timePart] = datetime.split(" ");
+  const [y, m, d] = datePart.split("-").map(Number);
+  const [hh, mm, ss] = timePart.split(":").map(Number);
+
+  // Treat DB value as IST, create UTC date
+  const utcDate = new Date(Date.UTC(y, m - 1, d, hh, mm, ss));
+
+  // Subtract 5h 30m
+  utcDate.setMinutes(utcDate.getMinutes() - 330);
+
+  const pad = (n) => String(n).padStart(2, "0");
+
+  return (
+    `${utcDate.getUTCFullYear()}-` +
+    `${pad(utcDate.getUTCMonth() + 1)}-` +
+    `${pad(utcDate.getUTCDate())} ` +
+    `${pad(utcDate.getUTCHours())}:` +
+    `${pad(utcDate.getUTCMinutes())}:` +
+    `${pad(utcDate.getUTCSeconds())}`
+  );
+}
+
 export const getUserDetails = async (req, res) => {
   const { id } = req.params;
 
@@ -2744,22 +2771,39 @@ export const getReachTimesForRoute = async (req, res) => {
 //             .tz("Asia/Kolkata")
 //             .format("YYYY-MM-DD HH:mm:ss")
 //         : null,
+//         const converted = reachTimes.map((group) => {
+//   const stopsArray =
+//     typeof group.stops === "string" ? JSON.parse(group.stops) : group.stops;
+
+//   return {
+//     ...group,
+//     stops: stopsArray.map((stop) => {
+//       console.log("🧭 Raw DB Time:", stop.reachDateTime);
+// console.log("🕒 DB time (already IST):", stop.reachDateTime);
+//             return {
+//           ...stop,
+//       // ✅ No timezone shift — DB already in IST
+//                   reachDateTime: stop.reachDateTime,
+
+//             };
+//     }),
+//   };
+// });
+
         const converted = reachTimes.map((group) => {
   const stopsArray =
     typeof group.stops === "string" ? JSON.parse(group.stops) : group.stops;
 
   return {
     ...group,
-    stops: stopsArray.map((stop) => {
-      console.log("🧭 Raw DB Time:", stop.reachDateTime);
-console.log("🕒 DB time (already IST):", stop.reachDateTime);
-            return {
-          ...stop,
-      // ✅ No timezone shift — DB already in IST
-                  reachDateTime: stop.reachDateTime,
+    stops: stopsArray.map((stop) => ({
+      ...stop,
 
-            };
-    }),
+      // ✅ DB is IST → subtract 5:30 → send STRING
+      reachDateTime: stop.reachDateTime
+        ? istMinus530ToString(stop.reachDateTime)
+        : null,
+    })),
   };
 });
 
