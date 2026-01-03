@@ -683,7 +683,7 @@ export const markStopReached = async (req, res, next) => {
 
       // const nowTime = moment().tz("Asia/Kolkata").format("HH:mm");
 // const nowTime = moment().format("HH:mm");
-      const nowTime = newDate().toISOString().substring(11,16);
+      const nowTime = now.toISOString().substring(11,16);
 
       // find existing round or create new
       const existingRound = rounds[tripType].find(r => r.round === round);
