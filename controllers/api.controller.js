@@ -2816,7 +2816,7 @@ export const getReachTimesForRoute = async (req, res) => {
             SELECT 
                 MIN(tbl_sm360_stop_reach_logs.id) AS logId,
                 tbl_sm360_stop_reach_logs.stopId,
-                DATE(tbl_sm360_stop_reach_logs.reachDateTime) AS reachDate,
+                DATE_FORMAT(tbl_sm360_stop_reach_logs.reachDateTime, '%Y-%m-%d') AS reachDate,
                 MAX(tbl_sm360_stop_reach_logs.reachDateTime) AS reachDateTime,
                 tbl_sm360_stop_reach_logs.tripType,
                 tbl_sm360_stop_reach_logs.round,
