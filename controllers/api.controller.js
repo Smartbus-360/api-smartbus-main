@@ -2841,7 +2841,7 @@ export const getReachTimesForRoute = async (req, res) => {
               AND tbl_sm360_stop_reach_logs.reachDateTime >= DATE_SUB(CURDATE(), INTERVAL 2 DAY)
             GROUP BY 
                 tbl_sm360_stop_reach_logs.stopId, 
-                DATE(tbl_sm360_stop_reach_logs.reachDateTime),
+    DATE_FORMAT(tbl_sm360_stop_reach_logs.reachDateTime, '%Y-%m-%d'),
                 tbl_sm360_stop_reach_logs.tripType,
                 tbl_sm360_stop_reach_logs.round,
                 tbl_sm360_stops.stopName,
