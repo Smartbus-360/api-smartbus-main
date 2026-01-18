@@ -52,15 +52,33 @@ export const getNotifications = async (req, res) => {
     try {
         const currentDate = new Date().toISOString().slice(0, 19).replace("T", " "); // Format for MySQL
 
+        if (req.user.isAdmin && Number(req.user.isAdmin) === 1) {
+            const query = `
+                SELECT * FROM tbl_sm360_notifications
+                WHERE expiryDate IS NULL OR expiryDate > :currentDate
+            `;
+
+            const notifications = await sequelize.query(query, {
+                replacements: { currentDate },
+                type: sequelize.QueryTypes.SELECT,
+            });
+
+            return res.json({ success: true, notifications });
+        }
+
+        // ✅ CASE 2: NORMAL USER → filter by institute type
         const [inst] = await sequelize.query(
-          `SELECT institutionType FROM tbl_sm360_institutes WHERE id = :iid LIMIT 1`,
-          {
-            replacements: { iid: req.user.instituteId },
-            type: sequelize.QueryTypes.SELECT,
-          }
+            `SELECT institutionType FROM tbl_sm360_institutes WHERE id = :iid LIMIT 1`,
+            {
+                replacements: { iid: req.user.instituteId },
+                type: sequelize.QueryTypes.SELECT,
+            }
         );
 
-        const instituteType = inst?.institutionType;
+        if (!inst || !inst.institutionType) {
+            return res.json({ success: true, notifications: [] });
+        }
+        const instituteType = inst.institutionType;
 
 
         const query = `
