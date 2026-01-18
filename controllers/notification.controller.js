@@ -50,6 +50,10 @@ export const createNotification = async (req, res) => {
   
 export const getNotifications = async (req, res) => {
     try {
+                // 🚫 Disable caching (IMPORTANT)
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
         const currentDate = new Date().toISOString().slice(0, 19).replace("T", " "); // Format for MySQL
 
         if (req.user.isAdmin && Number(req.user.isAdmin) === 1) {
