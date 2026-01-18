@@ -51,13 +51,27 @@ export const createNotification = async (req, res) => {
 export const getNotifications = async (req, res) => {
     try {
         const currentDate = new Date().toISOString().slice(0, 19).replace("T", " "); // Format for MySQL
+
+        const [inst] = await sequelize.query(
+          `SELECT institutionType FROM tbl_sm360_institutes WHERE id = :iid LIMIT 1`,
+          {
+            replacements: { iid: req.user.instituteId },
+            type: sequelize.QueryTypes.SELECT,
+          }
+        );
+
+        const instituteType = inst?.institutionType;
+
+
         const query = `
             SELECT * FROM tbl_sm360_notifications 
-            WHERE expiryDate IS NULL OR expiryDate > :currentDate
+            WHERE
+                instituteType = :instituteType
+                AND (expiryDate IS NULL OR expiryDate > :currentDate)
         `;
         
         const notifications = await sequelize.query(query, {
-            replacements: { currentDate },
+            replacements: { currentDate, instituteType },
             type: sequelize.QueryTypes.SELECT,
         });
 
