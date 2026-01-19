@@ -291,13 +291,13 @@ export const getUserToken = async (usernameOrEmail, password) => {
 };
 
 // Function to get Driver Token
-export const getDriverToken = async (email, password) => {
+export const getDriverToken = async (email, password, sessionId) => {
     const driver = await Driver.findOne({ where: { email } });
     //console.log('Driver:', driver); 
     
     // Check if driver exists and verify the password
     if (driver && await bcrypt.compare(password, driver.password)) {
-        const token = jwt.sign({ email: driver.email, role: 'driver' }, JWT_SECRET, { expiresIn: '30d' });
+        const token = jwt.sign({ email: driver.email, role: 'driver',sessionId }, JWT_SECRET, { expiresIn: '30d' });
         driver.token = token; // Optionally save the token in the database
         await driver.save();
 
