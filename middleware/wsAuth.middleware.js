@@ -72,9 +72,14 @@ return next();
 
         if (!row)  return res.status(401).json({ message: 'QR session invalid or expired' });
         
-
+console.log("🛂 AUTH CHECK (driver)");
+    console.log("📦 JWT payload:", payload);
         const driver = await Driver.findByPk(payload.id);
-        if (!driver) return res.status(401).json({ message: 'Driver not found' });
+
+    if (!driver) {
+        console.log("❌ Driver not found for ID:", payload.id);
+        return res.status(401).json({ message: "Driver not found" });
+    }
                 
 
         req.user = driver;
@@ -119,11 +124,17 @@ if (payload.role === 'attendance_taker') {
     // // req.user = driver;
     // return next();
         // 🔥 SESSION INVALIDATION CHECK
+        console.log("✅ Driver found from DB");
+    console.log("🧾 DB currentSessionId:", driver.currentSessionId);
+    console.log("🎫 Token sessionId:", payload.sessionId);
+
 if (payload.sessionId !== driver.currentSessionId) {
+            console.log("🚫 SESSION MISMATCH → FORCE LOGOUT");
     return res.status(401).json({
         message: "Logged out: account accessed from another device"
     });
 }
+    console.log("✅ Session valid");
 
 req.user = driver;
 return next();
@@ -348,18 +359,31 @@ export const getUserToken = async (usernameOrEmail, password) => {
 
 
 export const getDriverToken = async (email, password) => {
+    console.log("🔐 DRIVER LOGIN ATTEMPT");
+    console.log("📧 Email received:", email);
     const driver = await Driver.findOne({ where: { email } });
-    if (!driver) throw new Error("Invalid credentials");
+    if (!driver) {
+        console.log("❌ Driver NOT FOUND in DB");
+        throw new Error("Invalid credentials");
+    }
+
+        console.log("✅ Driver found, ID:", driver.id);
 
     const ok = await bcrypt.compare(password, driver.password);
-    if (!ok) throw new Error("Invalid credentials");
+        console.log("🔑 Password match result:", ok);
+if (!ok) {
+        console.log("❌ Password mismatch");
+        throw new Error("Invalid credentials");
+    }
 
     const sessionId = nanoid(32);
+    console.log("🆕 Generated sessionId:", sessionId);
 
     await Driver.update(
         { currentSessionId: sessionId, lastLogin: new Date() },
         { where: { id: driver.id } }
     );
+    console.log("💾 SessionId saved in DB");
 
     const token = jwt.sign(
         {
@@ -371,6 +395,7 @@ export const getDriverToken = async (email, password) => {
         JWT_SECRET,
         { expiresIn: '30d' }
     );
+    console.log("🎟 JWT issued");
 
     return {
         id: driver.id,
