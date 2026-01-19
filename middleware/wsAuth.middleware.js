@@ -214,30 +214,63 @@ return next();
 
 }
   if (payload.role === 'driver') {
-    if (payload.qr === true) {
-        const row = await DriverQrToken.findOne({
-            where: {
-                originalDriverId: payload.id,
-                token: payload.qrToken,
-                status: { [Op.in]: ['active', 'used'] },
-                expiresAt: { [Op.gt]: new Date() },
-            },
-            order: [['expiresAt', 'DESC']],
-        });
+//     if (payload.qr === true) {
+//         const row = await DriverQrToken.findOne({
+//             where: {
+//                 originalDriverId: payload.id,
+//                 token: payload.qrToken,
+//                 status: { [Op.in]: ['active', 'used'] },
+//                 expiresAt: { [Op.gt]: new Date() },
+//             },
+//             order: [['expiresAt', 'DESC']],
+//         });
 
-        if (!row) return next(new Error('QR session invalid or expired'));
+//         if (!row) return next(new Error('QR session invalid or expired'));
 
-        const driver = await Driver.findByPk(payload.id);
-        if (!driver) return next(new Error('Driver not found'));
-        if (driver.currentSessionId !== payload.sessionId) {
-  return next(new Error("SESSION_EXPIRED"));
+//         const driver = await Driver.findByPk(payload.id);
+//         if (!driver) return next(new Error('Driver not found'));
+//         if (driver.currentSessionId !== payload.sessionId) {
+//   return next(new Error("SESSION_EXPIRED"));
+// }
+
+// // socket.driverId = driver.id;
+//         socket.user = driver;
+//         socket.driverId = driver.id;  // ✅ attach id
+//         return next();
+//     }
+      if (payload.qr === true) {
+  if (!payload.qrToken) {
+    return next(new Error("Invalid QR token payload"));
+  }
+
+  const row = await DriverQrToken.findOne({
+    where: {
+      originalDriverId: payload.id,
+      token: payload.qrToken,
+      status: { [Op.in]: ['active', 'used'] },
+      expiresAt: { [Op.gt]: new Date() },
+    },
+    order: [['expiresAt', 'DESC']],
+  });
+
+  if (!row) {
+    return next(new Error("QR session invalid or expired"));
+  }
+
+  const driver = await Driver.findByPk(payload.id);
+  if (!driver) {
+    return next(new Error("Driver not found"));
+  }
+
+  if (driver.currentSessionId !== payload.sessionId) {
+    return next(new Error("SESSION_EXPIRED"));
+  }
+
+  socket.user = driver;
+  socket.driverId = driver.id;
+  return next();
 }
 
-// socket.driverId = driver.id;
-        socket.user = driver;
-        socket.driverId = driver.id;  // ✅ attach id
-        return next();
-    }
 
     const driver = await Driver.findOne({ where: { email: payload.email, token } });
     if (!driver) return next(new Error('Authentication error: Invalid or expired token'));
