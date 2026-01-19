@@ -154,6 +154,8 @@ return next();
 
 // Middleware for WebSocket Authentication
 export const wsAuth = async (socket, next) => {
+    console.log("🔌 WS AUTH CONNECTED");
+console.log("🔐 WS AUTH HEADERS:", socket.handshake.headers);
     const jwtToken = socket.handshake.headers['authorization'];
     if (!jwtToken || !jwtToken.startsWith('Bearer ')) {
         return next(new Error('Authentication error: No token provided'));
@@ -167,6 +169,7 @@ export const wsAuth = async (socket, next) => {
     try {
         // Verify the token and extract the payload
         const payload = jwt.verify(token, JWT_SECRET);
+console.log("📦 WS JWT PAYLOAD:", payload);
 
         // Fetch user or driver from the database and ensure token matches
         if (payload.role === 'user') {
@@ -226,6 +229,10 @@ return next();
 
       if (payload.qr === true) {
     const driver = await Driver.findByPk(payload.id);
+    console.log("👤 WS DRIVER FOUND:", driver?.id);
+console.log("🧾 DB currentSessionId:", driver?.currentSessionId);
+console.log("🎫 JWT sessionId:", payload.sessionId);
+
     if (!driver) {
         return next(new Error("Driver not found"));
     }
@@ -237,6 +244,7 @@ return next();
 
     socket.user = driver;
     socket.driverId = driver.id;
+    console.log("🧷 WS ATTACHED driverId:", socket.driverId);
     socket.user.qr = true;
 
     return next();
