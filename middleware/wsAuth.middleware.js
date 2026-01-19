@@ -58,33 +58,70 @@ return next();
 } 
     if (payload.role === 'driver') {
     // QR-session token lane
-    if (payload.qr === true) {
-        const row = await DriverQrToken.findOne({
-            where: {
-                originalDriverId: payload.id,
-                token: payload.qrToken,
-                status: { [Op.in]: ['active', 'used'] },
-                expiresAt: { [Op.gt]: new Date() },
-            },
-            order: [['expiresAt', 'DESC']],
-        });
+//     if (payload.qr === true) {
+//         const row = await DriverQrToken.findOne({
+//             where: {
+//                 originalDriverId: payload.id,
+//                 token: payload.qrToken,
+//                 status: { [Op.in]: ['active', 'used'] },
+//                 expiresAt: { [Op.gt]: new Date() },
+//             },
+//             order: [['expiresAt', 'DESC']],
+//         });
 
-        if (!row)  return res.status(401).json({ message: 'QR session invalid or expired' });
+//         if (!row)  return res.status(401).json({ message: 'QR session invalid or expired' });
         
 
-        const driver = await Driver.findByPk(payload.id);
-        if (!driver) return res.status(401).json({ message: 'Driver not found' });
+//         const driver = await Driver.findByPk(payload.id);
+//         if (!driver) return res.status(401).json({ message: 'Driver not found' });
                 
-if (driver.currentSessionId !== payload.sessionId) {
-  return res.status(401).json({
-    code: "SESSION_EXPIRED",
-    message: "QR session replaced by another login",
+// if (driver.currentSessionId !== payload.sessionId) {
+//   return res.status(401).json({
+//     code: "SESSION_EXPIRED",
+//     message: "QR session replaced by another login",
+//   });
+// }
+
+//         req.user = driver;
+//         return next();
+//     }
+        if (payload.qr === true) {
+  if (!payload.qrToken) {
+    return res.status(401).json({
+      message: "Invalid QR token payload",
+    });
+  }
+
+  const row = await DriverQrToken.findOne({
+    where: {
+      originalDriverId: payload.id,
+      token: payload.qrToken,
+      status: { [Op.in]: ['active', 'used'] },
+      expiresAt: { [Op.gt]: new Date() },
+    },
+    order: [['expiresAt', 'DESC']],
   });
+
+  if (!row) {
+    return res.status(401).json({ message: 'QR session invalid or expired' });
+  }
+
+  const driver = await Driver.findByPk(payload.id);
+  if (!driver) {
+    return res.status(401).json({ message: 'Driver not found' });
+  }
+
+  if (driver.currentSessionId !== payload.sessionId) {
+    return res.status(401).json({
+      code: "SESSION_EXPIRED",
+      message: "QR session replaced by another login",
+    });
+  }
+
+  req.user = driver;
+  return next();
 }
 
-        req.user = driver;
-        return next();
-    }
         // ✅ Attendance-Taker token lane
 if (payload.role === 'attendance_taker') {
     const attendanceTaker = await AttendanceTaker.findOne({ where: { email: payload.email, token } });
