@@ -8,7 +8,6 @@ import Institute from "../models/institute.model.js";
 import { findActiveQrOverride } from "../utils/qrOverride.js";
 import DriverQrToken from '../models/driverQrToken.model.js';
 import AttendanceTaker from '../models/attendanceTaker.model.js';  // ⬅️ add this import at top
-import { nanoid } from "nanoid";
 
 
 dotenv.config();
@@ -72,14 +71,9 @@ return next();
 
         if (!row)  return res.status(401).json({ message: 'QR session invalid or expired' });
         
-console.log("🛂 AUTH CHECK (driver)");
-    console.log("📦 JWT payload:", payload);
-        const driver = await Driver.findByPk(payload.id);
 
-    if (!driver) {
-        console.log("❌ Driver not found for ID:", payload.id);
-        return res.status(401).json({ message: "Driver not found" });
-    }
+        const driver = await Driver.findByPk(payload.id);
+        if (!driver) return res.status(401).json({ message: 'Driver not found' });
                 
 
         req.user = driver;
@@ -98,47 +92,30 @@ if (payload.role === 'attendance_taker') {
 
 
     // Normal token lane
-    // const driver = await Driver.findOne({ where: { email: payload.email, token } });
-        const driver = await Driver.findByPk(payload.id);
+    const driver = await Driver.findOne({ where: { email: payload.email, token } });
     if (!driver)  return res.status(401).json({ message: 'Authentication error: Invalid or expired token' });
     
 
-    // const activeQr = await DriverQrToken.findOne({
-    //     where: {
-    //         originalDriverId: driver.id,
-    //         status: { [Op.in]: ['active', 'used'] },
-    //         expiresAt: { [Op.gt]: new Date() },
-    //     },
-    //     order: [['expiresAt', 'DESC']],
-    // });
-
-    // if (activeQr) {
-    //     return res.status(423).json({
-    //         code: 'QR_SESSION_ACTIVE',
-    //         message: `Temporarily blocked by QR session until ${activeQr.expiresAt.toISOString()}`,
-    //         expiresAt: activeQr.expiresAt,
-    //     });
-    // }
-    // req.user = driver;
-
-    // // req.user = driver;
-    // return next();
-        // 🔥 SESSION INVALIDATION CHECK
-        console.log("✅ Driver found from DB");
-    console.log("🧾 DB currentSessionId:", driver.currentSessionId);
-    console.log("🎫 Token sessionId:", payload.sessionId);
-
-if (payload.sessionId !== driver.currentSessionId) {
-            console.log("🚫 SESSION MISMATCH → FORCE LOGOUT");
-    return res.status(401).json({
-        message: "Logged out: account accessed from another device"
+    const activeQr = await DriverQrToken.findOne({
+        where: {
+            originalDriverId: driver.id,
+            status: { [Op.in]: ['active', 'used'] },
+            expiresAt: { [Op.gt]: new Date() },
+        },
+        order: [['expiresAt', 'DESC']],
     });
-}
-    console.log("✅ Session valid");
 
-req.user = driver;
-return next();
+    if (activeQr) {
+        return res.status(423).json({
+            code: 'QR_SESSION_ACTIVE',
+            message: `Temporarily blocked by QR session until ${activeQr.expiresAt.toISOString()}`,
+            expiresAt: activeQr.expiresAt,
+        });
+    }
+    req.user = driver;
 
+    // req.user = driver;
+    return next();
 }
        
 
@@ -154,8 +131,6 @@ return next();
 
 // Middleware for WebSocket Authentication
 export const wsAuth = async (socket, next) => {
-    console.log("🔌 WS AUTH CONNECTED");
-console.log("🔐 WS AUTH HEADERS:", socket.handshake.headers);
     const jwtToken = socket.handshake.headers['authorization'];
     if (!jwtToken || !jwtToken.startsWith('Bearer ')) {
         return next(new Error('Authentication error: No token provided'));
@@ -169,7 +144,6 @@ console.log("🔐 WS AUTH HEADERS:", socket.handshake.headers);
     try {
         // Verify the token and extract the payload
         const payload = jwt.verify(token, JWT_SECRET);
-console.log("📦 WS JWT PAYLOAD:", payload);
 
         // Fetch user or driver from the database and ensure token matches
         if (payload.role === 'user') {
@@ -190,97 +164,46 @@ return next();
 
 }
   if (payload.role === 'driver') {
-//     if (payload.qr === true) {
-//             const driver = await Driver.findByPk(payload.id);
-//         // const row = await DriverQrToken.findOne({
-//         //     where: {
-//         //         originalDriverId: payload.id,
-//         //         token: payload.qrToken,
-//         //         status: { [Op.in]: ['active', 'used'] },
-//         //         expiresAt: { [Op.gt]: new Date() },
-//         //     },
-//         //     order: [['expiresAt', 'DESC']],
-//         // });
-//         // const driver = await Driver.findByPk(payload.id);
-// if (!driver) {
-//     return res.status(401).json({ message: "Driver not found" });
-// }
+    if (payload.qr === true) {
+        const row = await DriverQrToken.findOne({
+            where: {
+                originalDriverId: payload.id,
+                token: payload.qrToken,
+                status: { [Op.in]: ['active', 'used'] },
+                expiresAt: { [Op.gt]: new Date() },
+            },
+            order: [['expiresAt', 'DESC']],
+        });
 
-// if (payload.sessionId !== driver.currentSessionId) {
-//     return res.status(401).json({
-//         message: "Logged out: account accessed from another device"
-//     });
-// }
+        if (!row) return next(new Error('QR session invalid or expired'));
 
-// req.user = driver;
-// req.user.qr = true;
-// return next();
-
-
-//         if (!row) return next(new Error('QR session invalid or expired'));
-
-//         const driver = await Driver.findByPk(payload.id);
-//         if (!driver) return next(new Error('Driver not found'));
-// // socket.driverId = driver.id;
-//         socket.user = driver;
-//         socket.driverId = driver.id;  // ✅ attach id
-//         return next();
-//     }
-
-      if (payload.qr === true) {
-    const driver = await Driver.findByPk(payload.id);
-    console.log("👤 WS DRIVER FOUND:", driver?.id);
-console.log("🧾 DB currentSessionId:", driver?.currentSessionId);
-console.log("🎫 JWT sessionId:", payload.sessionId);
-
-    if (!driver) {
-        console.log("❌ WS AUTH FAILED");
-        return next(new Error("Driver not found"));
+        const driver = await Driver.findByPk(payload.id);
+        if (!driver) return next(new Error('Driver not found'));
+// socket.driverId = driver.id;
+        socket.user = driver;
+        socket.driverId = driver.id;  // ✅ attach id
+        return next();
     }
 
-    // 🔥 SESSION INVALIDATION (force logout others)
-    if (payload.sessionId !== driver.currentSessionId) {
-        return next(new Error("Logged out: session expired"));
+    const driver = await Driver.findOne({ where: { email: payload.email, token } });
+    if (!driver) return next(new Error('Authentication error: Invalid or expired token'));
+
+    const activeQr = await DriverQrToken.findOne({
+        where: {
+            originalDriverId: driver.id,
+            status: { [Op.in]: ['active', 'used'] },
+            expiresAt: { [Op.gt]: new Date() },
+        },
+        order: [['expiresAt', 'DESC']],
+    });
+
+    if (activeQr) {
+        return next(new Error(`Temporarily blocked by QR session until ${activeQr.expiresAt.toISOString()}`));
     }
 
     socket.user = driver;
-    socket.driverId = driver.id;
-    console.log("🧷 WS ATTACHED driverId:", socket.driverId);
-    socket.user.qr = true;
-
+    socket.driverId = driver.id;  // ✅ attach id
     return next();
-}
-
-    // const driver = await Driver.findOne({ where: { email: payload.email, token } });
-      const driver = await Driver.findByPk(payload.id);
-      console.log("❌ WS AUTH FAILED");
-    if (!driver) return next(new Error('Authentication error: Invalid or expired token'));
-
-    // const activeQr = await DriverQrToken.findOne({
-    //     where: {
-    //         originalDriverId: driver.id,
-    //         status: { [Op.in]: ['active', 'used'] },
-    //         expiresAt: { [Op.gt]: new Date() },
-    //     },
-    //     order: [['expiresAt', 'DESC']],
-    // });
-
-    // if (activeQr) {
-    //     return next(new Error(`Temporarily blocked by QR session until ${activeQr.expiresAt.toISOString()}`));
-    // }
-
-    // socket.user = driver;
-    // socket.driverId = driver.id;  // ✅ attach id
-    // return next();
-      if (payload.sessionId !== driver.currentSessionId) {
-          console.log("❌ WS AUTH FAILED");
-    return next(new Error("Logged out: session expired"));
-}
-
-socket.user = driver;
-socket.driverId = driver.id;
-return next();
-
 }
 
 
@@ -346,74 +269,26 @@ export const getUserToken = async (usernameOrEmail, password) => {
 };
 
 // Function to get Driver Token
-// export const getDriverToken = async (email, password) => {
-//     const driver = await Driver.findOne({ where: { email } });
-//     //console.log('Driver:', driver); 
-    
-//     // Check if driver exists and verify the password
-//     if (driver && await bcrypt.compare(password, driver.password)) {
-//         const token = jwt.sign({ email: driver.email, role: 'driver' }, JWT_SECRET, { expiresIn: '30d' });
-//         driver.token = token; // Optionally save the token in the database
-//         await driver.save();
-
-//         // Return token along with driver id, name, and email
-//         return {
-//             id: driver.id,
-//             name: driver.name,
-//             email: driver.email,
-//             token
-//         };
-//     }
-
-//     throw new Error('Invalid credentials');
-// };
-
-
 export const getDriverToken = async (email, password) => {
-    console.log("🔐 DRIVER LOGIN ATTEMPT");
-    console.log("📧 Email received:", email);
     const driver = await Driver.findOne({ where: { email } });
-    if (!driver) {
-        console.log("❌ Driver NOT FOUND in DB");
-        throw new Error("Invalid credentials");
-    }
+    //console.log('Driver:', driver); 
+    
+    // Check if driver exists and verify the password
+    if (driver && await bcrypt.compare(password, driver.password)) {
+        const token = jwt.sign({ email: driver.email, role: 'driver' }, JWT_SECRET, { expiresIn: '30d' });
+        driver.token = token; // Optionally save the token in the database
+        await driver.save();
 
-        console.log("✅ Driver found, ID:", driver.id);
-
-    const ok = await bcrypt.compare(password, driver.password);
-        console.log("🔑 Password match result:", ok);
-if (!ok) {
-        console.log("❌ Password mismatch");
-        throw new Error("Invalid credentials");
-    }
-
-    const sessionId = nanoid(32);
-    console.log("🆕 Generated sessionId:", sessionId);
-
-    await Driver.update(
-        { currentSessionId: sessionId, lastLogin: new Date() },
-        { where: { id: driver.id } }
-    );
-    console.log("💾 SessionId saved in DB");
-
-    const token = jwt.sign(
-        {
+        // Return token along with driver id, name, and email
+        return {
             id: driver.id,
+            name: driver.name,
             email: driver.email,
-            role: 'driver',
-            sessionId
-        },
-        JWT_SECRET,
-        { expiresIn: '30d' }
-    );
-    console.log("🎟 JWT issued");
+            token
+        };
+    }
 
-    return {
-        id: driver.id,
-        name: driver.name,
-        email: driver.email,
-        token
-    };
+    throw new Error('Invalid credentials');
 };
 
 export const logout = async (req, res) => {
