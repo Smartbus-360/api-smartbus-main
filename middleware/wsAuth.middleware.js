@@ -92,30 +92,41 @@ if (payload.role === 'attendance_taker') {
 
 
     // Normal token lane
-    const driver = await Driver.findOne({ where: { email: payload.email, token } });
+    // const driver = await Driver.findOne({ where: { email: payload.email, token } });
+        const driver = await Driver.findByPk(payload.id);
     if (!driver)  return res.status(401).json({ message: 'Authentication error: Invalid or expired token' });
     
 
-    const activeQr = await DriverQrToken.findOne({
-        where: {
-            originalDriverId: driver.id,
-            status: { [Op.in]: ['active', 'used'] },
-            expiresAt: { [Op.gt]: new Date() },
-        },
-        order: [['expiresAt', 'DESC']],
-    });
+    // const activeQr = await DriverQrToken.findOne({
+    //     where: {
+    //         originalDriverId: driver.id,
+    //         status: { [Op.in]: ['active', 'used'] },
+    //         expiresAt: { [Op.gt]: new Date() },
+    //     },
+    //     order: [['expiresAt', 'DESC']],
+    // });
 
-    if (activeQr) {
-        return res.status(423).json({
-            code: 'QR_SESSION_ACTIVE',
-            message: `Temporarily blocked by QR session until ${activeQr.expiresAt.toISOString()}`,
-            expiresAt: activeQr.expiresAt,
-        });
-    }
-    req.user = driver;
-
+    // if (activeQr) {
+    //     return res.status(423).json({
+    //         code: 'QR_SESSION_ACTIVE',
+    //         message: `Temporarily blocked by QR session until ${activeQr.expiresAt.toISOString()}`,
+    //         expiresAt: activeQr.expiresAt,
+    //     });
+    // }
     // req.user = driver;
-    return next();
+
+    // // req.user = driver;
+    // return next();
+        // 🔥 SESSION INVALIDATION CHECK
+if (payload.sessionId !== driver.currentSessionId) {
+    return res.status(401).json({
+        message: "Logged out: account accessed from another device"
+    });
+}
+
+req.user = driver;
+return next();
+
 }
        
 
@@ -165,15 +176,30 @@ return next();
 }
   if (payload.role === 'driver') {
     if (payload.qr === true) {
-        const row = await DriverQrToken.findOne({
-            where: {
-                originalDriverId: payload.id,
-                token: payload.qrToken,
-                status: { [Op.in]: ['active', 'used'] },
-                expiresAt: { [Op.gt]: new Date() },
-            },
-            order: [['expiresAt', 'DESC']],
-        });
+        // const row = await DriverQrToken.findOne({
+        //     where: {
+        //         originalDriverId: payload.id,
+        //         token: payload.qrToken,
+        //         status: { [Op.in]: ['active', 'used'] },
+        //         expiresAt: { [Op.gt]: new Date() },
+        //     },
+        //     order: [['expiresAt', 'DESC']],
+        // });
+        const driver = await Driver.findByPk(payload.id);
+if (!driver) {
+    return res.status(401).json({ message: "Driver not found" });
+}
+
+if (payload.sessionId !== driver.currentSessionId) {
+    return res.status(401).json({
+        message: "Logged out: account accessed from another device"
+    });
+}
+
+req.user = driver;
+req.user.qr = true;
+return next();
+
 
         if (!row) return next(new Error('QR session invalid or expired'));
 
@@ -185,25 +211,34 @@ return next();
         return next();
     }
 
-    const driver = await Driver.findOne({ where: { email: payload.email, token } });
+    // const driver = await Driver.findOne({ where: { email: payload.email, token } });
+      const driver = await Driver.findByPk(payload.id);
     if (!driver) return next(new Error('Authentication error: Invalid or expired token'));
 
-    const activeQr = await DriverQrToken.findOne({
-        where: {
-            originalDriverId: driver.id,
-            status: { [Op.in]: ['active', 'used'] },
-            expiresAt: { [Op.gt]: new Date() },
-        },
-        order: [['expiresAt', 'DESC']],
-    });
+    // const activeQr = await DriverQrToken.findOne({
+    //     where: {
+    //         originalDriverId: driver.id,
+    //         status: { [Op.in]: ['active', 'used'] },
+    //         expiresAt: { [Op.gt]: new Date() },
+    //     },
+    //     order: [['expiresAt', 'DESC']],
+    // });
 
-    if (activeQr) {
-        return next(new Error(`Temporarily blocked by QR session until ${activeQr.expiresAt.toISOString()}`));
-    }
+    // if (activeQr) {
+    //     return next(new Error(`Temporarily blocked by QR session until ${activeQr.expiresAt.toISOString()}`));
+    // }
 
-    socket.user = driver;
-    socket.driverId = driver.id;  // ✅ attach id
-    return next();
+    // socket.user = driver;
+    // socket.driverId = driver.id;  // ✅ attach id
+    // return next();
+      if (payload.sessionId !== driver.currentSessionId) {
+    return next(new Error("Logged out: session expired"));
+}
+
+socket.user = driver;
+socket.driverId = driver.id;
+return next();
+
 }
 
 
