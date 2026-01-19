@@ -100,6 +100,10 @@ const Driver = sequelize.define('tbl_sm360_drivers', {
     type: DataTypes.DATE,
     allowNull: true,
   },
+  currentSessionId: {
+  type: DataTypes.STRING,
+  allowNull: true,
+},
   parentDriverId: { type: DataTypes.INTEGER, allowNull: true },
 isSubdriver:   { type: DataTypes.BOOLEAN, defaultValue: false },
 
