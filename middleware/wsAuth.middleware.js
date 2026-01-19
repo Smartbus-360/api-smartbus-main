@@ -8,6 +8,7 @@ import Institute from "../models/institute.model.js";
 import { findActiveQrOverride } from "../utils/qrOverride.js";
 import DriverQrToken from '../models/driverQrToken.model.js';
 import AttendanceTaker from '../models/attendanceTaker.model.js';  // ⬅️ add this import at top
+import { nanoid } from "nanoid";
 
 
 dotenv.config();
@@ -304,26 +305,60 @@ export const getUserToken = async (usernameOrEmail, password) => {
 };
 
 // Function to get Driver Token
+// export const getDriverToken = async (email, password) => {
+//     const driver = await Driver.findOne({ where: { email } });
+//     //console.log('Driver:', driver); 
+    
+//     // Check if driver exists and verify the password
+//     if (driver && await bcrypt.compare(password, driver.password)) {
+//         const token = jwt.sign({ email: driver.email, role: 'driver' }, JWT_SECRET, { expiresIn: '30d' });
+//         driver.token = token; // Optionally save the token in the database
+//         await driver.save();
+
+//         // Return token along with driver id, name, and email
+//         return {
+//             id: driver.id,
+//             name: driver.name,
+//             email: driver.email,
+//             token
+//         };
+//     }
+
+//     throw new Error('Invalid credentials');
+// };
+
+
 export const getDriverToken = async (email, password) => {
     const driver = await Driver.findOne({ where: { email } });
-    //console.log('Driver:', driver); 
-    
-    // Check if driver exists and verify the password
-    if (driver && await bcrypt.compare(password, driver.password)) {
-        const token = jwt.sign({ email: driver.email, role: 'driver' }, JWT_SECRET, { expiresIn: '30d' });
-        driver.token = token; // Optionally save the token in the database
-        await driver.save();
+    if (!driver) throw new Error("Invalid credentials");
 
-        // Return token along with driver id, name, and email
-        return {
+    const ok = await bcrypt.compare(password, driver.password);
+    if (!ok) throw new Error("Invalid credentials");
+
+    const sessionId = nanoid(32);
+
+    await Driver.update(
+        { currentSessionId: sessionId, lastLogin: new Date() },
+        { where: { id: driver.id } }
+    );
+
+    const token = jwt.sign(
+        {
             id: driver.id,
-            name: driver.name,
             email: driver.email,
-            token
-        };
-    }
+            role: 'driver',
+            sessionId
+        },
+        JWT_SECRET,
+        { expiresIn: '30d' }
+    );
 
-    throw new Error('Invalid credentials');
+    return {
+        id: driver.id,
+        name: driver.name,
+        email: driver.email,
+        token
+    };
 };
 
 export const logout = async (req, res) => {
