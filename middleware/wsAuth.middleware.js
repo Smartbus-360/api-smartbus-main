@@ -20,10 +20,18 @@ export const httpAuth = async (req, res, next) => {
         return res.status(401).json({ message: 'Authentication error: No token provided' });
     }
 
-    const token = jwtToken.split(' ')[1];
-    if (!token) {
-        return res.status(401).json({ message: 'Authentication error: No token provided' });
-    }
+    // const token = jwtToken.split(' ')[1];
+    // if (!token) {
+    //     return res.status(401).json({ message: 'Authentication error: No token provided' });
+    // }
+    const parts = jwtToken.split(' ');
+if (parts.length !== 2 || !parts[1] || parts[1] === 'undefined' || parts[1] === 'null') {
+  return res.status(401).json({
+    message: 'Authentication error: Invalid token format',
+  });
+}
+const token = parts[1];
+
 
     try {
         // Verify the token and extract the payload
@@ -186,10 +194,16 @@ export const wsAuth = async (socket, next) => {
         return next(new Error('Authentication error: No token provided'));
     }
 
-    const token = jwtToken.split(' ')[1];
-    if (!token) {
-        return next(new Error('Authentication error: No token provided'));
-    }
+    // const token = jwtToken.split(' ')[1];
+    // if (!token) {
+    //     return next(new Error('Authentication error: No token provided'));
+    // }
+    const parts = jwtToken.split(' ');
+if (parts.length !== 2 || !parts[1] || parts[1] === 'undefined' || parts[1] === 'null') {
+  return next(new Error('Authentication error: Invalid token format'));
+}
+const token = parts[1];
+
 
     try {
         // Verify the token and extract the payload
