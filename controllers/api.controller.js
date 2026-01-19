@@ -1324,6 +1324,7 @@ import AttendanceTaker from '../models/attendanceTaker.model.js';
 // import moment from "moment-timezone";
 import DriverRoute from "../models/driverRoute.model.js";
 import Route from "../models/route.model.js";
+import { nanoid } from "nanoid";
 
 
 // const OSRM_URL = "http://router.project-osrm.org/route/v1/driving";
@@ -2289,8 +2290,9 @@ export const loginDriver = async (req, res) => {
   }
 
   try {
+            const sessionId = nanoid(32);
     // Authenticate the driver and get the token
-    const driverData = await getDriverToken(email, password);
+    const driverData = await getDriverToken(email, password,sessionId);
     const activeQr = await findActiveQrOverride(driverData.id);
     if (activeQr) {
       return res.status(423).json({
@@ -2301,7 +2303,6 @@ export const loginDriver = async (req, res) => {
       });
     }
 
-    
 
     // Invalidate existing token for this driver
     await sequelize.query(
@@ -2312,11 +2313,19 @@ export const loginDriver = async (req, res) => {
       }
     );
 
+
+
+
     // Save the new token in the database
     await sequelize.query(
-      `UPDATE tbl_sm360_drivers SET token = :token WHERE id = :driverId`,
+      `UPDATE tbl_sm360_drivers SET currentSessionId = :sessionId,
+      token = :token 
+      WHERE id = :driverId`,
       {
-        replacements: { token: driverData.token, driverId: driverData.id },
+        replacements: { 
+            sessionId,
+            token: driverData.token,
+            driverId: driverData.id },
         type: sequelize.QueryTypes.UPDATE,
       }
     );
