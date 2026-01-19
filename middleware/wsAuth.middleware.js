@@ -176,41 +176,60 @@ return next();
 
 }
   if (payload.role === 'driver') {
-    if (payload.qr === true) {
-        // const row = await DriverQrToken.findOne({
-        //     where: {
-        //         originalDriverId: payload.id,
-        //         token: payload.qrToken,
-        //         status: { [Op.in]: ['active', 'used'] },
-        //         expiresAt: { [Op.gt]: new Date() },
-        //     },
-        //     order: [['expiresAt', 'DESC']],
-        // });
-        const driver = await Driver.findByPk(payload.id);
-if (!driver) {
-    return res.status(401).json({ message: "Driver not found" });
-}
+//     if (payload.qr === true) {
+//             const driver = await Driver.findByPk(payload.id);
+//         // const row = await DriverQrToken.findOne({
+//         //     where: {
+//         //         originalDriverId: payload.id,
+//         //         token: payload.qrToken,
+//         //         status: { [Op.in]: ['active', 'used'] },
+//         //         expiresAt: { [Op.gt]: new Date() },
+//         //     },
+//         //     order: [['expiresAt', 'DESC']],
+//         // });
+//         // const driver = await Driver.findByPk(payload.id);
+// if (!driver) {
+//     return res.status(401).json({ message: "Driver not found" });
+// }
 
-if (payload.sessionId !== driver.currentSessionId) {
-    return res.status(401).json({
-        message: "Logged out: account accessed from another device"
-    });
-}
+// if (payload.sessionId !== driver.currentSessionId) {
+//     return res.status(401).json({
+//         message: "Logged out: account accessed from another device"
+//     });
+// }
 
-req.user = driver;
-req.user.qr = true;
-return next();
+// req.user = driver;
+// req.user.qr = true;
+// return next();
 
 
-        if (!row) return next(new Error('QR session invalid or expired'));
+//         if (!row) return next(new Error('QR session invalid or expired'));
 
-        const driver = await Driver.findByPk(payload.id);
-        if (!driver) return next(new Error('Driver not found'));
-// socket.driverId = driver.id;
-        socket.user = driver;
-        socket.driverId = driver.id;  // ✅ attach id
-        return next();
+//         const driver = await Driver.findByPk(payload.id);
+//         if (!driver) return next(new Error('Driver not found'));
+// // socket.driverId = driver.id;
+//         socket.user = driver;
+//         socket.driverId = driver.id;  // ✅ attach id
+//         return next();
+//     }
+
+      if (payload.qr === true) {
+    const driver = await Driver.findByPk(payload.id);
+    if (!driver) {
+        return next(new Error("Driver not found"));
     }
+
+    // 🔥 SESSION INVALIDATION (force logout others)
+    if (payload.sessionId !== driver.currentSessionId) {
+        return next(new Error("Logged out: session expired"));
+    }
+
+    socket.user = driver;
+    socket.driverId = driver.id;
+    socket.user.qr = true;
+
+    return next();
+}
 
     // const driver = await Driver.findOne({ where: { email: payload.email, token } });
       const driver = await Driver.findByPk(payload.id);
