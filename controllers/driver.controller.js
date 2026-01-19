@@ -920,19 +920,19 @@ export const getDriverSelf = async (req, res, next) => {
 
     // If this is the main driver (not a sub-driver), block during active QR window
 // If this is a normal driver (not a sub-driver), block while a claimed QR is still unexpired
-const isSub = Number(driver.isSubdriver) === 1 || driver.isSubdriver === true;
-if (!isSub) {
-    const activeQr = await findActiveQrOverride(driver.id);
-    const isQrJwt = Boolean(req.user?.qr);
-    if (activeQr && !isQrJwt) {
-      return res.status(423).json({
-        success: false,
-        reason: "qr_override_active",
-        message: "Temporarily blocked: a QR login is active for this driver.",
-        until: activeQr.expiresAt,
-      });
-    }
-  }
+// const isSub = Number(driver.isSubdriver) === 1 || driver.isSubdriver === true;
+// if (!isSub) {
+//     const activeQr = await findActiveQrOverride(driver.id);
+//     const isQrJwt = Boolean(req.user?.qr);
+//     if (activeQr && !isQrJwt) {
+//       return res.status(423).json({
+//         success: false,
+//         reason: "qr_override_active",
+//         message: "Temporarily blocked: a QR login is active for this driver.",
+//         until: activeQr.expiresAt,
+//       });
+//     }
+//   }
 
     // Return whatever minimal profile your app needs on reopen
     return res.json({
