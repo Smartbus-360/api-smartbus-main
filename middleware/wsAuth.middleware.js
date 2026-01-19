@@ -234,6 +234,7 @@ console.log("🧾 DB currentSessionId:", driver?.currentSessionId);
 console.log("🎫 JWT sessionId:", payload.sessionId);
 
     if (!driver) {
+        console.log("❌ WS AUTH FAILED");
         return next(new Error("Driver not found"));
     }
 
@@ -252,6 +253,7 @@ console.log("🎫 JWT sessionId:", payload.sessionId);
 
     // const driver = await Driver.findOne({ where: { email: payload.email, token } });
       const driver = await Driver.findByPk(payload.id);
+      console.log("❌ WS AUTH FAILED");
     if (!driver) return next(new Error('Authentication error: Invalid or expired token'));
 
     // const activeQr = await DriverQrToken.findOne({
@@ -271,6 +273,7 @@ console.log("🎫 JWT sessionId:", payload.sessionId);
     // socket.driverId = driver.id;  // ✅ attach id
     // return next();
       if (payload.sessionId !== driver.currentSessionId) {
+          console.log("❌ WS AUTH FAILED");
     return next(new Error("Logged out: session expired"));
 }
 
