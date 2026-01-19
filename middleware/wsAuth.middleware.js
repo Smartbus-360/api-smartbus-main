@@ -75,6 +75,12 @@ return next();
         const driver = await Driver.findByPk(payload.id);
         if (!driver) return res.status(401).json({ message: 'Driver not found' });
                 
+if (driver.currentSessionId !== payload.sessionId) {
+  return res.status(401).json({
+    code: "SESSION_EXPIRED",
+    message: "QR session replaced by another login",
+  });
+}
 
         req.user = driver;
         return next();
@@ -95,6 +101,13 @@ if (payload.role === 'attendance_taker') {
     const driver = await Driver.findOne({ where: { email: payload.email, token } });
     if (!driver)  return res.status(401).json({ message: 'Authentication error: Invalid or expired token' });
     
+// 🔥 FORCE LOGOUT if session changed
+if (driver.currentSessionId !== payload.sessionId) {
+  return res.status(401).json({
+    code: "SESSION_EXPIRED",
+    message: "Logged out because you signed in from another device",
+  });
+}
 
     const activeQr = await DriverQrToken.findOne({
         where: {
@@ -179,6 +192,10 @@ return next();
 
         const driver = await Driver.findByPk(payload.id);
         if (!driver) return next(new Error('Driver not found'));
+        if (driver.currentSessionId !== payload.sessionId) {
+  return next(new Error("SESSION_EXPIRED"));
+}
+
 // socket.driverId = driver.id;
         socket.user = driver;
         socket.driverId = driver.id;  // ✅ attach id
@@ -187,6 +204,11 @@ return next();
 
     const driver = await Driver.findOne({ where: { email: payload.email, token } });
     if (!driver) return next(new Error('Authentication error: Invalid or expired token'));
+
+      // 🔥 FORCE LOGOUT CHECK
+if (driver.currentSessionId !== payload.sessionId) {
+  return next(new Error("SESSION_EXPIRED"));
+}
 
     const activeQr = await DriverQrToken.findOne({
         where: {
