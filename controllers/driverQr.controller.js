@@ -157,11 +157,30 @@ export const exchangeDriverQr = async (req, res) => {
     }
 
 const secondsLeft = Math.max(1, Math.floor((new Date(row.expiresAt) - Date.now()) / 1000));
+// const driverJwt = jwt.sign(
+//   { id: driver.id, email: driver.email, role: 'driver', qr: true, qrToken: row.token },
+//   JWT_SECRET,
+//   { expiresIn: secondsLeft }
+// );
+    const sessionId = nanoid(32);
+
+   await Driver.update(
+  { currentSessionId: sessionId, lastLogin: new Date() },
+  { where: { id: driver.id } }
+);
+
 const driverJwt = jwt.sign(
-  { id: driver.id, email: driver.email, role: 'driver', qr: true, qrToken: row.token },
+  {
+    id: driver.id,
+    email: driver.email,
+    role: 'driver',
+    qr: true,
+    sessionId,        // 👈 VERY IMPORTANT
+  },
   JWT_SECRET,
   { expiresIn: secondsLeft }
 );
+
 
 
     // Persist token ON THE SAME DRIVER (do NOT null out any other device)
