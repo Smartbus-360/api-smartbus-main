@@ -175,6 +175,7 @@ const driverJwt = jwt.sign(
     email: driver.email,
     role: 'driver',
     qr: true,
+    qrToken: row.token,   // 🔴 REQUIRED
     sessionId,        // 👈 VERY IMPORTANT
   },
   JWT_SECRET,
@@ -190,7 +191,7 @@ const driverJwt = jwt.sign(
 
     // Mark QR as used (so others get 423 block until it expires)
     await DriverQrToken.update(
-      { status: 'used', usedCount: (row.usedCount ?? 0) + 1 },
+      { currentSessionId: sessionId, token,status: 'used', usedCount: (row.usedCount ?? 0) + 1 },
       { where: { id: row.id } }
     );
 io.to(`driver:${driver.id}`).emit("qrOverrideActive", {
