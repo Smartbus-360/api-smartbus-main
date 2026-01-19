@@ -15,6 +15,7 @@ dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET;
 
 export const httpAuth = async (req, res, next) => {
+        console.log("🧾 HTTP AUTH HEADER =", req.headers.authorization);
     const jwtToken = req.headers['authorization'];
     if (!jwtToken || !jwtToken.startsWith('Bearer ')) {
         return res.status(401).json({ message: 'Authentication error: No token provided' });
@@ -31,6 +32,7 @@ if (parts.length !== 2 || !parts[1] || parts[1] === 'undefined' || parts[1] === 
   });
 }
 const token = parts[1];
+console.log("🧾 HTTP TOKEN VALUE =", token);
 
 
     try {
@@ -189,6 +191,7 @@ if (driver.currentSessionId !== payload.sessionId) {
 
 // Middleware for WebSocket Authentication
 export const wsAuth = async (socket, next) => {
+        console.log("🔌 WS AUTH HEADER =", socket.handshake.headers.authorization);
     const jwtToken = socket.handshake.headers['authorization'];
     if (!jwtToken || !jwtToken.startsWith('Bearer ')) {
         return next(new Error('Authentication error: No token provided'));
@@ -203,6 +206,7 @@ if (parts.length !== 2 || !parts[1] || parts[1] === 'undefined' || parts[1] === 
   return next(new Error('Authentication error: Invalid token format'));
 }
 const token = parts[1];
+console.log("🔌 WS TOKEN VALUE =", token);
 
 
     try {
