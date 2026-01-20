@@ -177,9 +177,15 @@ export const exchangeDriverQr = async (req, res) => {
     }
 
 // const secondsLeft = Math.max(1, Math.floor((new Date(row.expiresAt) - Date.now()) / 1000));
-    const secondsLeft = row.expiresAt
-  ? Math.max(1, Math.floor((new Date(row.expiresAt) - Date.now()) / 1000))
-  : 60 * 60 * 24 * 365 * 10; // 10 years JWT for infinite QR
+    const SIX_MONTHS_SECONDS = 60 * 60 * 24 * 30 * 6; // ~6 months
+
+const secondsLeft = row.expiresAt
+  ? Math.max(
+      1,
+      Math.floor((new Date(row.expiresAt) - Date.now()) / 1000)
+    )
+  : SIX_MONTHS_SECONDS;
+
 // const driverJwt = jwt.sign(
 //   { id: driver.id, email: driver.email, role: 'driver', qr: true, qrToken: row.token },
 //   JWT_SECRET,
