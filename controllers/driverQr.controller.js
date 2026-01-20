@@ -99,9 +99,24 @@ export const generateDriverQr = async (req, res) => {
     // if (!Number.isFinite(hours) || hours <= 0) {
     //   return res.status(400).json({ success: false, message: "durationHours must be > 0" });
     // }
-let expiresAt = null;
+// let expiresAt = null;
 
-if (!neverExpire) {
+// if (!neverExpire) {
+//   const hours = Number(durationHours ?? 6);
+//   if (!Number.isFinite(hours) || hours <= 0) {
+//     return res.status(400).json({ success: false, message: "durationHours must be > 0" });
+//   }
+//   expiresAt = new Date(Date.now() + hours * 3600 * 1000);
+// }
+const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 30 * 6;
+const SIX_HOURS_MS = 1000 * 60 * 60 * 6;
+
+let expiresAt;
+
+if (neverExpire) {
+  // ✅ long-term QR instead of null
+  expiresAt = new Date(Date.now() + SIX_MONTHS_MS);
+} else {
   const hours = Number(durationHours ?? 6);
   if (!Number.isFinite(hours) || hours <= 0) {
     return res.status(400).json({ success: false, message: "durationHours must be > 0" });
@@ -152,12 +167,7 @@ export const exchangeDriverQr = async (req, res) => {
         token,
         status: { [Op.in]: ['active', 'used'] },
         // expiresAt: { [Op.gt]: new Date() },
-        expiresAt: {
-  [Op.or]: [
-    { [Op.gt]: new Date() },
-    { [Op.is]: null }
-  ]
-},
+        expiresAt: { [Op.gt]: new Date() }
       },
     });
     console.log("🟡 QR ROW FOUND:", row?.toJSON?.() || row);
@@ -336,12 +346,7 @@ export const listSubDrivers = async (req, res) => {
           subDriverId: s.id,
           status: "active",
           // expiresAt: { [Op.gt]: now },
-          expiresAt: {
-  [Op.or]: [
-    { [Op.gt]: now },
-    { [Op.is]: null }
-  ]
-},
+        expiresAt: { [Op.gt]: new Date() }
         },
         order: [["expiresAt", "DESC"]],
       });
