@@ -90,7 +90,8 @@ export const generateDriverQr = async (req, res) => {
   try {
     // const { driverId, durationHours } = req.body;
     const { driverId, durationHours, neverExpire } = req.body;
-    const createdBy = Number(req.user?.id) || null;
+    // const createdBy = Number(req.user?.id) || null;
+    const createdBy = req.user?.id ?? null;
 
     if (!driverId) {
       return res.status(400).json({ success: false, message: "driverId is required" });
