@@ -379,7 +379,15 @@ export const listDriverQrHistory = async (req, res) => {
 
     const where = {};
     if (driverId) where.originalDriverId = driverId;
-    if (status !== 'all') where.status = status; // 'active' | 'used' | 'revoked'
+    // if (status !== 'all') where.status = status; // 'active' | 'used' | 'revoked'
+
+if (status === 'active') {
+  where.status = { [Op.in]: ['active', 'used'] };
+  where.expiresAt = { [Op.gt]: new Date() };
+} else if (status !== 'all') {
+  where.status = status;
+}
+
 
     // Include durationHours computed from createdAt/expiresAt
     const rows = await DriverQrToken.findAll({
