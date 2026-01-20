@@ -16,6 +16,11 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 export const httpAuth = async (req, res, next) => {
         console.log("🧾 HTTP AUTH HEADER =", req.headers.authorization);
+        console.log("🧨 AUTH DEBUG START");
+console.log("METHOD:", req.method);
+console.log("URL:", req.originalUrl);
+console.log("HEADERS:", req.headers);
+console.log("🧨 AUTH DEBUG END");
     const jwtToken = req.headers['authorization'];
     if (!jwtToken || !jwtToken.startsWith('Bearer ')) {
         return res.status(401).json({ message: 'Authentication error: No token provided' });
@@ -192,6 +197,11 @@ if (driver.currentSessionId !== payload.sessionId) {
 // Middleware for WebSocket Authentication
 export const wsAuth = async (socket, next) => {
         console.log("🔌 WS AUTH HEADER =", socket.handshake.headers.authorization);
+        console.log("🧨 WS AUTH DEBUG START");
+console.log("HANDSHAKE HEADERS:", socket.handshake.headers);
+console.log("HANDSHAKE AUTH:", socket.handshake.auth);
+console.log("HANDSHAKE QUERY:", socket.handshake.query);
+console.log("🧨 WS AUTH DEBUG END");
     const jwtToken = socket.handshake.headers['authorization'];
     if (!jwtToken || !jwtToken.startsWith('Bearer ')) {
         return next(new Error('Authentication error: No token provided'));
