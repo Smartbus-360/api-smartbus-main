@@ -137,6 +137,9 @@ if (!neverExpire) {
 
 // 4.3 Exchange QR for a Driver JWT (called by the Driver app after scanning)
 export const exchangeDriverQr = async (req, res) => {
+  console.log("🟡 QR LOGIN ATTEMPT START");
+  console.log("REQ BODY:", req.body);
+  console.log("REQ HEADERS:", req.headers);
   try {
     const { token } = req.body;
     if (!token) {
@@ -157,6 +160,7 @@ export const exchangeDriverQr = async (req, res) => {
 },
       },
     });
+    console.log("🟡 QR ROW FOUND:", row?.toJSON?.() || row);
     if (!row) {
       return res.status(400).json({ success: false, message: "Invalid or expired token" });
     }
@@ -187,7 +191,10 @@ export const exchangeDriverQr = async (req, res) => {
   { currentSessionId: sessionId, lastLogin: new Date() },
   { where: { id: driver.id } }
 );
-
+console.log("🟡 ISSUING DRIVER JWT");
+console.log("Driver ID:", driver.id);
+console.log("QR NEVER EXPIRE:", row.expiresAt === null);
+console.log("SESSION ID:", sessionId);
 const driverJwt = jwt.sign(
   {
     id: driver.id,
@@ -217,6 +224,7 @@ io.to(`driver:${driver.id}`).emit("qrOverrideActive", {
   driverId: driver.id,
   until: row.expiresAt,
 });
+    console.log("🟢 QR LOGIN SUCCESS — TOKEN ISSUED");
     return res.json({
   success: true,
   driverId: driver.id,
