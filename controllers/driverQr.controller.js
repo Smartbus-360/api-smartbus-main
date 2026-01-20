@@ -88,19 +88,29 @@ export const createSubDriver = async (req, res) => {
 
 export const generateDriverQr = async (req, res) => {
   try {
-    const { driverId, durationHours } = req.body;
+    // const { driverId, durationHours } = req.body;
+    const { driverId, durationHours, neverExpire } = req.body;
     const createdBy = Number(req.user?.id) || null;
 
     if (!driverId) {
       return res.status(400).json({ success: false, message: "driverId is required" });
     }
-    const hours = Number(durationHours ?? 6);
-    if (!Number.isFinite(hours) || hours <= 0) {
-      return res.status(400).json({ success: false, message: "durationHours must be > 0" });
-    }
+    // const hours = Number(durationHours ?? 6);
+    // if (!Number.isFinite(hours) || hours <= 0) {
+    //   return res.status(400).json({ success: false, message: "durationHours must be > 0" });
+    // }
+let expiresAt = null;
+
+if (!neverExpire) {
+  const hours = Number(durationHours ?? 6);
+  if (!Number.isFinite(hours) || hours <= 0) {
+    return res.status(400).json({ success: false, message: "durationHours must be > 0" });
+  }
+  expiresAt = new Date(Date.now() + hours * 3600 * 1000);
+}
 
     const token = nanoid(32);
-    const expiresAt = new Date(Date.now() + hours * 3600 * 1000);
+    // const expiresAt = new Date(Date.now() + hours * 3600 * 1000);
 
     const row = await DriverQrToken.create({
       originalDriverId: driverId,
@@ -138,7 +148,13 @@ export const exchangeDriverQr = async (req, res) => {
       where: {
         token,
         status: { [Op.in]: ['active', 'used'] },
-        expiresAt: { [Op.gt]: new Date() },
+        // expiresAt: { [Op.gt]: new Date() },
+        expiresAt: {
+  [Op.or]: [
+    { [Op.gt]: new Date() },
+    { [Op.is]: null }
+  ]
+},
       },
     });
     if (!row) {
@@ -156,7 +172,10 @@ export const exchangeDriverQr = async (req, res) => {
       return res.status(500).json({ success: false, message: "Server misconfig: JWT_SECRET missing" });
     }
 
-const secondsLeft = Math.max(1, Math.floor((new Date(row.expiresAt) - Date.now()) / 1000));
+// const secondsLeft = Math.max(1, Math.floor((new Date(row.expiresAt) - Date.now()) / 1000));
+    const secondsLeft = row.expiresAt
+  ? Math.max(1, Math.floor((new Date(row.expiresAt) - Date.now()) / 1000))
+  : 60 * 60 * 24 * 365 * 10; // 10 years JWT for infinite QR
 // const driverJwt = jwt.sign(
 //   { id: driver.id, email: driver.email, role: 'driver', qr: true, qrToken: row.token },
 //   JWT_SECRET,
@@ -191,7 +210,7 @@ const driverJwt = jwt.sign(
 
     // Mark QR as used (so others get 423 block until it expires)
     await DriverQrToken.update(
-      { currentSessionId: sessionId, token,status: 'used', usedCount: (row.usedCount ?? 0) + 1 },
+      { currentSessionId: sessionId, status: 'used', usedCount: (row.usedCount ?? 0) + 1 },
       { where: { id: row.id } }
     );
 io.to(`driver:${driver.id}`).emit("qrOverrideActive", {
@@ -302,7 +321,13 @@ export const listSubDrivers = async (req, res) => {
           originalDriverId: mainDriverId,
           subDriverId: s.id,
           status: "active",
-          expiresAt: { [Op.gt]: now },
+          // expiresAt: { [Op.gt]: now },
+          expiresAt: {
+  [Op.or]: [
+    { [Op.gt]: now },
+    { [Op.is]: null }
+  ]
+},
         },
         order: [["expiresAt", "DESC"]],
       });
