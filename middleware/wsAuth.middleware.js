@@ -165,7 +165,13 @@ if (driver.currentSessionId !== payload.sessionId) {
         where: {
             originalDriverId: driver.id,
             status: { [Op.in]: ['active', 'used'] },
-            expiresAt: { [Op.gt]: new Date() },
+            // expiresAt: { [Op.gt]: new Date() },
+        expiresAt: {
+  [Op.or]: [
+    { [Op.gt]: new Date() },
+    { [Op.is]: null }
+  ]
+}
         },
         order: [['expiresAt', 'DESC']],
     });
@@ -276,7 +282,13 @@ return next();
       originalDriverId: payload.id,
       token: payload.qrToken,
       status: { [Op.in]: ['active', 'used'] },
-      expiresAt: { [Op.gt]: new Date() },
+      // expiresAt: { [Op.gt]: new Date() },
+        expiresAt: {
+  [Op.or]: [
+    { [Op.gt]: new Date() },
+    { [Op.is]: null }
+  ]
+}
     },
     order: [['expiresAt', 'DESC']],
   });
@@ -312,7 +324,13 @@ if (driver.currentSessionId !== payload.sessionId) {
         where: {
             originalDriverId: driver.id,
             status: { [Op.in]: ['active', 'used'] },
-            expiresAt: { [Op.gt]: new Date() },
+            // expiresAt: { [Op.gt]: new Date() },
+                expiresAt: {
+  [Op.or]: [
+    { [Op.gt]: new Date() },
+    { [Op.is]: null }
+  ]
+}
         },
         order: [['expiresAt', 'DESC']],
     });
