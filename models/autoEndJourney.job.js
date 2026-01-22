@@ -63,17 +63,37 @@ cron.schedule("* * * * *", async () => {
 
       // Convert endTime to today datetime
       const [h, m, s] = route.endTime.split(":");
-      const routeEnd = new Date(now);
-routeEnd.setHours(Number(h), Number(m), Number(s || 0), 0);
-console.log(
-  `🕒 [AUTO-END] Route ${route.id} | now=${now.toTimeString()} | routeEnd=${routeEnd.toTimeString()}`
+      // const routeEnd = new Date(now);
+      const TIMEZONE = "Asia/Kolkata";
+
+const now = new Date(
+  new Date().toLocaleString("en-US", { timeZone: TIMEZONE })
 );
 
-      // Skip if end time not crossed
-      if (now < routeEnd) {
-          console.log(`⏭️ [AUTO-END] Route ${route.id} not finished yet`);
-continue;
-      }
+// Convert endTime (LOCAL) to today LOCAL datetime
+const [h, m, s] = route.endTime.split(":");
+const routeEnd = new Date(now);
+routeEnd.setHours(Number(h), Number(m), Number(s || 0), 0);
+
+console.log(
+  `🕒 [AUTO-END] Route ${route.id} | now=${now.toLocaleTimeString()} | routeEnd=${routeEnd.toLocaleTimeString()}`
+);
+
+if (now < routeEnd) {
+  console.log(`⏭️ [AUTO-END] Route ${route.id} not finished yet`);
+  continue;
+}
+
+// routeEnd.setHours(Number(h), Number(m), Number(s || 0), 0);
+// console.log(
+//   `🕒 [AUTO-END] Route ${route.id} | now=${now.toTimeString()} | routeEnd=${routeEnd.toTimeString()}`
+// );
+
+//       // Skip if end time not crossed
+//       if (now < routeEnd) {
+//           console.log(`⏭️ [AUTO-END] Route ${route.id} not finished yet`);
+// continue;
+//       }
 
       // 🔥 AUTO END JOURNEY (reuse existing logic)
       const { req, res } = createFakeReqRes(route.id);
