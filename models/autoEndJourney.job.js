@@ -64,7 +64,8 @@ cron.schedule("* * * * *", async () => {
       // Convert endTime to today datetime
       const [h, m, s] = route.endTime.split(":");
       const routeEnd = new Date(now);
-      routeEnd.setHours(Number(h), Number(m), Number(s || 0), 0);
+      // routeEnd.setHours(Number(h), Number(m), Number(s || 0), 0);
+      routeEnd.setUTCHours(Number(h), Number(m), Number(s || 0), 0);
 console.log(
   `🕒 [AUTO-END] Route ${route.id} | now=${now.toTimeString()} | routeEnd=${routeEnd.toTimeString()}`
 );
