@@ -1959,6 +1959,9 @@ export const markMissedStop = async (req, res) => {
 };
 
 export const markFinalStopReached = async (req, res) => {
+      console.log(
+  `🔥 [AUTO-END] Triggering auto finish for route ${req.body?.routeId}`
+);
   let { routeId, driverId } = req.body;
       // let { routeId, driverId, newShift, newRound } = req.body;
   if (!routeId) return res.status(400).json({ success: false, message: "Route ID is required." });
@@ -2087,12 +2090,31 @@ export const markFinalStopReached = async (req, res) => {
     }
     
     // Avoid updating to same phase/round
-    if (nextPhase === currentJourneyPhase && nextRound === currentRound) {
-      return res.json({
-        success: true,
-        message: `No further rounds to progress. Journey remains at ${currentJourneyPhase} (Round ${currentRound}).`,
-      });
+    // if (nextPhase === currentJourneyPhase && nextRound === currentRound) {
+    //   return res.json({
+    //     success: true,
+    //     message: `No further rounds to progress. Journey remains at ${currentJourneyPhase} (Round ${currentRound}).`,
+    //   });
+    // }
+        if (nextPhase === currentJourneyPhase && nextRound === currentRound) {
+
+  await sequelize.query(
+    `UPDATE tbl_sm360_routes 
+     SET finalStopReached = 1 
+     WHERE id = :rId`,
+    {
+      replacements: { rId },
+      type: sequelize.QueryTypes.UPDATE,
     }
+  );
+
+  console.log(`🏁 Route ${rId} permanently ended (finalStopReached = 1)`);
+
+  return res.json({
+    success: true,
+    message: `Journey fully completed for route ${rId}.`,
+  });
+}
 
     await sequelize.query(
       `UPDATE tbl_sm360_routes 
@@ -2109,6 +2131,19 @@ export const markFinalStopReached = async (req, res) => {
        AND JSON_EXTRACT(rounds, '$."${nextPhase}"') LIKE CONCAT('%', :nextRound, '%')`,
       { replacements: { rId, nextPhase, nextRound }, type: sequelize.QueryTypes.UPDATE }
     );
+
+            // 🔒 IMPORTANT: Mark route as fully finished so cron won't re-trigger
+await sequelize.query(
+  `UPDATE tbl_sm360_routes 
+   SET finalStopReached = 1 
+   WHERE id = :rId`,
+  {
+    replacements: { rId },
+    type: sequelize.QueryTypes.UPDATE,
+  }
+);
+
+console.log(`🏁 Route ${rId} marked as finalStopReached = 1`);
 
     console.log(`✅ Journey updated to ${nextPhase} (Round ${nextRound})`);
     res.json({ success: true, message: `Journey phase updated to ${nextPhase} (Round ${nextRound}).` });
