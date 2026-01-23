@@ -227,12 +227,12 @@ console.log(
 
 
       // 🔥 AUTO END JOURNEY
-      const { req, res } = createFakeReqRes(route.id);
-      await markFinalStopReached(req, res);
+      // const { req, res } = createFakeReqRes(route.id);
+      // await markFinalStopReached(req, res);
 
-      console.log(
-        `✅ [AUTO-END] Route ${route.id} ended automatically`
-      );
+      // console.log(
+      //   `✅ [AUTO-END] Route ${route.id} ended automatically`
+      // );
     }
   } catch (err) {
     console.error("[AUTO-END-JOURNEY] Job failed:", err);
