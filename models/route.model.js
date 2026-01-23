@@ -104,10 +104,16 @@ const Route = sequelize.define('tbl_sm360_routes', {
     defaultValue: 1,
     allowNull: true,
   },
-  shiftTimings: {
+shiftTimings: {
   type: DataTypes.JSON,
   allowNull: true,
-}
+  defaultValue: {
+    morning: { rounds: {} },
+    afternoon: { rounds: {} },
+    evening: { rounds: {} }
+  }
+},
+
 }, { timestamps: true });
 
 export default Route;
