@@ -137,6 +137,35 @@ export const addStop = async (req, res, next) => {
     const route = await Route.findByPk(routeId, {
       include: { model: Institute, attributes: ["name"] }
     });
+    // ✅ SHIFT TIMING VALIDATION (ROUTE-LEVEL)
+if (route.shiftTimings) {
+  let parsedRounds = {};
+  try {
+    parsedRounds = typeof rounds === "string" ? JSON.parse(rounds) : rounds;
+  } catch {
+    return next(errorHandler(400, "Invalid rounds JSON"));
+  }
+
+  const shiftConfig = route.shiftTimings?.[stopType]?.rounds;
+
+  if (!shiftConfig) {
+    return next(
+      errorHandler(400, `No shift timing defined for ${stopType}`)
+    );
+  }
+
+  for (const r of parsedRounds?.[stopType] || []) {
+    if (!shiftConfig[r.round]) {
+      return next(
+        errorHandler(
+          400,
+          `Round ${r.round} not allowed for ${stopType} shift`
+        )
+      );
+    }
+  }
+}
+
 
     if (!route || (isAdmin === 2 && route.instituteId !== instituteId)) {
       return res.status(403).json({ message: "You do not have permission to add this stop." });
