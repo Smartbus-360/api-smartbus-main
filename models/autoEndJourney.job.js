@@ -170,22 +170,61 @@ cron.schedule("* * * * *", async () => {
         `➡️ [AUTO-END] Checking route ${route.id}, endTime=${route.endTime}`
       );
 
-      if (!route.endTime) continue;
+      // if (!route.endTime) continue;
 
-      // Convert route endTime (LOCAL) to today LOCAL datetime
-      const [h, m, s] = route.endTime.split(":");
-      const routeEnd = new Date(now);
-      routeEnd.setHours(Number(h), Number(m), Number(s || 0), 0);
+      // // Convert route endTime (LOCAL) to today LOCAL datetime
+      // const [h, m, s] = route.endTime.split(":");
+      // const routeEnd = new Date(now);
+      // routeEnd.setHours(Number(h), Number(m), Number(s || 0), 0);
 
-      console.log(
-        `🕒 [AUTO-END] Route ${route.id} | now=${now.toLocaleTimeString()} | routeEnd=${routeEnd.toLocaleTimeString()}`
-      );
+      // console.log(
+      //   `🕒 [AUTO-END] Route ${route.id} | now=${now.toLocaleTimeString()} | routeEnd=${routeEnd.toLocaleTimeString()}`
+      // );
 
-      // Skip if end time not crossed
-      if (now < routeEnd) {
-        console.log(`⏭️ [AUTO-END] Route ${route.id} not finished yet`);
-        continue;
-      }
+      // // Skip if end time not crossed
+      // if (now < routeEnd) {
+      //   console.log(`⏭️ [AUTO-END] Route ${route.id} not finished yet`);
+      //   continue;
+      // }
+      // ✅ Get current shift + round timing from route
+const phase = route.currentJourneyPhase;
+const round = route.currentRound;
+
+const timing =
+  route.shiftTimings?.[phase]?.rounds?.[round];
+
+if (!timing) {
+  console.log(
+    `⚠️ [AUTO-END] No timing found for route ${route.id} | ${phase} Round ${round}`
+  );
+  continue;
+}
+
+// Convert timing.end (HH:mm) to today IST datetime
+const [h, m] = timing.end.split(":");
+const roundEnd = new Date(now);
+roundEnd.setHours(Number(h), Number(m), 0, 0);
+
+console.log(
+  `🕒 [AUTO-END] Route ${route.id} | now=${now.toLocaleTimeString()} | roundEnd=${roundEnd.toLocaleTimeString()}`
+);
+
+// ⏭️ Skip if round not finished yet
+if (now < roundEnd) {
+  console.log(
+    `⏭️ [AUTO-END] ${phase} Round ${round} still active`
+  );
+  continue;
+}
+
+// 🔥 Auto end journey using SAME controller as button
+const { req, res } = createFakeReqRes(route.id);
+await markFinalStopReached(req, res);
+
+console.log(
+  `🏁 [AUTO-END] Route ${route.id} auto-ended for ${phase} Round ${round}`
+);
+
 
       // 🔥 AUTO END JOURNEY
       const { req, res } = createFakeReqRes(route.id);
