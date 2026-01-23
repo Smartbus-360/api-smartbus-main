@@ -204,8 +204,10 @@ if (!phase || !round) {
   );
   continue;
 }
-const timing =
-  route.shiftTimings?.[phase]?.rounds?.[round];
+// const timing =
+//   route.shiftTimings?.[phase]?.rounds?.[round];
+    const timing =
+  route.shiftTimings?.[phase]?.rounds?.[String(round)];
 
 if (!timing) {
   console.log(
