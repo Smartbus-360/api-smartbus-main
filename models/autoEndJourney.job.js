@@ -153,13 +153,21 @@ cron.schedule("* * * * *", async () => {
 
     console.log("🟡 [AUTO-END] Job tick at", now.toLocaleString());
 
+    // const activeRoutes = await Route.findAll({
+    //   where: {
+    //     endTime: { [Op.ne]: null },
+    //     finalStopReached: { [Op.ne]: 1 },
+    //     isActive: true,
+    //   },
+    // });
     const activeRoutes = await Route.findAll({
-      where: {
-        endTime: { [Op.ne]: null },
-        finalStopReached: { [Op.ne]: 1 },
-        isActive: true,
-      },
-    });
+  where: {
+    isActive: true,
+    currentJourneyPhase: { [Op.ne]: null },
+    currentRound: { [Op.ne]: null },
+  },
+});
+
 
     console.log(
       `🔍 [AUTO-END] Active routes found: ${activeRoutes.length}`
