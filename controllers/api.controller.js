@@ -2036,6 +2036,21 @@ export const markFinalStopReached = async (req, res) => {
         })
       )].sort((a, b) => a - b);
     };
+        // 🕒 READ SHIFT TIMING FROM ROUTE (NO LOGIC CHANGE)
+const route = await Route.findByPk(rId);
+
+const timing =
+  route?.shiftTimings
+    ? route.shiftTimings?.[currentJourneyPhase]?.rounds?.[currentRound]
+    : null;
+
+if (timing) {
+  console.log(
+    `🕒 Shift Timing Active → ${currentJourneyPhase} Round ${currentRound}`,
+    timing
+  );
+}
+
     const getNextAvailableShift = (currentPhase, availablePhases) => {
       const phaseOrder = ["morning", "afternoon", "evening"];
       const validPhases = phaseOrder.filter(p => availablePhases.includes(p));
@@ -2552,6 +2567,21 @@ const { stoppageId, routeId, reached, reachDateTime, tripType, round } = req.bod
     if (!stoppageToUpdate) {
       return res.status(400).json({ success: false, message: "Invalid stoppage" });
     }
+      // ⏱️ SHIFT TIMING VALIDATION (SOFT GUARD)
+const route = await Route.findByPk(routeId);
+
+if (route?.shiftTimings) {
+  const timing =
+    route.shiftTimings?.[tripType]?.rounds?.[round];
+
+  if (!timing) {
+    return res.status(400).json({
+      success: false,
+      message: `Round ${round} is not allowed for ${tripType} shift`,
+    });
+  }
+}
+
 
    
         // DB and input already in IST
