@@ -25,6 +25,7 @@ export const addRoute = async (req, res, next) => {
     missedStopsDetails = null,
     finalStopReached = 0,
     currentJourneyPhase = null, 
+    shiftTimings = null,
   } = req.body;
 
   const userId = req.user.id;
@@ -81,6 +82,26 @@ export const addRoute = async (req, res, next) => {
   const formattedStartTime = (startTime && startTime !== '') ? startTime : null;
   const formattedEndTime = (endTime && endTime !== '') ? endTime : null;
 
+  // ✅ Validate shiftTimings structure (if provided)
+if (shiftTimings) {
+  const validPhases = ["morning", "afternoon", "evening"];
+
+  for (const phase of Object.keys(shiftTimings)) {
+    if (!validPhases.includes(phase)) {
+      return next(errorHandler(400, `Invalid shift phase: ${phase}`));
+    }
+
+    if (
+      !shiftTimings[phase].rounds ||
+      typeof shiftTimings[phase].rounds !== "object"
+    ) {
+      return next(
+        errorHandler(400, `Rounds missing or invalid for ${phase}`)
+      );
+    }
+  }
+}
+
   try {
     const newRoute = await Route.create({
       routeName,
@@ -105,6 +126,7 @@ export const addRoute = async (req, res, next) => {
       missedStopsDetails,
       finalStopReached,
       currentJourneyPhase,
+      shiftTimings,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -142,6 +164,7 @@ export const updateRoute = async (req, res, next) => {
     routeStatus,
     pickupInstructions,
     dropOffInstructions,
+    shiftTimings,
   } = req.body;
 
   const userId = req.user.id;
@@ -194,6 +217,9 @@ export const updateRoute = async (req, res, next) => {
     route.dropOffInstructions = dropOffInstructions || null;
     route.lastUpdatedBy = userId;
 
+    if (shiftTimings) {
+  route.shiftTimings = shiftTimings;
+}
     await route.save();
 
     res.status(200).json({
