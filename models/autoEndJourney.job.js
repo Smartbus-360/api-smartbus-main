@@ -190,6 +190,12 @@ cron.schedule("* * * * *", async () => {
 const phase = route.currentJourneyPhase;
 const round = route.currentRound;
 
+if (!phase || !round) {
+  console.log(
+    `⚠️ [AUTO-END] Route ${route.id} missing phase or round`
+  );
+  continue;
+}
 const timing =
   route.shiftTimings?.[phase]?.rounds?.[round];
 
