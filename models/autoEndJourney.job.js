@@ -121,6 +121,7 @@ import { Op } from "sequelize";
 import Route from "../models/route.model.js";
 import { markFinalStopReached } from "../controllers/api.controller.js";
 
+const SHIFT_ORDER = ["morning", "afternoon", "evening"];
 const TIMEZONE = "Asia/Kolkata";
 
 /**
@@ -234,12 +235,75 @@ if (now < roundEnd) {
 }
 
 // 🔥 Auto end journey using SAME controller as button
-const { req, res } = createFakeReqRes(route.id);
-await markFinalStopReached(req, res);
+// const { req, res } = createFakeReqRes(route.id);
+// await markFinalStopReached(req, res);
+
+// console.log(
+//   `🏁 [AUTO-END] Route ${route.id} auto-ended for ${phase} Round ${round}`
+// );
+
+      // ===== STATE MACHINE START =====
+
+// All timings for this route
+const timings = route.shiftTimings;
+
+// Rounds for current phase
+const phaseRounds = timings?.[phase]?.rounds;
+
+if (!phaseRounds) {
+  console.log(
+    `⚠️ [AUTO-END] No rounds found for ${phase} on route ${route.id}`
+  );
+  continue;
+}
+
+// Get sorted round numbers (["1","2"] → [1,2])
+const roundNumbers = Object.keys(phaseRounds)
+  .map(Number)
+  .sort((a, b) => a - b);
+
+const lastRound = roundNumbers[roundNumbers.length - 1];
+
+// 🟢 CASE 1: Move to next round in SAME shift
+if (round < lastRound) {
+  await route.update({
+    currentRound: round + 1,
+  });
+
+  console.log(
+    `➡️ [AUTO-END] Route ${route.id} moved to ${phase} Round ${round + 1}`
+  );
+  continue;
+}
+
+// 🟡 CASE 2: Move to NEXT shift
+const currentShiftIndex = SHIFT_ORDER.indexOf(phase);
+const nextShift = SHIFT_ORDER[currentShiftIndex + 1];
+
+if (nextShift && timings[nextShift]) {
+  await route.update({
+    currentJourneyPhase: nextShift,
+    currentRound: 1,
+  });
+
+  console.log(
+    `➡️ [AUTO-END] Route ${route.id} moved to ${nextShift} Round 1`
+  );
+  continue;
+}
+
+// 🔴 CASE 3: END ROUTE (ONLY ONCE)
+await route.update({
+  finalStopReached: 1,
+  currentJourneyPhase: null,
+  currentRound: null,
+});
 
 console.log(
-  `🏁 [AUTO-END] Route ${route.id} auto-ended for ${phase} Round ${round}`
+  `🏁 [AUTO-END] Route ${route.id} permanently ended`
 );
+
+// ===== STATE MACHINE END =====
 
 
       // 🔥 AUTO END JOURNEY
