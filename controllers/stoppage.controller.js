@@ -706,6 +706,30 @@ export const markStopReached = async (req, res, next) => {
     if (!stopId || !routeId || !tripType) {
       return res.status(400).json({ message: "stopId, routeId, and tripType are required." });
     }
+    // 🔒 Prevent stop reach after journey completion
+const route = await Route.findByPk(routeId);
+if (!route) {
+  return res.status(404).json({ message: "Route not found." });
+}
+
+if (route.finalStopReached === 1) {
+  return res.status(400).json({
+    message: "Journey already completed. Stop cannot be marked.",
+  });
+}
+    // 🔒 Validate round against route shift timing
+if (route.shiftTimings) {
+  const timing =
+    route.shiftTimings?.[tripType]?.rounds?.[String(round)];
+
+  if (!timing) {
+    return res.status(400).json({
+      message: `Round ${round} not allowed for ${tripType} shift`,
+    });
+  }
+}
+
+
 
     // ✅ Use IST timezone for reach timestamp
     // const now = moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss");
