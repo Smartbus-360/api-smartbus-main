@@ -2039,6 +2039,15 @@ export const markFinalStopReached = async (req, res) => {
         // 🕒 READ SHIFT TIMING FROM ROUTE (NO LOGIC CHANGE)
 const route = await Route.findByPk(rId);
 
+        // 🛑 HARD GUARD — do nothing if route already completed
+if (route.finalStopReached === 1) {
+  console.log(`⛔ Route ${rId} already completed. Skipping.`);
+  return res.json({
+    success: true,
+    message: "Route already completed",
+  });
+}
+
 const timing =
   route?.shiftTimings
     ? route.shiftTimings?.[currentJourneyPhase]?.rounds?.[currentRound]
@@ -2097,7 +2106,8 @@ if (timing) {
         await resetStopHitCount(rId, currentJourneyPhase, currentRound); // 🔧 fix here
       }
     
-      nextRound = availableRounds[0] || 1;
+      // nextRound = availableRounds[0] || 1;
+          nextRound = availableRounds.length > 0 ? availableRounds[0] : 1;
     } else {
       nextRound = availableRounds[currentIndex + 1];
       console.log(`Moving to next round: ${nextRound} in ${nextPhase}`);
@@ -2148,17 +2158,17 @@ if (timing) {
     );
 
             // 🔒 IMPORTANT: Mark route as fully finished so cron won't re-trigger
-await sequelize.query(
-  `UPDATE tbl_sm360_routes 
-   SET finalStopReached = 1 
-   WHERE id = :rId`,
-  {
-    replacements: { rId },
-    type: sequelize.QueryTypes.UPDATE,
-  }
-);
+// await sequelize.query(
+//   `UPDATE tbl_sm360_routes 
+//    SET finalStopReached = 1 
+//    WHERE id = :rId`,
+//   {
+//     replacements: { rId },
+//     type: sequelize.QueryTypes.UPDATE,
+//   }
+// );
 
-console.log(`🏁 Route ${rId} marked as finalStopReached = 1`);
+// console.log(`🏁 Route ${rId} marked as finalStopReached = 1`);
 
     console.log(`✅ Journey updated to ${nextPhase} (Round ${nextRound})`);
     res.json({ success: true, message: `Journey phase updated to ${nextPhase} (Round ${nextRound}).` });
