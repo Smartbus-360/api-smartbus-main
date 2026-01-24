@@ -124,8 +124,11 @@ if (shiftTimings) {
       pickupInstructions,
       dropOffInstructions,
       missedStopsDetails,
-      finalStopReached,
-      currentJourneyPhase,
+      // finalStopReached,
+      // currentJourneyPhase,
+      finalStopReached: 0,
+  currentJourneyPhase: shiftTimings ? "morning" : null,
+  currentRound: shiftTimings ? 1 : null,
       shiftTimings,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -217,9 +220,18 @@ export const updateRoute = async (req, res, next) => {
     route.dropOffInstructions = dropOffInstructions || null;
     route.lastUpdatedBy = userId;
 
+//     if (shiftTimings) {
+//   route.shiftTimings = shiftTimings;
+// }
     if (shiftTimings) {
   route.shiftTimings = shiftTimings;
+
+  // 🔁 RESET JOURNEY STATE WHEN TIMINGS CHANGE
+  route.currentJourneyPhase = "morning";
+  route.currentRound = 1;
+  route.finalStopReached = 0;
 }
+
     await route.save();
 
     res.status(200).json({
