@@ -1,3 +1,4 @@
+What to add and where
 import User from "../models/user.model.js";
 import {
   getUserToken,
