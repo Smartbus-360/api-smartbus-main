@@ -19,6 +19,7 @@ import mapSubscriptionRoutes from "./routes/mapSubscription.route.js";
 import razorpayRoutes from "./routes/razorpay.route.js";
 import razorpayWebhookRoutes from "./routes/razorpayWebhook.route.js";
 // import "./models/autoEndJourney.job.js";
+import homepageContentRoutes from "./routes/homepageContent.route.js";
 
 console.log("✅ ESM MODE CONFIRMED", import.meta.url);
 
@@ -69,6 +70,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use("/api", razorpayRoutes);
 app.use("/webhook", razorpayWebhookRoutes);
 app.use("/api", mapSubscriptionRoutes);
+app.use("/api", homepageContentRoutes);
 
 
 
