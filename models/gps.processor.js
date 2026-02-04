@@ -229,7 +229,6 @@ export const handleIncomingPacket = async (buffer, socket) => {
     // const imei = extractImeiTemporary(buffer);
     const imei = extractImei(buffer);
     console.log("🧭 IMEI extracted:", imei);
-console.log("🟢 GPS FIX:", location);
 
     if (!imei) {
         console.log("⚠️ IMEI not found in packet");
@@ -254,6 +253,7 @@ console.log("🟢 GPS FIX:", location);
         console.log("⚠️ Location not decoded");
         return;
     }
+console.log("🟢 GPS FIX:", location);
 
     console.log(
         "🟢 GPS FIX → Bus:",
