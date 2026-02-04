@@ -6,10 +6,15 @@ const GPS_PORT = 7001;
 const server = net.createServer((socket) => {
     console.log("📡 GPS Device Connected:", socket.remoteAddress);
 
+    // socket.on("data", (data) => {
+    //     console.log("📥 RAW Packet:", data);
+    //     handleIncomingPacket(data, socket);  // forward to processor
+    // });
     socket.on("data", (data) => {
-        console.log("📥 RAW Packet:", data);
-        handleIncomingPacket(data, socket);  // forward to processor
-    });
+    console.log("📥 RAW GPS PACKET:", data.toString("utf8").trim());
+    handleIncomingPacket(data, socket);
+});
+
 
     socket.on("close", () => {
         console.log("❌ GPS Device Disconnected");
