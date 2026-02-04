@@ -499,4 +499,27 @@ export const checkBusReplacement = async (req, res, next) => {
     res.status(500).json({ error: error });
   }
 };
+export const updateBusLocationSource = async (req, res) => {
+  const { busId } = req.params;
+  const { locationSource } = req.body;
+
+  if (!["ANDROID", "GPS"].includes(locationSource)) {
+    return res.status(400).json({ message: "Invalid location source" });
+  }
+
+  const bus = await Bus.findByPk(busId);
+  if (!bus) {
+    return res.status(404).json({ message: "Bus not found" });
+  }
+
+  bus.locationSource = locationSource;
+  await bus.save();
+
+  res.json({
+    success: true,
+    message: `Location source switched to ${locationSource}`,
+    busId: bus.id,
+    locationSource: bus.locationSource,
+  });
+};
 
