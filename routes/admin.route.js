@@ -68,7 +68,8 @@ import {
   getReplaceBuses,
   addReplaceBus,
   updateReplaceBus,
-  deleteReplaceBus
+  deleteReplaceBus,
+  updateBusLocationSource
 } from "../controllers/bus.controller.js";
 import {
   getAllUsers,
@@ -184,7 +185,11 @@ router.get('/replaced_buses', verifyToken, getReplaceBuses);
 router.post('/replaced_buses', verifyToken, addReplaceBus);
 router.put('/replaced_buses/:id', verifyToken, updateReplaceBus);
 router.delete('/replaced_buses/:id', verifyToken, deleteReplaceBus);
-
+router.put(
+  "/bus/:busId/location-source",
+  verifyToken,
+  updateBusLocationSource
+);
 // Stops
 router.get("/stoppages", verifyToken, getAllStoppages);
 router.post("/stoppages", verifyToken, addStop);
