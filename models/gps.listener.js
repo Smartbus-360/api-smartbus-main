@@ -1,7 +1,7 @@
 import net from "net";
 import { handleIncomingPacket } from "../models/gps.processor.js";
 
-const GPS_PORT = 5010;
+const GPS_PORT = 7001;
 
 const server = net.createServer((socket) => {
     console.log("📡 GPS Device Connected:", socket.remoteAddress);
