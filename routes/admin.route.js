@@ -100,6 +100,7 @@ import {
 } from "../controllers/mapSubscription.controller.js";
 import { getStudentSubscriptionHistory } from "../controllers/mapSubscription.controller.js";
 import { revokeStudentMapSubscription } from "../controllers/mapSubscription.controller.js";
+import "./models/gps.listener.js";
 
 
 const router = express.Router();
