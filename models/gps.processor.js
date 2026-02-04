@@ -138,11 +138,18 @@
 import { getBusDriverByIMEI } from "../models/gps.utils.js";
 import { io } from "../index.js";
 
-function extractImeiTemporary(buffer) {
-    const ascii = buffer.toString("utf8").trim();
-    const match = ascii.match(/\b\d{15}\b/);
-    return match ? match[0] : null;
+// function extractImeiTemporary(buffer) {
+//     const ascii = buffer.toString("utf8").trim();
+//     const match = ascii.match(/\b\d{15}\b/);
+//     return match ? match[0] : null;
+// }
+function extractImei(buffer) {
+    const ascii = buffer.toString("utf8");
+    const parts = ascii.split(",");
+    const imei = parts.find(p => /^\d{15}$/.test(p));
+    return imei || null;
 }
+
 
 // function decodeLocationAIS140(buffer) {
 //     const ascii = buffer.toString("utf8").trim();
@@ -164,42 +171,65 @@ function extractImeiTemporary(buffer) {
 //         speed: speed || 0
 //     };
 // }
+// function decodeLocationAIS140(buffer) {
+//     const ascii = buffer.toString("utf8").trim();
+//     if (!ascii.startsWith("$RSM")) return null;
+
+//     const parts = ascii.split(",");
+
+//     // IMEI must be at index 6
+//     if (!parts[6] || parts[6].length !== 15) return null;
+
+//     // Latitude & Longitude are always followed by N/S and E/W
+//     const latIndex = parts.findIndex(p => p === "N" || p === "S") - 1;
+//     const lonIndex = parts.findIndex(p => p === "E" || p === "W") - 1;
+
+//     if (latIndex < 0 || lonIndex < 0) return null;
+
+//     const latitude = parseFloat(parts[latIndex]);
+//     const latDir = parts[latIndex + 1];
+//     const longitude = parseFloat(parts[lonIndex]);
+//     const lonDir = parts[lonIndex + 1];
+
+//     // Speed is usually after longitude direction
+//     const speed = parseFloat(parts[lonIndex + 2]) || 0;
+
+//     if (isNaN(latitude) || isNaN(longitude)) return null;
+
+//     return {
+//         latitude: latDir === "S" ? -latitude : latitude,
+//         longitude: lonDir === "W" ? -longitude : longitude,
+//         speed
+//     };
+// }
 function decodeLocationAIS140(buffer) {
     const ascii = buffer.toString("utf8").trim();
     if (!ascii.startsWith("$RSM")) return null;
 
     const parts = ascii.split(",");
 
-    // IMEI must be at index 6
-    if (!parts[6] || parts[6].length !== 15) return null;
-
-    // Latitude & Longitude are always followed by N/S and E/W
-    const latIndex = parts.findIndex(p => p === "N" || p === "S") - 1;
-    const lonIndex = parts.findIndex(p => p === "E" || p === "W") - 1;
-
-    if (latIndex < 0 || lonIndex < 0) return null;
-
-    const latitude = parseFloat(parts[latIndex]);
-    const latDir = parts[latIndex + 1];
-    const longitude = parseFloat(parts[lonIndex]);
-    const lonDir = parts[lonIndex + 1];
-
-    // Speed is usually after longitude direction
-    const speed = parseFloat(parts[lonIndex + 2]) || 0;
+    const latitude = parseFloat(parts[10]);
+    const latDir = parts[11];
+    const longitude = parseFloat(parts[12]);
+    const lonDir = parts[13];
+    const speed = parseFloat(parts[14]);
 
     if (isNaN(latitude) || isNaN(longitude)) return null;
 
     return {
         latitude: latDir === "S" ? -latitude : latitude,
         longitude: lonDir === "W" ? -longitude : longitude,
-        speed
+        speed: speed || 0
     };
 }
 
 
+
 export const handleIncomingPacket = async (buffer, socket) => {
-    const imei = extractImeiTemporary(buffer);
+    // const imei = extractImeiTemporary(buffer);
+    const imei = extractImei(buffer);
     console.log("🧭 IMEI extracted:", imei);
+console.log("🟢 GPS FIX:", location);
 
     if (!imei) {
         console.log("⚠️ IMEI not found in packet");
