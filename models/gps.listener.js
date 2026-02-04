@@ -1,5 +1,5 @@
 import net from "net";
-import { handleIncomingPacket } from "./gps.processor.js";
+import { handleIncomingPacket } from "../models/gps.processor.js";
 
 const GPS_PORT = 5010;
 
