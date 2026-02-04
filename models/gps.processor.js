@@ -2,7 +2,7 @@
 //     console.log("📦 [TEMP] Packet received in processor:", data);
 // };
 
-import { getBusDriverByIMEI } from "./gps.utils.js";
+import { getBusDriverByIMEI } from "../models/gps.utils.js";
 import { io } from "../index.js";
 
 // TEMP FUNCTION – will be replaced when protocol arrives
