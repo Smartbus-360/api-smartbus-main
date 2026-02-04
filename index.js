@@ -20,7 +20,7 @@ import razorpayRoutes from "./routes/razorpay.route.js";
 import razorpayWebhookRoutes from "./routes/razorpayWebhook.route.js";
 // import "./models/autoEndJourney.job.js";
 import homepageContentRoutes from "./routes/homepageContent.route.js";
-import "../models/gps.listener.js";
+import "./models/gps.listener.js";
 
 console.log("✅ ESM MODE CONFIRMED", import.meta.url);
 
