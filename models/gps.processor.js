@@ -262,32 +262,41 @@ console.log("🟢 GPS FIX:", location);
         mapping.driverId,
         location
     );
-    // 🔥 ATTACH MAPPING TO SOCKET (CRITICAL FIX)
-// 🔗 BIND GPS SOCKET WITH MAPPING (CRITICAL)
-socket.driverId = mapping.driverId;
-socket.busId = mapping.busId;
-socket.imei = imei;
-
-console.log(
-  "🔗 GPS socket bound → IMEI:",
-  imei,
-  "Bus:",
-  mapping.busId,
-  "Driver:",
-  mapping.driverId
-);
+  
 
 
 
-    io.of("/drivers")
-        .to(`driver_${mapping.driverId}`)
-        .emit("locationUpdate", {
-            driverId: mapping.driverId,
-            latitude: location.latitude,
-            longitude: location.longitude,
-            speed: location.speed,
-            source: "GPS"
-        });
+    // io.of("/drivers")
+    //     .to(`driver_${mapping.driverId}`)
+    //     .emit("locationUpdate", {
+    //         driverId: mapping.driverId,
+    //         latitude: location.latitude,
+    //         longitude: location.longitude,
+    //         speed: location.speed,
+    //         source: "GPS"
+    //     });
+    // ✅ Emit to USERS (students / parents)
+io.of("/users")
+  .to(`driver_${mapping.driverId}`)
+  .emit("locationUpdate", {
+    driverId: mapping.driverId,
+    latitude: location.latitude,
+    longitude: location.longitude,
+    speed: location.speed,
+    source: "GPS"
+  });
+
+// ✅ Emit to ADMIN dashboard
+io.of("/admin/notification")
+  .to(`driver_${mapping.driverId}`)
+  .emit("locationUpdate", {
+    driverId: mapping.driverId,
+    latitude: location.latitude,
+    longitude: location.longitude,
+    speed: location.speed,
+    source: "GPS"
+  });
+
 
     console.log("📡 GPS location emitted:", {
         driverId: mapping.driverId,
