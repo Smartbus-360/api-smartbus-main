@@ -459,7 +459,16 @@ export const configureSocket = (io) => {
             console.log("📥 Incoming location data:", data, "socket.driverId:", socket.driverId);
       const { driverId, latitude, longitude, speed = 0, placeName = '', upcomingStop = null, shiftType = null } = data;
       // const numericDriverId = parseInt(driverId, 10);
-            const numericDriverId = socket.driverId;
+            // const numericDriverId = socket.driverId;
+                const numericDriverId =
+  socket.driverId ||
+  parseInt(data?.driverId, 10);
+
+if (!numericDriverId) {
+  console.error("❌ DriverId missing (socket + payload)");
+  return;
+}
+
       if (!numericDriverId || latitude === undefined || longitude === undefined) {
         return console.error(`⚠️ Invalid or missing location data from driver ${driverId}`);
       }
