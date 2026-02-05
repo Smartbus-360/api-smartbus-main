@@ -401,6 +401,7 @@
 // };
 import Driver from '../models/driver.model.js';
 import { wsAuth } from '../middleware/wsAuth.middleware.js';
+import Bus from '../models/bus.model.js';
 
 const driverInfoCache = {};
 
