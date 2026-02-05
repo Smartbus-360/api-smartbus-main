@@ -30,6 +30,11 @@ const Bus = sequelize.define('tbl_sm360_buses', {
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
   },
+  locationSource: {
+  type: DataTypes.ENUM("ANDROID", "GPS"),
+  allowNull: false,
+  defaultValue: "ANDROID",
+},
   licensePlate: {
     type: DataTypes.STRING,
     allowNull: true,
