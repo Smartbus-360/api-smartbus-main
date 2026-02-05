@@ -262,6 +262,20 @@ console.log("🟢 GPS FIX:", location);
         mapping.driverId,
         location
     );
+    // 🔥 ATTACH MAPPING TO SOCKET (CRITICAL FIX)
+socket.driverId = bus.driverId;
+socket.busId = bus.id;
+socket.imei = imei;
+
+console.log(
+  "🔗 GPS socket bound → IMEI:",
+  imei,
+  "Bus:",
+  bus.id,
+  "Driver:",
+  bus.driverId
+);
+
 
     io.of("/drivers")
         .to(`driver_${mapping.driverId}`)
