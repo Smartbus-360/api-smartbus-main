@@ -277,6 +277,13 @@ console.log("🟢 GPS FIX:", location);
     //         source: "GPS"
     //     });
     // ✅ Emit to USERS (students / parents)
+await handleDriverLocation(io, {
+  driverId: mapping.driverId,
+  latitude: location.latitude,
+  longitude: location.longitude,
+  speed: location.speed,
+  source: "GPS",
+});
 
 
     console.log("📡 GPS location emitted:", {
