@@ -276,7 +276,7 @@ console.log("🟢 GPS FIX:", location);
     //         source: "GPS"
     //     });
     // ✅ Emit to USERS (students / parents)
-io.of("/users")
+io.of("/drivers")
   .to(`driver_${mapping.driverId}`)
   .emit("locationUpdate", {
     driverId: mapping.driverId,
@@ -285,18 +285,6 @@ io.of("/users")
     speed: location.speed,
     source: "GPS"
   });
-
-// ✅ Emit to ADMIN dashboard
-io.of("/admin/notification")
-  .to(`driver_${mapping.driverId}`)
-  .emit("locationUpdate", {
-    driverId: mapping.driverId,
-    latitude: location.latitude,
-    longitude: location.longitude,
-    speed: location.speed,
-    source: "GPS"
-  });
-
 
     console.log("📡 GPS location emitted:", {
         driverId: mapping.driverId,
