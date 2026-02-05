@@ -453,7 +453,8 @@ export const configureSocket = (io) => {
       console.log(`Shift update received for driver ${data.driverId}: ${data.shiftType}`);
     });
 
-    socket.on('locationUpdate', (data) => {
+    // socket.on('locationUpdate', (data) => {
+        socket.on('locationUpdate',async (data) => {
             console.log("📥 Incoming location data:", data, "socket.driverId:", socket.driverId);
       const { driverId, latitude, longitude, speed = 0, placeName = '', upcomingStop = null, shiftType = null } = data;
       // const numericDriverId = parseInt(driverId, 10);
@@ -462,6 +463,12 @@ export const configureSocket = (io) => {
         return console.error(`⚠️ Invalid or missing location data from driver ${driverId}`);
       }
 
+                const bus = await Bus.findOne({ where: { driverId: numericDriverId } });
+    if (bus?.locationSource === "GPS") {
+        console.log("🚫 Android location ignored (GPS enabled)");
+        return;
+    }
+                            console.log(`📡 Speed received from driver ${numericDriverId}:`, speed);
       getDriverInfo(numericDriverId, (err, driverInfo) => {
         if (err) return console.error('Driver info error:', err);
         const effectiveShift = shiftType || driverInfo.shiftType;
