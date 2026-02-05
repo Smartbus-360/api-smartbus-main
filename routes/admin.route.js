@@ -100,7 +100,7 @@ import {
 } from "../controllers/mapSubscription.controller.js";
 import { getStudentSubscriptionHistory } from "../controllers/mapSubscription.controller.js";
 import { revokeStudentMapSubscription } from "../controllers/mapSubscription.controller.js";
-// import "../../models/gps.listener.js";
+import "../models/gps.listener.js";
 
 
 const router = express.Router();
@@ -186,11 +186,11 @@ router.get('/replaced_buses', verifyToken, getReplaceBuses);
 router.post('/replaced_buses', verifyToken, addReplaceBus);
 router.put('/replaced_buses/:id', verifyToken, updateReplaceBus);
 router.delete('/replaced_buses/:id', verifyToken, deleteReplaceBus);
-// router.put(
-//   "/bus/:busId/location-source",
-//   verifyToken,
-//   updateBusLocationSource
-// );
+router.put(
+  "/bus/:busId/location-source",
+  verifyToken,
+  updateBusLocationSource
+);
 // Stops
 router.get("/stoppages", verifyToken, getAllStoppages);
 router.post("/stoppages", verifyToken, addStop);
