@@ -50,3 +50,30 @@ export const getHomepageContent = async (req, res, next) => {
     next(err);
   }
 };
+export const deleteHomepageContent = async (req, res, next) => {
+  try {
+    // only SUPER ADMIN
+    if (req.user.isAdmin !== 1) {
+      return next(errorHandler(403, "Access denied"));
+    }
+
+    const { id } = req.params;
+
+    const content = await HomepageContent.findByPk(id);
+
+    if (!content) {
+      return next(errorHandler(404, "Content not found"));
+    }
+
+    // Soft delete (recommended)
+    content.isActive = false;
+    await content.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Homepage content deleted successfully",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
