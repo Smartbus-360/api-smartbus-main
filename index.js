@@ -72,6 +72,7 @@ app.use("/api", razorpayRoutes);
 app.use("/webhook", razorpayWebhookRoutes);
 app.use("/api", mapSubscriptionRoutes);
 app.use("/api/admin", homepageContentRoutes);
+app.use("/api", homepageContentRoutes);       // public (GET)
 
 
 
