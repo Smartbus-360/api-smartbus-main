@@ -71,7 +71,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use("/api", razorpayRoutes);
 app.use("/webhook", razorpayWebhookRoutes);
 app.use("/api", mapSubscriptionRoutes);
-app.use("/api", homepageContentRoutes);
+app.use("/api/admin", homepageContentRoutes);
 
 
 
