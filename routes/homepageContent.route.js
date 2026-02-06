@@ -4,6 +4,7 @@ import { verifyToken } from "../utils/verifyUser.js";
 import {
   addHomepageContent,
   getHomepageContent,
+  deleteHomepageContent,
 } from "../controllers/homepageContent.controller.js";
 
 const router = express.Router();
@@ -25,6 +26,12 @@ router.post(
   upload.single("image"),
   addHomepageContent
 );
+router.delete(
+  "/homepage-content/:id",
+  verifyToken,
+  deleteHomepageContent
+);
+
 
 // PUBLIC
 router.get("/homepage-content", getHomepageContent);
