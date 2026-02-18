@@ -1,5 +1,6 @@
 import AttendanceTaker from "../models/attendanceTaker.model.js";
 import bcrypt from "bcrypt";
+import User from "../models/user.model.js";
 import { errorHandler } from "../utils/error.js";
 import { Op } from "sequelize";
 import jwt from "jsonwebtoken";
@@ -10,18 +11,57 @@ dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET;
 
 
+// export const getAttendanceTakers = async (req, res, next) => {
+//   try {
+//     const user = req.user;  // from JWT middleware
+
+//     let whereCondition = {};
+
+//     // If not super admin → filter by institute
+//     if (user.role !== "super_admin") {
+//       whereCondition.instituteId = user.instituteId;
+//     }
+
+//     const takers = await AttendanceTaker.findAll({ 
+//       attributes: [
+//         "id",
+//         "name",
+//         "email",
+//         "phone",
+//         "availabilityStatus",
+//         "instituteId",
+//         "role",   // ✅ FIX: Include role
+//         "createdAt",
+//         "updatedAt"
+//       ],
+//       order: [["createdAt", "DESC"]] });
+//     res.status(200).json(takers);
+//   } catch (error) {
+//     next(errorHandler(500, error.message || "Error fetching attendance-takers"));
+//   }
+// };
+
 export const getAttendanceTakers = async (req, res, next) => {
   try {
-    const user = req.user;  // from JWT middleware
+    const userId = req.user.id;
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    const isAdmin = Number(user.isAdmin);
+    const instituteId = Number(user.instituteId);
 
     let whereCondition = {};
 
-    // If not super admin → filter by institute
-    if (user.role !== "super_admin") {
-      whereCondition.instituteId = user.instituteId;
+    if (isAdmin === 2) {
+      // Restrict to same institute like driver logic
+      whereCondition.instituteId = instituteId;
     }
 
-    const takers = await AttendanceTaker.findAll({ 
+    const takers = await AttendanceTaker.findAll({
+      where: whereCondition,
       attributes: [
         "id",
         "name",
@@ -29,20 +69,80 @@ export const getAttendanceTakers = async (req, res, next) => {
         "phone",
         "availabilityStatus",
         "instituteId",
-        "role",   // ✅ FIX: Include role
+        "role",
         "createdAt",
         "updatedAt"
       ],
-      order: [["createdAt", "DESC"]] });
+      order: [["createdAt", "DESC"]]
+    });
+
     res.status(200).json(takers);
+
   } catch (error) {
     next(errorHandler(500, error.message || "Error fetching attendance-takers"));
   }
 };
 
+// export const addAttendanceTaker = async (req, res, next) => {
+//   try {
+//     // Get logged-in admin
+// const userId = req.user.id;
+// const user = await User.findByPk(userId);
+
+// if (!user) {
+//   return res.status(401).json({ message: "User not found" });
+// }
+
+// const isAdmin = Number(user.isAdmin);
+// const instituteId = Number(user.instituteId);
+
+// // Restrict normal admins (isAdmin === 2)
+// if (isAdmin === 2 && !instituteId) {
+//   return res.status(403).json({
+//     message: "You are not assigned to any institute"
+//   });
+// }
+//     // const { name, email, password, phone, instituteId,role } = req.body;
+//     const { name, email, password, phone, role } = req.body;
+
+//     if (!name || !email || !password)
+//       return res.status(400).json({ message: "Name, email, and password are required" });
+
+//     const existing = await AttendanceTaker.findOne({ where: { email } });
+//     if (existing)
+//       return res.status(400).json({ message: "Email already exists" });
+
+//     const hashed = await bcrypt.hash(password, 10);
+//     const newTaker = await AttendanceTaker.create({
+//       name,
+//       email,
+//       password: hashed,
+//       phone,
+//       instituteId: instituteId,
+//       role: role || "taker",
+//     });
+
+//     res.status(201).json({ success: true, message: "Attendance-Taker added successfully", data: newTaker });
+//   } catch (error) {
+//     next(errorHandler(500, error.message || "Error adding attendance-taker"));
+//   }
+// };
+
 export const addAttendanceTaker = async (req, res, next) => {
   try {
-    const { name, email, password, phone, instituteId,role } = req.body;
+
+    // 🔥 Get logged-in admin
+    const userId = req.user.id;
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    const isAdmin = Number(user.isAdmin);
+    const instituteId = Number(user.instituteId);
+
+    const { name, email, password, phone, role } = req.body;
 
     if (!name || !email || !password)
       return res.status(400).json({ message: "Name, email, and password are required" });
@@ -52,16 +152,22 @@ export const addAttendanceTaker = async (req, res, next) => {
       return res.status(400).json({ message: "Email already exists" });
 
     const hashed = await bcrypt.hash(password, 10);
+
     const newTaker = await AttendanceTaker.create({
       name,
       email,
       password: hashed,
       phone,
-      instituteId,
+      instituteId: instituteId, // 🔥 secure
       role: role || "taker",
     });
 
-    res.status(201).json({ success: true, message: "Attendance-Taker added successfully", data: newTaker });
+    res.status(201).json({
+      success: true,
+      message: "Attendance-Taker added successfully",
+      data: newTaker
+    });
+
   } catch (error) {
     next(errorHandler(500, error.message || "Error adding attendance-taker"));
   }
@@ -73,17 +179,52 @@ export const addAttendanceTaker = async (req, res, next) => {
 export const updateAttendanceTaker = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, email, phone, availabilityStatus,role } = req.body;
+
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(401).json({ message: "User not found" });
+
+    const isAdmin = Number(user.isAdmin);
+    const instituteId = Number(user.instituteId);
 
     const taker = await AttendanceTaker.findByPk(id);
     if (!taker) return res.status(404).json({ message: "Attendance-Taker not found" });
 
-    await taker.update({ name, email, phone, availabilityStatus,role });
-    res.status(200).json({ success: true, message: "Attendance-Taker updated", data: taker });
+    // 🔥 Restrict institute admin
+    if (isAdmin === 2 && taker.instituteId !== instituteId) {
+      return res.status(403).json({
+        message: "You are not authorized to update this attendance-taker"
+      });
+    }
+
+    const { name, email, phone, availabilityStatus, role } = req.body;
+
+    await taker.update({ name, email, phone, availabilityStatus, role });
+
+    res.status(200).json({
+      success: true,
+      message: "Attendance-Taker updated",
+      data: taker
+    });
+
   } catch (error) {
-    next(errorHandler(500, error.message || "Error updating attendance-taker"));
+    next(errorHandler(500, error.message));
   }
 };
+
+// export const updateAttendanceTaker = async (req, res, next) => {
+//   try {
+//     const { id } = req.params;
+//     const { name, email, phone, availabilityStatus,role } = req.body;
+
+//     const taker = await AttendanceTaker.findByPk(id);
+//     if (!taker) return res.status(404).json({ message: "Attendance-Taker not found" });
+
+//     await taker.update({ name, email, phone, availabilityStatus,role });
+//     res.status(200).json({ success: true, message: "Attendance-Taker updated", data: taker });
+//   } catch (error) {
+//     next(errorHandler(500, error.message || "Error updating attendance-taker"));
+//   }
+// };
 
 /**
  * ❌ Delete attendance-taker
@@ -91,15 +232,47 @@ export const updateAttendanceTaker = async (req, res, next) => {
 export const deleteAttendanceTaker = async (req, res, next) => {
   try {
     const { id } = req.params;
+
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(401).json({ message: "User not found" });
+
+    const isAdmin = Number(user.isAdmin);
+    const instituteId = Number(user.instituteId);
+
     const taker = await AttendanceTaker.findByPk(id);
     if (!taker) return res.status(404).json({ message: "Attendance-Taker not found" });
 
+    // 🔥 Restrict institute admin
+    if (isAdmin === 2 && taker.instituteId !== instituteId) {
+      return res.status(403).json({
+        message: "You are not authorized to delete this attendance-taker"
+      });
+    }
+
     await taker.destroy();
-    res.status(200).json({ success: true, message: "Attendance-Taker deleted successfully" });
+
+    res.status(200).json({
+      success: true,
+      message: "Attendance-Taker deleted successfully"
+    });
+
   } catch (error) {
-    next(errorHandler(500, error.message || "Error deleting attendance-taker"));
+    next(errorHandler(500, error.message));
   }
 };
+
+// export const deleteAttendanceTaker = async (req, res, next) => {
+//   try {
+//     const { id } = req.params;
+//     const taker = await AttendanceTaker.findByPk(id);
+//     if (!taker) return res.status(404).json({ message: "Attendance-Taker not found" });
+
+//     await taker.destroy();
+//     res.status(200).json({ success: true, message: "Attendance-Taker deleted successfully" });
+//   } catch (error) {
+//     next(errorHandler(500, error.message || "Error deleting attendance-taker"));
+//   }
+// };
 
 /**
  * 🔍 Search attendance-takers
@@ -107,20 +280,50 @@ export const deleteAttendanceTaker = async (req, res, next) => {
 export const searchAttendanceTakers = async (req, res, next) => {
   try {
     const { query } = req.query;
-    const takers = await AttendanceTaker.findAll({
-      where: {
-        [Op.or]: [
-          { name: { [Op.like]: `%${query}%` } },
-          { email: { [Op.like]: `%${query}%` } },
-          { phone: { [Op.like]: `%${query}%` } },
-        ],
-      },
-    });
+
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(401).json({ message: "User not found" });
+
+    const isAdmin = Number(user.isAdmin);
+    const instituteId = Number(user.instituteId);
+
+    let whereCondition = {
+      [Op.or]: [
+        { name: { [Op.like]: `%${query}%` } },
+        { email: { [Op.like]: `%${query}%` } },
+        { phone: { [Op.like]: `%${query}%` } },
+      ],
+    };
+
+    if (isAdmin === 2) {
+      whereCondition.instituteId = instituteId;
+    }
+
+    const takers = await AttendanceTaker.findAll({ where: whereCondition });
+
     res.status(200).json(takers);
+
   } catch (error) {
-    next(errorHandler(500, error.message || "Error searching attendance-takers"));
+    next(errorHandler(500, error.message));
   }
 };
+// export const searchAttendanceTakers = async (req, res, next) => {
+//   try {
+//     const { query } = req.query;
+//     const takers = await AttendanceTaker.findAll({
+//       where: {
+//         [Op.or]: [
+//           { name: { [Op.like]: `%${query}%` } },
+//           { email: { [Op.like]: `%${query}%` } },
+//           { phone: { [Op.like]: `%${query}%` } },
+//         ],
+//       },
+//     });
+//     res.status(200).json(takers);
+//   } catch (error) {
+//     next(errorHandler(500, error.message || "Error searching attendance-takers"));
+//   }
+// };
 /**
  * 🧾 Admin: Generate QR for an attendance taker
  */
