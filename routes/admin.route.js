@@ -171,6 +171,8 @@ router.put("/drivers/:id", verifyToken, uploadDriverImage.single("profilePicture
 router.delete("/drivers/:id", verifyToken, deleteDriver);
 router.post("/drivers/routes", addUpdateDriverRoute);
 router.get("/admin/export", httpAuth, adminExportAttendance);
+router.get("/attendance/student-export/:studentId", httpAuth, downloadStudentAttendanceExcel);
+
 
 router.post("/driver-qr/generate", verifyToken, generateDriverQr);
 // Revoke a driver QR token
