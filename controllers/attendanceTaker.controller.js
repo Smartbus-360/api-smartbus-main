@@ -189,20 +189,34 @@ export const updateAttendanceTaker = async (req, res, next) => {
     const taker = await AttendanceTaker.findByPk(id);
     if (!taker) return res.status(404).json({ message: "Attendance-Taker not found" });
 
-    // 🔥 Restrict institute admin
+    // 🔐 Institute restriction
     if (isAdmin === 2 && taker.instituteId !== instituteId) {
       return res.status(403).json({
         message: "You are not authorized to update this attendance-taker"
       });
     }
 
-    const { name, email, phone, availabilityStatus, role } = req.body;
+    const { name, email, phone, availabilityStatus, role, password } = req.body;
 
-    await taker.update({ name, email, phone, availabilityStatus, role });
+    let updatedData = {
+      name,
+      email,
+      phone,
+      availabilityStatus,
+      role
+    };
+
+    // 🔥 If password is provided → hash and update
+    if (password && password.trim() !== "") {
+      const hashed = await bcrypt.hash(password, 10);
+      updatedData.password = hashed;
+    }
+
+    await taker.update(updatedData);
 
     res.status(200).json({
       success: true,
-      message: "Attendance-Taker updated",
+      message: password ? "Attendance-Taker updated with new password" : "Attendance-Taker updated",
       data: taker
     });
 
@@ -210,6 +224,41 @@ export const updateAttendanceTaker = async (req, res, next) => {
     next(errorHandler(500, error.message));
   }
 };
+
+// export const updateAttendanceTaker = async (req, res, next) => {
+//   try {
+//     const { id } = req.params;
+
+//     const user = await User.findByPk(req.user.id);
+//     if (!user) return res.status(401).json({ message: "User not found" });
+
+//     const isAdmin = Number(user.isAdmin);
+//     const instituteId = Number(user.instituteId);
+
+//     const taker = await AttendanceTaker.findByPk(id);
+//     if (!taker) return res.status(404).json({ message: "Attendance-Taker not found" });
+
+//     // 🔥 Restrict institute admin
+//     if (isAdmin === 2 && taker.instituteId !== instituteId) {
+//       return res.status(403).json({
+//         message: "You are not authorized to update this attendance-taker"
+//       });
+//     }
+
+//     const { name, email, phone, availabilityStatus, role } = req.body;
+
+//     await taker.update({ name, email, phone, availabilityStatus, role });
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Attendance-Taker updated",
+//       data: taker
+//     });
+
+//   } catch (error) {
+//     next(errorHandler(500, error.message));
+//   }
+// };
 
 // export const updateAttendanceTaker = async (req, res, next) => {
 //   try {
