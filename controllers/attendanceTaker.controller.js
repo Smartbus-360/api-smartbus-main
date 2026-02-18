@@ -12,6 +12,15 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 export const getAttendanceTakers = async (req, res, next) => {
   try {
+    const user = req.user;  // from JWT middleware
+
+    let whereCondition = {};
+
+    // If not super admin → filter by institute
+    if (user.role !== "super_admin") {
+      whereCondition.instituteId = user.instituteId;
+    }
+
     const takers = await AttendanceTaker.findAll({ 
       attributes: [
         "id",
