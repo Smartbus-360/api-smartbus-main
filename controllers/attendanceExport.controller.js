@@ -251,3 +251,59 @@ export const adminExportAttendance = async (req, res, next) => {
     next(errorHandler(500, error.message || "Error generating admin Excel export"));
   }
 };
+export const downloadStudentAttendanceExcel = async (req, res, next) => {
+  try {
+    const { studentId } = req.params;
+
+    const records = await Attendance.findAll({
+      where: { studentId },   // make sure column name matches DB
+      order: [["scan_time", "ASC"]],
+    });
+
+    if (!records.length) {
+      return res.status(404).json({ message: "No attendance records found" });
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Student Attendance");
+
+    sheet.columns = [
+      { header: "Registration Number", key: "registrationNumber", width: 20 },
+      { header: "Student Name", key: "username", width: 25 },
+      { header: "Institute", key: "instituteName", width: 25 },
+      { header: "Driver ID", key: "driver_id", width: 15 },
+      { header: "Bus ID", key: "bus_id", width: 15 },
+      { header: "Latitude", key: "latitude", width: 15 },
+      { header: "Longitude", key: "longitude", width: 15 },
+      { header: "Scan Time (IST)", key: "scan_time", width: 25 },
+    ];
+
+    records.forEach((r) => {
+      sheet.addRow({
+        registrationNumber: r.registrationNumber,
+        username: r.username,
+        instituteName: r.instituteName,
+        driver_id: r.driver_id,
+        bus_id: r.bus_id,
+        latitude: r.latitude,
+        longitude: r.longitude,
+        scan_time: toIST(r.scan_time),
+      });
+    });
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=student_${studentId}_attendance.xlsx`
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    next(errorHandler(500, error.message || "Error generating Excel"));
+  }
+};
