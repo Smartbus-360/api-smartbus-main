@@ -38,6 +38,12 @@ export const markAttendance = async (req, res, next) => {
     if (!qr) {
       return res.status(401).json({ message: "Invalid or revoked QR token" });
     }
+// 🔒 Ensure QR belongs to this student
+if (qr.student_id !== student.id) {
+  return res.status(401).json({
+    message: "QR token does not belong to this student"
+  });
+}
 
     // 2️⃣ Validate student exists
     console.log("2️⃣ Checking student:", registrationNumber);
@@ -48,12 +54,21 @@ export const markAttendance = async (req, res, next) => {
 
     // 3️⃣ Validate attendance taker exists
     const [taker] = await sequelize.query(
-      "SELECT id, name,role FROM tbl_sm360_attendance_takers WHERE id = :id",
-      { replacements: { id: attendance_taker_id }, type: sequelize.QueryTypes.SELECT }
-    );
-    if (!taker) {
-      return res.status(403).json({ message: "Invalid attendance taker ID" });
-    }
+  "SELECT id, name, role, instituteId FROM tbl_sm360_attendance_takers WHERE id = :id",
+  { replacements: { id: attendance_taker_id }, type: sequelize.QueryTypes.SELECT }
+);
+
+if (!taker) {
+  return res.status(403).json({ message: "Invalid attendance taker ID" });
+}
+
+    // 🔒 Prevent cross-institute attendance marking
+if (taker.instituteId !== student.instituteId) {
+  return res.status(403).json({
+    message: "Unauthorized: Cannot mark attendance for another institute's student"
+  });
+}
+
 
     // 4️⃣ Fetch institute name
     const [institute] = await sequelize.query(
