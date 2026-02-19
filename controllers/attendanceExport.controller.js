@@ -256,7 +256,8 @@ export const downloadStudentAttendanceExcel = async (req, res, next) => {
     const { studentId } = req.params;
 
     const records = await Attendance.findAll({
-      where: { studentId },   // make sure column name matches DB
+      // where: { studentId },   // make sure column name matches DB
+      where: { student_id: studentId },
       order: [["scan_time", "ASC"]],
     });
 
