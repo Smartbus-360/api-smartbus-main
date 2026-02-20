@@ -38,12 +38,7 @@ export const markAttendance = async (req, res, next) => {
     if (!qr) {
       return res.status(401).json({ message: "Invalid or revoked QR token" });
     }
-// 🔒 Ensure QR belongs to this student
-if (qr.student_id !== student.id) {
-  return res.status(401).json({
-    message: "QR token does not belong to this student"
-  });
-}
+
 
     // 2️⃣ Validate student exists
     console.log("2️⃣ Checking student:", registrationNumber);
@@ -52,6 +47,12 @@ if (qr.student_id !== student.id) {
       return res.status(404).json({ message: "Student not found" });
     }
 
+    // 🔒 Ensure QR belongs to this student
+if (qr.student_id !== student.id) {
+  return res.status(401).json({
+    message: "QR token does not belong to this student"
+  });
+}
     // 3️⃣ Validate attendance taker exists
     const [taker] = await sequelize.query(
   "SELECT id, name, role, instituteId FROM tbl_sm360_attendance_takers WHERE id = :id",
