@@ -76,6 +76,24 @@ export const getAttendanceTakers = async (req, res, next) => {
       order: [["createdAt", "DESC"]]
     });
 
+    // 🔥 Fetch active QR sessions
+const activeSessions = await AttendanceTakerQrSession.findAll({
+  where: { isActive: true },
+  attributes: ["attendanceTakerId"]
+});
+
+const activeMap = {};
+activeSessions.forEach(session => {
+  activeMap[session.attendanceTakerId] = true;
+});
+
+// Attach QR status to each taker
+const takersWithQrStatus = takers.map(taker => ({
+  ...taker.toJSON(),
+  isQrActive: !!activeMap[taker.id]
+}));
+
+
     res.status(200).json(takers);
 
   } catch (error) {
