@@ -94,7 +94,8 @@ const takersWithQrStatus = takers.map(taker => ({
 }));
 
 
-    res.status(200).json(takers);
+    res.status(200).json(takersWithQrStatus);
+    // res.status(200).json(takers);
 
   } catch (error) {
     next(errorHandler(500, error.message || "Error fetching attendance-takers"));
